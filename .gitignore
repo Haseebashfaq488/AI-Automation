@@ -1,0 +1,54 @@
+# Environment & secrets
+.env
+.env.local
+*.env
+token.json
+client_secret.json
+tokens/
+
+# WhatsApp sidecar & profile data
+backend/whatsapp_service/chrome_profile_copy/
+backend/whatsapp_service/tokens/
+chrome_profile_copy/
+
+# Databases & local state
+*.db
+*.sqlite
+*.sqlite3
+jarvis.db
+.jarvis_trash/
+worker_sessions/
+
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+env/
+venv/
+ENV/
+.pytest_cache/
+
+# Node.js & Next.js
+node_modules/
+.next/
+out/
+build/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs & temporary files
+*.log
+tunnel_service.log
+dbg_*.png
+poc_result.png
+scratch/
+tmp_source.txt
+
+# OS metadata
+Thumbs.db
+.DS_Store
