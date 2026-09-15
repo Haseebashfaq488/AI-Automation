@@ -26,7 +26,7 @@ def _default_scope() -> str:
 
 class ForkRequest(BaseModel):
     objective: str
-    worker_type: str = "document_worker"
+    worker_type: str = "opencode_worker"
     requirements: List[str] = []
     constraints: List[str] = []
     success_criteria: List[str] = []
@@ -39,7 +39,81 @@ class InterveneRequest(BaseModel):
     message: str
 
 
+class OpenTerminalRequest(BaseModel):
+    directory: Optional[str] = "D:/Ai automation backend"
+    prompt: Optional[str] = None
+
+
 # ── Endpoints ────────────────────────────────────────────────────────────
+
+
+@router.post("/open-terminal")
+async def open_terminal(payload: Optional[OpenTerminalRequest] = None):
+    """Directly launch a visible, interactive OpenCode CLI window on the user's desktop."""
+    import subprocess
+    import sys
+    from app.workers.opencode_worker.agent.config import get_opencode_binary
+
+    target_dir = payload.directory if payload and payload.directory else "D:/Ai automation backend"
+    if not os.path.exists(target_dir):
+        target_dir = "D:/Ai automation backend"
+
+    bat_file = os.path.join("D:\\Ai automation backend", "launch_opencode.bat")
+
+    try:
+        if sys.platform == "win32":
+            if os.path.isfile(bat_file):
+                # NOTE: do NOT launch the .bat via explorer.exe — explorer.exe
+                # silently drops quoted paths that contain spaces (this repo
+                # lives in "D:\Ai automation backend"), so nothing opened.
+                # `start` always creates a NEW, visible console window (never
+                # background) and `/max` maximizes it so it can't hide behind
+                # the browser. First quoted arg = window title (mandatory).
+                subprocess.Popen(
+                    f'start "Jarvis OpenCode CLI" /max "{bat_file}"',
+                    shell=True,
+                )
+            else:
+                binary = get_opencode_binary() or "opencode"
+                subprocess.Popen(
+                    f'start "OpenCode CLI" /max powershell.exe -NoExit '
+                    f'-Command "Set-Location -LiteralPath \'{target_dir}\'; & \'{binary}\'"',
+                    shell=True,
+                )
+        else:
+            binary = get_opencode_binary() or "opencode"
+            subprocess.Popen([binary], cwd=target_dir)
+
+        return {
+            "status": "launched",
+            "message": f"OpenCode CLI terminal launched in {target_dir}",
+            "directory": target_dir,
+            "launcher": bat_file,
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to launch OpenCode terminal: {exc}")
+
+
+@router.post("/open-desktop")
+async def open_desktop():
+    """Launch the OpenCode Desktop GUI application on Windows if installed."""
+    import subprocess
+    import sys
+
+    desktop_app = os.path.expandvars(r"%LOCALAPPDATA%\Programs\@opencode-aidesktop\OpenCode.exe")
+    if not os.path.isfile(desktop_app):
+        raise HTTPException(status_code=404, detail="OpenCode Desktop GUI app is not installed at default location.")
+
+    try:
+        if sys.platform == "win32":
+            subprocess.Popen([desktop_app], shell=False)
+        return {
+            "status": "launched",
+            "message": "OpenCode Desktop Application launched.",
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to launch OpenCode Desktop: {exc}")
+
 
 
 @router.get("")
@@ -57,6 +131,7 @@ async def list_workers():
         if session_id not in seen:
             workers.append({"session_id": session_id, **state})
     return {"workers": workers}
+
 
 
 @router.post("/fork")
@@ -78,7 +153,7 @@ async def fork_worker(payload: ForkRequest):
     return await launch_worker(contract, worker_type=payload.worker_type)
 
 
-async def launch_worker(contract: TaskContract, worker_type: str = "document_worker") -> Dict:
+async def launch_worker(contract: TaskContract, worker_type: str = "opencode_worker") -> Dict:
     """Create + start a worker engine and register it for polling/SSE.
 
     Shared by the /fork route and the agent's `fork` tool so both produce
@@ -131,14 +206,17 @@ def _disk_sessions() -> Dict[str, Dict]:
 
 def _agent_factory_for(worker_type: str):
     """Return an agent factory for the worker type, or None (placeholder loop)."""
-    if worker_type == "document_worker":
-        from app.workers.document_worker.agent.worker_agent import DocumentWorkerAgent
+    if worker_type in ("opencode_worker", "opencode"):
+        from app.workers.opencode_worker.agent.worker_agent import OpenCodeWorkerAgent
 
         def factory(contract: TaskContract):
-            return DocumentWorkerAgent(
+            return OpenCodeWorkerAgent(
                 objective=contract.objective,
                 allowed_tools=contract.allowed_tools,
                 fs_scope=contract.fs_scope,
+                requirements=contract.requirements,
+                constraints=contract.constraints,
+                success_criteria=contract.success_criteria,
             )
 
         return factory

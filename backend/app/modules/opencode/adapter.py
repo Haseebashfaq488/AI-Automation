@@ -53,17 +53,7 @@ class OpenCodeAdapter:
         "unread_digest": {"to": "optional — chat to send the digest to; omit to just return it"},
         "send_email": {"to": "recipient email address", "subject": "optional email subject (omit for no subject)", "body": "email body text", "attachments": "optional list of absolute file paths to attach to the email"},
         "list_recent_emails": {"query": "optional search query (e.g. from:user subject:hello); omit to list recent inbox mail", "max_results": "optional maximum number of emails to return"},
-        "create_docx": {"path": "absolute path of the new .docx file", "title": "optional document title", "initial_text": "optional initial text"},
-        "add_heading": {"path": "absolute path of the .docx file", "text": "heading text", "level": "optional heading level (1-9)"},
-        "add_paragraph": {"path": "absolute path of the .docx file", "text": "paragraph text", "style": "optional style name"},
-        "add_table": {"path": "absolute path of the .docx file", "headers": "list of column headers", "rows": "list of row lists"},
-        "inspect_docx": {"path": "absolute path of the .docx file"},
-        "read_docx": {"path": "absolute path of the .docx file"},
-        "normalize_headings": {"path": "absolute path of the .docx file"},
-        "fix_spacing": {"path": "absolute path of the .docx file"},
-        "format_tables": {"path": "absolute path of the .docx file"},
-        "backup_docx": {"path": "absolute path of the .docx file"},
-        "fork": {"objective": "description of the task to fork (e.g. 'create document or normalize headings')"},
+        "fork": {"objective": "description of the coding task to fork to the OpenCode worker (e.g. 'implement authentication endpoints and run tests')"},
     }
 
     def __init__(

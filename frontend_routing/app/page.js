@@ -27,7 +27,7 @@ function loadStoredMessages() {
 }
 
 const SUGGESTIONS = [
-  { label: "⚡ Fork Heading Normalization", prompt: "fork the task: normalize headings on my report.docx" },
+  { label: "⚡ Fork Coding Task", prompt: "fork the task: implement user auth endpoints and tests" },
   { label: "📂 List files", prompt: "list files in D:/Ai automation backend" },
   { label: "✉️ Recent emails", prompt: "list my recent emails" },
   { label: "💬 WhatsApp chats", prompt: "list my whatsapp chats" },
@@ -148,6 +148,23 @@ export default function Home() {
     }
   }
 
+  const [launchingTerminal, setLaunchingTerminal] = useState(false);
+
+  async function openOpenCodeTerminal() {
+    setLaunchingTerminal(true);
+    try {
+      await fetch(`${API_URL}/workers/open-terminal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ directory: "D:/Ai automation backend" }),
+      });
+    } catch {
+      /* ignore */
+    } finally {
+      setLaunchingTerminal(false);
+    }
+  }
+
   return (
     <div className="flex h-screen flex-col bg-zinc-950 text-zinc-100 selection:bg-purple-500/30 selection:text-purple-200">
       <header className="flex items-center justify-between border-b border-zinc-800/80 bg-zinc-900/50 px-6 py-3.5 backdrop-blur-md">
@@ -175,6 +192,14 @@ export default function Home() {
 
         <div className="flex items-center gap-2.5">
           <button
+            onClick={openOpenCodeTerminal}
+            disabled={launchingTerminal}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-sky-700/60 bg-sky-950/60 px-3.5 py-1.5 text-xs font-semibold text-sky-300 shadow-sm transition hover:border-sky-500 hover:bg-sky-900/60 hover:text-white disabled:opacity-40"
+          >
+            <span>💻</span>
+            <span>{launchingTerminal ? "Opening..." : "Open OpenCode CLI"}</span>
+          </button>
+          <button
             onClick={newChat}
             disabled={busy}
             className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white disabled:opacity-40"
@@ -190,6 +215,7 @@ export default function Home() {
           </Link>
         </div>
       </header>
+
 
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="mx-auto flex max-w-2xl flex-col gap-4">

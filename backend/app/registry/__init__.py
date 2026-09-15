@@ -63,30 +63,8 @@ from app.modules.gmail.skills.list_recent_emails import ListRecentEmailsSkill
 registry.register(SendEmailTool())
 registry.register(ListRecentEmailsSkill())
 
-# Document worker (word) tools
-from app.workers.document_worker.word_worker.tools import (
-    CreateDocxTool,
-    AddHeadingTool,
-    AddParagraphTool,
-    AddTableTool,
-    InspectDocxTool,
-    ReadDocxTool,
-    NormalizeHeadingsTool,
-    FixSpacingTool,
-    FormatTablesTool,
-    BackupDocxTool,
-)
 
-registry.register(CreateDocxTool())
-registry.register(AddHeadingTool())
-registry.register(AddParagraphTool())
-registry.register(AddTableTool())
-registry.register(InspectDocxTool())
-registry.register(ReadDocxTool())
-registry.register(NormalizeHeadingsTool())
-registry.register(FixSpacingTool())
-registry.register(FormatTablesTool())
-registry.register(BackupDocxTool())
+
 
 # WhatsApp tools & skills
 registry.register(SendMessageTool())

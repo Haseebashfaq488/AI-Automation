@@ -263,4 +263,48 @@ Implements the parent‑worker plan from `DESIGN_AND_PLAN_FOR_THE_NEXT_BIGGER_MO
 
 ---
 
+## Session: Jarvis + OpenCode CLI Worker Architecture & Word Worker Removal (2026-09-15)
+
+### Summary
+- Replaced legacy Word Worker (`document_worker`, docx tools, python-docx dependency) with
+  `OpenCodeWorkerAgent` — an autonomous coding worker that interfaces with the `opencode` CLI.
+- Preserved the existing forking foundation (`WorkerEngine`, `WorkerSession`, `EventBus`,
+  `TaskContract`, disk persistence, intervention queue, SSE streaming).
+
+### Key Components Built
+1. **`app.workers.opencode_worker` Package**:
+   - `config.py`: Environment-driven resolution for `opencode` binary path, default model
+     (`OPENCODE_MODEL`, default `opencode/gemini-3.5-flash-lite`), auto-approval flag (`OPENCODE_AUTO`),
+     and execution timeout (`OPENCODE_MILESTONE_TIMEOUT`).
+   - `milestones.py`: Deterministic 4-phase milestone decomposition:
+     `Analyze` → `Implement` → `Test & Fix` → `Verify`. Builds structured milestone prompts
+     with project directory, task requirements, constraints, success criteria, and parent interventions.
+   - `cli_client.py`: Async subprocess client wrapping non-interactive `opencode run`. Streams JSON
+     events, captures output, extracts and reuses session IDs (`--session`) across milestones for
+     continuity, and supports timeouts and clean cancellation.
+   - `worker_agent.py`: Implements `WorkerEngine`'s agent contract (`available`, `decide_next_step`,
+     `record_step`, `inject_intervention`). Steps through the 4 milestones sequentially within a
+     single persistent OpenCode session.
+2. **Registry & Routing Wiring**:
+   - Cleaned all docx tool registrations and imports from `app/registry/__init__.py`.
+   - Updated `OpenCodeAdapter._KNOWN_TOOLS` in `app/modules/opencode/adapter.py` to remove docx tools
+     and update the `fork` tool definition.
+   - Updated `backend/app/api/routes/workers.py`: default `worker_type` is now `"opencode_worker"`,
+     and `_agent_factory_for` instantiates `OpenCodeWorkerAgent`.
+   - Updated `backend/app/api/routes/agent.py`: default fork tools changed to coding/file tools
+     (`list_directory`, `read_file`, `write_file`, `create_file`, etc.).
+3. **Frontend Updates**:
+   - `frontend_routing/app/workers/page.js`: Updated tool options to file/coding tools, updated
+     quick presets ("Implement Feature", "Refactor Module", "File Inspection"), and set
+     `worker_type: "opencode_worker"`.
+   - `frontend_routing/app/page.js`: Updated quick suggestion to "⚡ Fork Coding Task".
+4. **Testing**:
+   - Removed all legacy Word Worker tests (`test_word_worker.py`, `test_worker_agent*.py`).
+   - Added comprehensive suite in `tests/unit/test_opencode_worker.py` (29 tests) covering config,
+     milestones, prompt generation, CLI client arguments, session continuity, and agent decision loops.
+   - Updated `test_agent_fork.py` and `test_workers_api.py` monkeypatches.
+   - All 134 backend tests pass (100% green).
+
+---
+
 *This log lives at `backend/IMPLEMENTATION_LOG.md` and should be updated after each module.*

@@ -13,10 +13,11 @@ from app.workers.base.session import WorkerSession
 @pytest.fixture(autouse=True)
 def isolated_sessions(tmp_path, monkeypatch):
     monkeypatch.setattr(WorkerSession, "SESSIONS_ROOT", tmp_path / "sessions")
-    # Deterministic placeholder mode — never hit the real OpenRouter API
-    # even when a key is configured.
+    # Deterministic placeholder mode — hide the opencode binary so the
+    # OpenCodeWorkerAgent reports available=False and the engine falls
+    # back to its deterministic placeholder loop.
     monkeypatch.setattr(
-        "app.workers.document_worker.agent.worker_agent.get_worker_api_key", lambda: None
+        "app.workers.opencode_worker.agent.config.get_opencode_binary", lambda: None
     )
     workers_routes._engines.clear()
     yield
@@ -59,8 +60,8 @@ async def test_fork_task_defaults_objective_to_prompt(tmp_path):
     assert result["success"] is True
     eng = workers_routes.get_engine(result["data"]["session_id"])
     assert eng._contract.objective == "fork the task"
-    # default word toolset applied
-    assert "normalize_headings" in eng._contract.allowed_tools
+    # default coding toolset applied
+    assert "list_directory" in eng._contract.allowed_tools
 
 
 @pytest.mark.asyncio

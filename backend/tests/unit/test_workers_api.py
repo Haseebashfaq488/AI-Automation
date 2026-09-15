@@ -18,7 +18,7 @@ def client(monkeypatch, tmp_path):
     in‑process engine store."""
     monkeypatch.setattr(WorkerSession, "SESSIONS_ROOT", tmp_path)
     monkeypatch.setattr(
-        "app.workers.document_worker.agent.worker_agent.get_worker_api_key", lambda: None
+        "app.workers.opencode_worker.agent.config.get_opencode_binary", lambda: None
     )
     workers_routes._engines.clear()
     app = create_app()

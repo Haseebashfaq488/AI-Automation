@@ -174,6 +174,30 @@ export default function WorkerPage() {
     }
   }, [sessionId]);
 
+  const [launchingTerminal, setLaunchingTerminal] = useState(false);
+  const [terminalMsg, setTerminalMsg] = useState(null);
+
+  const openOpenCodeTerminal = useCallback(async () => {
+    setLaunchingTerminal(true);
+    setTerminalMsg(null);
+    try {
+      const res = await fetch(`${API_URL}/workers/open-terminal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ directory: state?.fs_scope || "D:/Ai automation backend" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+      setTerminalMsg(data.message || "✓ OpenCode CLI window opened on desktop!");
+      setTimeout(() => setTerminalMsg(null), 5000);
+    } catch (e) {
+      setTerminalMsg(`Failed: ${e.message}`);
+      setTimeout(() => setTerminalMsg(null), 5000);
+    } finally {
+      setLaunchingTerminal(false);
+    }
+  }, [state?.fs_scope]);
+
   const copySessionId = useCallback(() => {
     navigator.clipboard.writeText(sessionId);
     setCopiedId(true);
@@ -234,6 +258,15 @@ export default function WorkerPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={openOpenCodeTerminal}
+            disabled={launchingTerminal}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-sky-700/60 bg-sky-950/60 px-3 py-1.5 text-xs font-semibold text-sky-300 shadow-sm transition hover:border-sky-500 hover:bg-sky-900/60 hover:text-white disabled:opacity-40"
+          >
+            <span>💻</span>
+            <span>{launchingTerminal ? "Opening..." : "Open OpenCode CLI"}</span>
+          </button>
+
           <span
             className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${
               STATUS_STYLE[state?.status] || STATUS_STYLE.idle
@@ -262,6 +295,7 @@ export default function WorkerPage() {
           )}
         </div>
       </header>
+
 
       {/* ── Main Two-Column View ── */}
       <div className="flex flex-1 overflow-hidden">
@@ -555,10 +589,28 @@ function StepBubble({ event }) {
   const running = event.type === "STEP_STARTED";
   const outputData = event.data?.output || event.data?.result;
 
+  const isMilestone =
+    event.data?.step?.startsWith("milestone_") ||
+    outputData?.milestone ||
+    outputData?.phase;
+
+  const phaseName =
+    outputData?.phase ||
+    (event.data?.step?.startsWith("milestone_")
+      ? event.data.step.replace("milestone_", "")
+      : "");
+
+  const milestoneTitle =
+    outputData?.milestone ||
+    event.data?.step?.replace("milestone_", "Milestone: ") ||
+    "Execution Step";
+
+  const previewText = outputData?.output_preview || (typeof outputData === "string" ? outputData : null);
+
   return (
     <div className="flex justify-start">
       <div
-        className={`max-w-[85%] rounded-2xl rounded-bl-md border px-4 py-3 text-sm shadow-md transition ${
+        className={`w-full max-w-[90%] rounded-2xl rounded-bl-md border px-4 py-3.5 text-sm shadow-md transition ${
           ok
             ? "border-emerald-900/60 bg-emerald-950/40 text-zinc-200"
             : failed
@@ -568,7 +620,7 @@ function StepBubble({ event }) {
             : "border-zinc-800/80 bg-zinc-900/60 text-zinc-300"
         }`}
       >
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span
               className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
@@ -583,15 +635,26 @@ function StepBubble({ event }) {
             >
               {ok ? "✓ Completed" : failed ? "✗ Failed" : running ? "● Running" : event.type}
             </span>
-            {event.data?.tool && (
-              <span className="font-mono text-[11px] text-zinc-400">
-                tool: <strong className="text-zinc-200">{event.data.tool}</strong>
+
+            {isMilestone && (
+              <span className="rounded bg-purple-950/80 border border-purple-800/50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-purple-300">
+                {outputData?.milestone_index && outputData?.total_milestones
+                  ? `Phase ${outputData.milestone_index}/${outputData.total_milestones}`
+                  : phaseName ? `Phase: ${phaseName}` : "Milestone"}
+              </span>
+            )}
+
+            {outputData?.opencode_session && (
+              <span className="rounded bg-zinc-900 px-2 py-0.5 font-mono text-[10px] text-zinc-400 border border-zinc-800">
+                session: {outputData.opencode_session}
               </span>
             )}
           </div>
         </div>
 
-        <p className="mt-1.5 text-sm font-medium text-zinc-100">{event.data?.step}</p>
+        <h4 className="mt-2 text-sm font-semibold text-zinc-100">
+          {milestoneTitle}
+        </h4>
 
         {failed && event.data?.error && (
           <div className="mt-2 rounded-lg border border-red-900/60 bg-red-950/60 p-2.5 text-xs text-red-300">
@@ -599,14 +662,21 @@ function StepBubble({ event }) {
           </div>
         )}
 
-        {/* Structured Output Preview */}
+        {/* Milestone Output Preview / Text */}
+        {previewText && (
+          <div className="mt-2.5 rounded-xl border border-zinc-800/70 bg-zinc-950/80 p-3 text-xs text-zinc-300 font-mono whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">
+            {previewText}
+          </div>
+        )}
+
+        {/* Structured Output Toggle */}
         {outputData && (
           <div className="mt-2.5">
             <button
               onClick={() => setShowDetails(!showDetails)}
               className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-400 hover:text-zinc-200 transition"
             >
-              <span>{showDetails ? "Hide Output" : "View Output Data"}</span>
+              <span>{showDetails ? "Hide Raw Data" : "View Raw Event Data"}</span>
               <span>{showDetails ? "▲" : "▼"}</span>
             </button>
 
@@ -623,6 +693,7 @@ function StepBubble({ event }) {
     </div>
   );
 }
+
 
 // ── Result Card Component ───────────────────────────────────────────────
 function ResultCard({ event, artifactsCount }) {

@@ -294,6 +294,27 @@ class WorkerEngine:
             "progress_percent": int(len(completed) / max(total, 1) * 100),
         })
 
+        # Internal milestone step (already executed by OpenCode worker agent)
+        if tool_name == "opencode_milestone":
+            phase = params.get("phase", "milestone")
+            step_label = f"milestone_{phase}"
+            error_msg = params.get("error")
+            if error_msg:
+                errors.append({"tool": step_label, "message": error_msg})
+                ev.step_completed(step_label, idx, output={}, errors=[error_msg])
+                self._session.append_event(
+                    "STEP_FAILED", {"step": step_label, "index": idx, "error": error_msg, "params": params}
+                )
+                return False, None, error_msg
+
+            completed.append(step_label)
+            output_data = params
+            ev.step_completed(step_label, idx, output=output_data)
+            self._session.append_event(
+                "STEP_COMPLETED", {"step": step_label, "index": idx, "output": output_data}
+            )
+            return True, output_data, None
+
         try:
             result = await engine.run(tool_name, params)
         except Exception as exc:

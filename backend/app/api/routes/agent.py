@@ -186,11 +186,10 @@ async def _execute_plan(steps: List[Dict[str, Any]], prompt: str = "") -> Dict[s
     }
 
 
-# Default toolset for a forked document worker when the LLM/user didn't specify one.
+# Default toolset for a forked OpenCode worker when the LLM/user didn't specify one.
 _DEFAULT_FORK_TOOLS = [
-    "create_docx", "add_heading", "add_paragraph", "add_table",
-    "inspect_docx", "read_docx", "normalize_headings",
-    "fix_spacing", "format_tables", "backup_docx",
+    "list_directory", "read_file", "write_file", "create_file",
+    "create_folder", "exists", "search_content", "search_files",
 ]
 
 
@@ -223,7 +222,7 @@ async def _fork_task(params: Dict[str, Any], prompt: str) -> Dict[str, Any]:
 
     try:
         state = await workers_routes.launch_worker(
-            contract, worker_type=params.get("worker_type", "document_worker")
+            contract, worker_type=params.get("worker_type", "opencode_worker")
         )
     except Exception as exc:
         return {"success": False, "data": None, "error": {"code": "FORK_FAILED", "message": str(exc)}}

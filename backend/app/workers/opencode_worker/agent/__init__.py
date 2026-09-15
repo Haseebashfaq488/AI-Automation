@@ -1,0 +1,1 @@
+# OpenCode Worker Agent

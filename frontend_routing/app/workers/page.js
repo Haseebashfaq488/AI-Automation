@@ -14,18 +14,15 @@ const STATUS_STYLE = {
 };
 
 const TOOL_OPTIONS = [
-  { name: "create_docx", label: "create_docx" },
-  { name: "add_heading", label: "add_heading" },
-  { name: "add_paragraph", label: "add_paragraph" },
-  { name: "add_table", label: "add_table" },
-  { name: "inspect_docx", label: "inspect_docx" },
-  { name: "read_docx", label: "read_docx" },
-  { name: "normalize_headings", label: "normalize_headings" },
-  { name: "fix_spacing", label: "fix_spacing" },
-  { name: "format_tables", label: "format_tables" },
-  { name: "backup_docx", label: "backup_docx" },
-  { name: "list_directory", label: "list_directory (file)" },
-  { name: "exists", label: "exists (file)" },
+  { name: "list_directory", label: "list_directory" },
+  { name: "read_file", label: "read_file" },
+  { name: "write_file", label: "write_file" },
+  { name: "create_file", label: "create_file" },
+  { name: "create_folder", label: "create_folder" },
+  { name: "exists", label: "exists" },
+  { name: "search_content", label: "search_content" },
+  { name: "search_files", label: "search_files" },
+  { name: "delete_file", label: "delete_file" },
 ];
 
 const DEFAULT_TOOLS = TOOL_OPTIONS.map((t) => t.name);
@@ -45,15 +42,15 @@ function ForkForm() {
   }
 
   function applyPreset(type) {
-    if (type === "create") {
-      setObjective("Create a new document report.docx with title, introduction, headings, and data table");
-      setTools(["create_docx", "add_heading", "add_paragraph", "add_table", "inspect_docx"]);
-    } else if (type === "docx") {
-      setObjective("Inspect and normalize headings in report.docx");
-      setTools(["inspect_docx", "read_docx", "normalize_headings", "fix_spacing", "format_tables", "backup_docx"]);
+    if (type === "implement") {
+      setObjective("Implement new feature, write clean code, and verify tests pass");
+      setTools(["list_directory", "read_file", "write_file", "create_file", "exists"]);
+    } else if (type === "refactor") {
+      setObjective("Refactor code module to improve structure and maintain existing tests");
+      setTools(["list_directory", "read_file", "write_file", "search_content", "search_files"]);
     } else if (type === "files") {
       setObjective("Inspect directory structure and check file existence");
-      setTools(["list_directory", "exists"]);
+      setTools(["list_directory", "exists", "search_files"]);
     }
   }
 
@@ -68,7 +65,7 @@ function ForkForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           objective: objective.trim(),
-          worker_type: "document_worker",
+          worker_type: "opencode_worker",
           fs_scope: fsScope.trim() || "D:/Ai automation backend",
           allowed_tools: tools,
           max_steps: Math.max(1, Number(maxSteps) || 20),
@@ -115,17 +112,17 @@ function ForkForm() {
             <span className="text-xs font-medium text-zinc-400">Quick Presets:</span>
             <button
               type="button"
-              onClick={() => applyPreset("create")}
+              onClick={() => applyPreset("implement")}
               className="rounded-lg border border-sky-800/50 bg-sky-950/40 px-2.5 py-1 text-xs font-medium text-sky-300 transition hover:bg-sky-900/50"
             >
-              ✨ Create & Author
+              ✨ Implement Feature
             </button>
             <button
               type="button"
-              onClick={() => applyPreset("docx")}
+              onClick={() => applyPreset("refactor")}
               className="rounded-lg border border-purple-800/50 bg-purple-950/30 px-2.5 py-1 text-xs font-medium text-purple-300 transition hover:bg-purple-900/40"
             >
-              📄 Word Normalization
+              🛠️ Refactor Module
             </button>
             <button
               type="button"
@@ -142,7 +139,7 @@ function ForkForm() {
               <input
                 value={objective}
                 onChange={(e) => setObjective(e.target.value)}
-                placeholder='e.g. "Normalize headings and fix spacing in demo_workspace/report.docx"'
+                placeholder='e.g. "Implement user authentication endpoints and write unit tests"'
                 className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950/80 px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 outline-none transition focus:border-purple-600/70 focus:ring-1 focus:ring-purple-600/40"
               />
             </div>
@@ -219,6 +216,29 @@ export default function WorkersPage() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [launchingTerminal, setLaunchingTerminal] = useState(false);
+  const [terminalMsg, setTerminalMsg] = useState(null);
+
+  async function openOpenCodeTerminal(dir = "D:/Ai automation backend") {
+    setLaunchingTerminal(true);
+    setTerminalMsg(null);
+    try {
+      const res = await fetch(`${API_URL}/workers/open-terminal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ directory: dir }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+      setTerminalMsg(data.message || "✓ OpenCode CLI window launched on your desktop!");
+      setTimeout(() => setTerminalMsg(null), 5000);
+    } catch (e) {
+      setTerminalMsg(`Failed: ${e.message}`);
+      setTimeout(() => setTerminalMsg(null), 5000);
+    } finally {
+      setLaunchingTerminal(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -278,23 +298,70 @@ export default function WorkersPage() {
             </p>
           </div>
         </div>
-        <Link
-          href="/"
-          className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white"
-        >
-          ← Parent Chat
-        </Link>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => openOpenCodeTerminal()}
+            disabled={launchingTerminal}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-sky-700/60 bg-sky-950/60 px-3.5 py-1.5 text-xs font-semibold text-sky-300 shadow-sm transition hover:border-sky-500 hover:bg-sky-900/60 hover:text-white disabled:opacity-40"
+          >
+            <span>💻</span>
+            <span>{launchingTerminal ? "Opening..." : "Open OpenCode CLI"}</span>
+          </button>
+          <Link
+            href="/"
+            className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white"
+          >
+            ← Parent Chat
+          </Link>
+        </div>
       </header>
 
       <div className="flex-1 overflow-y-auto px-6 py-6">
         <div className="mx-auto max-w-4xl">
+          {terminalMsg && (
+            <div className="mb-6 flex items-center justify-between rounded-xl border border-sky-800/60 bg-sky-950/60 p-3.5 text-xs font-medium text-sky-200 shadow-lg backdrop-blur-md">
+              <div className="flex items-center gap-2">
+                <span>💻</span>
+                <span>{terminalMsg}</span>
+              </div>
+              <button
+                onClick={() => setTerminalMsg(null)}
+                className="text-zinc-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
           {error && (
             <div className="mb-6 rounded-xl border border-red-900/60 bg-red-950/40 p-4 text-xs text-red-300">
               Cannot reach backend at {API_URL}: {error}
             </div>
           )}
 
+          {/* Direct Launch OpenCode Hero Card */}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-sky-800/50 bg-gradient-to-r from-sky-950/30 to-indigo-950/20 p-4 shadow-xl backdrop-blur-md">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-900/60 border border-sky-700/50 text-sky-300 text-lg shadow-inner">
+                💻
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-white">Direct OpenCode Interactive CLI</h3>
+                <p className="text-xs text-zinc-400">Launch a live terminal window on your desktop to chat with OpenCode directly.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => openOpenCodeTerminal()}
+              disabled={launchingTerminal}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-sky-950/40 transition hover:from-sky-500 hover:to-indigo-500 disabled:opacity-40"
+            >
+              <span>▶</span>
+              <span>{launchingTerminal ? "Opening Terminal..." : "Launch OpenCode on Desktop"}</span>
+            </button>
+          </div>
+
           <ForkForm />
+
 
           {/* List Controls */}
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
