@@ -228,38 +228,51 @@ class JarvisBrainManager:
             "by a worker", "let a worker", "have a worker",
         ]
 
+        affirmative_triggers = {"yes", "y", "proceed", "sure", "do it", "go ahead", "ok", "okay", "yep", "please do", "yes please", "do that"}
+
+        is_affirmative = lowered in affirmative_triggers
         matched = any(trig in lowered for trig in worker_triggers)
-        if not matched and not lowered.startswith("fork ") and not lowered.startswith("delegate "):
+        if not matched and not lowered.startswith("fork ") and not lowered.startswith("delegate ") and not is_affirmative:
             return None
 
         # Extract objective
         objective = ""
-        # Sort triggers by descending length to match longest first
-        sorted_triggers = sorted(worker_triggers + ["fork", "delegate"], key=len, reverse=True)
-        generic_refs = {
-            "do this", "do this task", "this", "it", "do this exact task", "do exact task",
-            "exact task", "this exact task", "the task", "this task", "that", "do that",
-            "do it", "task", "job", "do the job"
-        }
-
-        for trig in sorted_triggers:
-            if trig in lowered:
-                parts = re.split(re.escape(trig), p, flags=re.IGNORECASE, maxsplit=1)
-                if len(parts) > 1 and parts[1].strip(" :,-"):
-                    candidate = parts[1].strip(" :,-")
-                    # Also strip common prefixes like 'to', 'for'
-                    candidate_clean = re.sub(r"^(?:to\s+|for\s+|do\s+)", "", candidate, flags=re.IGNORECASE).strip(" :,-")
-                    if candidate_clean.lower() not in generic_refs and candidate.lower() not in generic_refs:
-                        objective = candidate_clean or candidate
-                        break
-
-        # If generic phrase like "make a worker do this exact task", look at recent history
-        if not objective or objective.lower() in generic_refs:
+        if is_affirmative:
+            # Look at previous conversation history to find the task
             if history:
                 for msg in reversed(history):
-                    if msg.get("role") == "user" and msg.get("content") and msg.get("content") != prompt:
+                    if msg.get("role") == "user" and msg.get("content") and msg.get("content").lower() not in affirmative_triggers:
                         objective = msg["content"].strip()
                         break
+            if not objective:
+                return None
+        else:
+            # Sort triggers by descending length to match longest first
+            sorted_triggers = sorted(worker_triggers + ["fork", "delegate"], key=len, reverse=True)
+            generic_refs = {
+                "do this", "do this task", "this", "it", "do this exact task", "do exact task",
+                "exact task", "this exact task", "the task", "this task", "that", "do that",
+                "do it", "task", "job", "do the job"
+            }
+
+            for trig in sorted_triggers:
+                if trig in lowered:
+                    parts = re.split(re.escape(trig), p, flags=re.IGNORECASE, maxsplit=1)
+                    if len(parts) > 1 and parts[1].strip(" :,-"):
+                        candidate = parts[1].strip(" :,-")
+                        # Also strip common prefixes like 'to', 'for'
+                        candidate_clean = re.sub(r"^(?:to\s+|for\s+|do\s+)", "", candidate, flags=re.IGNORECASE).strip(" :,-")
+                        if candidate_clean.lower() not in generic_refs and candidate.lower() not in generic_refs:
+                            objective = candidate_clean or candidate
+                            break
+
+            # If generic phrase like "make a worker do this exact task", look at recent history
+            if not objective or objective.lower() in generic_refs:
+                if history:
+                    for msg in reversed(history):
+                        if msg.get("role") == "user" and msg.get("content") and msg.get("content") != prompt:
+                            objective = msg["content"].strip()
+                            break
 
         if not objective:
             objective = p
@@ -295,7 +308,7 @@ class JarvisBrainManager:
             "archive", "zip", "extract", "touch", "append", "fork", "delegate",
             "spawn", "worker", "run", "list", "build", "code", "generate",
             "compile", "calculate", "refactor", "modify", "analyze", "test",
-            "docx", "pdf", "script", "app", "fix", "clean", "develop",
+            "docx", "pdf", "script", "app", "fix", "clean", "develop", "files",
         ]
         return any(kw in p for kw in action_keywords)
 
@@ -319,11 +332,12 @@ class JarvisBrainManager:
                 "You are Jarvis, a personal manager and coordinator. You DO NOT perform task reasoning, code generation, or execution yourself.\n\n"
                 "CORE MANAGER RULES:\n"
                 "1. MANAGER ROLE: You never write code, generate files, or solve multi-step tasks directly in conversational text. You ONLY coordinate and plan.\n"
-                "2. KNOWN TOOLS ONLY: You can ONLY execute actions via the predefined Available Tools below.\n"
-                "3. WORKER DELEGATION: Whenever the user requests to create, build, code, generate, compile, automate, analyze, or execute any task, document, script, or project, you MUST return a tool plan with the 'fork' tool (params: {\"objective\": \"<detailed task>\", \"fs_scope\": \"D:/workspace\", \"worker_type\": \"antigravity_worker\", \"max_steps\": 20}).\n"
-                "4. ATOMIC TOOLS: If the user requests a specific direct tool action (e.g. send WhatsApp message/file, send email, search inbox, list a directory, move/delete a file), return a plan with that specific tool.\n"
-                "5. USER APPROVAL: Every actionable request MUST be returned as a JSON 'plan' so the user can review and accept before the worker or tool executes.\n"
-                "6. System Context: Owner is Haseeb, Phone: +923098956995, Primary Workspace: D:/workspace.\n\n"
+                "2. NO PERMISSION ASKING: NEVER ask conversational questions like 'Would you like me to proceed with that?'. ALWAYS directly return the JSON 'plan'. The UI displays an interactive Accept button for the user to confirm.\n"
+                "3. KNOWN TOOLS ONLY: You can ONLY execute actions via the predefined Available Tools below.\n"
+                "4. WORKER DELEGATION: Whenever the user requests to create, build, code, generate, compile, automate, analyze, or execute any task, document, script, or project, you MUST return a tool plan with the 'fork' tool (params: {\"objective\": \"<detailed task>\", \"fs_scope\": \"D:/workspace\", \"worker_type\": \"antigravity_worker\", \"max_steps\": 20}).\n"
+                "5. ATOMIC TOOLS: If the user requests a specific direct tool action (e.g. send WhatsApp message/file, send email, search inbox, list a directory, move/delete a file), return a plan with that specific tool.\n"
+                "6. USER APPROVAL: Every actionable request MUST be returned as a JSON 'plan' so the user can review and accept before the worker or tool executes.\n"
+                "7. System Context: Owner is Haseeb, Phone: +923098956995, Primary Workspace: D:/workspace.\n\n"
                 f"{history_block}"
                 f"Available Tools:\n{tools}\n\n"
                 "OUTPUT FORMAT (STRICT JSON ONLY):\n"

@@ -135,3 +135,13 @@ async def test_brain_manager_worker_intent_fork(temp_memory_file: Path):
     assert result3["steps"][0]["tool"] == "fork"
     assert "financial report" in result3["steps"][0]["params"]["objective"]
 
+    # 4. Affirmative confirmation follow-up from history
+    history_affirm = [
+        {"role": "user", "content": "please list the files in the local disk D"},
+        {"role": "assistant", "content": "I can delegate a background worker to list the files on your D drive."},
+    ]
+    result4 = await manager.analyze_prompt("yes", history=history_affirm)
+    assert result4["type"] == "plan"
+    assert result4["steps"][0]["tool"] == "fork"
+    assert "list the files in the local disk D" in result4["steps"][0]["params"]["objective"]
+
