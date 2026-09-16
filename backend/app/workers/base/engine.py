@@ -169,6 +169,20 @@ class WorkerEngine:
             while step_index < max_steps and not self._cancelled:
                 self._drain_interventions(agent)
 
+                # Update live state so UI polling immediately reflects progress
+                self._session.write_state({
+                    "status": "running",
+                    "current_step": f"milestone_{step_index + 1}",
+                    "completed": completed,
+                    "remaining": [contract.objective] if not completed else [],
+                    "errors": [e["message"] for e in errors],
+                    "progress_percent": int(len(completed) / max(max_steps, 1) * 100),
+                })
+                ev.step_started(f"milestone_{step_index + 1}", step_index)
+                self._session.append_event(
+                    "STEP_STARTED", {"step": f"milestone_{step_index + 1}", "index": step_index}
+                )
+
                 decision = await agent.decide_next_step()
                 action = decision.get("action")
 

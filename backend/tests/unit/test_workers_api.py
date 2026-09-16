@@ -20,6 +20,9 @@ def client(monkeypatch, tmp_path):
     monkeypatch.setattr(
         "app.workers.opencode_worker.agent.config.get_opencode_binary", lambda: None
     )
+    monkeypatch.setattr(
+        "app.workers.antigravity_worker.agent.config.get_agy_binary", lambda: None
+    )
     workers_routes._engines.clear()
     app = create_app()
     with TestClient(app) as c:

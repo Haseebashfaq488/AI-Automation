@@ -26,7 +26,7 @@ def _default_scope() -> str:
 
 class ForkRequest(BaseModel):
     objective: str
-    worker_type: str = "opencode_worker"
+    worker_type: str = "antigravity_worker"
     model: Optional[str] = None
     requirements: List[str] = []
     constraints: List[str] = []
@@ -188,7 +188,7 @@ async def fork_worker(payload: ForkRequest):
     return await launch_worker(contract, worker_type=payload.worker_type)
 
 
-async def launch_worker(contract: TaskContract, worker_type: str = "opencode_worker") -> Dict:
+async def launch_worker(contract: TaskContract, worker_type: str = "antigravity_worker") -> Dict:
     """Create + start a worker engine and register it for polling/SSE.
 
     Shared by the /fork route and the agent's `fork` tool so both produce

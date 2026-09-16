@@ -227,7 +227,7 @@ async def _fork_task(params: Dict[str, Any], prompt: str) -> Dict[str, Any]:
 
     try:
         state = await workers_routes.launch_worker(
-            contract, worker_type=params.get("worker_type", "opencode_worker")
+            contract, worker_type=params.get("worker_type", "antigravity_worker")
         )
     except Exception as exc:
         return {"success": False, "data": None, "error": {"code": "FORK_FAILED", "message": str(exc)}}
