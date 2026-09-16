@@ -214,6 +214,77 @@ class JarvisBrainManager:
 
         return None
 
+    def _check_worker_intent(self, prompt: str, history: Optional[List[Dict[str, str]]] = None) -> Optional[Dict[str, Any]]:
+        """Detect explicit user requests to delegate or fork a background worker."""
+        p = prompt.strip()
+        lowered = p.lower()
+
+        worker_triggers = [
+            "make a worker", "delegate a task", "delegate task", "delegate to worker",
+            "do this task by a worker", "do this by a worker", "run a worker",
+            "spawn a worker", "spawn worker", "fork worker", "fork a worker",
+            "fork task", "fork the task", "fork this task", "use a worker to",
+            "use a worker", "assign a worker", "assign to worker", "worker do this",
+            "by a worker", "let a worker", "have a worker",
+        ]
+
+        matched = any(trig in lowered for trig in worker_triggers)
+        if not matched and not lowered.startswith("fork ") and not lowered.startswith("delegate "):
+            return None
+
+        # Extract objective
+        objective = ""
+        # Sort triggers by descending length to match longest first
+        sorted_triggers = sorted(worker_triggers + ["fork", "delegate"], key=len, reverse=True)
+        generic_refs = {
+            "do this", "do this task", "this", "it", "do this exact task", "do exact task",
+            "exact task", "this exact task", "the task", "this task", "that", "do that",
+            "do it", "task", "job", "do the job"
+        }
+
+        for trig in sorted_triggers:
+            if trig in lowered:
+                parts = re.split(re.escape(trig), p, flags=re.IGNORECASE, maxsplit=1)
+                if len(parts) > 1 and parts[1].strip(" :,-"):
+                    candidate = parts[1].strip(" :,-")
+                    # Also strip common prefixes like 'to', 'for'
+                    candidate_clean = re.sub(r"^(?:to\s+|for\s+|do\s+)", "", candidate, flags=re.IGNORECASE).strip(" :,-")
+                    if candidate_clean.lower() not in generic_refs and candidate.lower() not in generic_refs:
+                        objective = candidate_clean or candidate
+                        break
+
+        # If generic phrase like "make a worker do this exact task", look at recent history
+        if not objective or objective.lower() in generic_refs:
+            if history:
+                for msg in reversed(history):
+                    if msg.get("role") == "user" and msg.get("content") and msg.get("content") != prompt:
+                        objective = msg["content"].strip()
+                        break
+
+        if not objective:
+            objective = p
+
+        # Clean prefix
+        objective = re.sub(r"^(?:do this exact task[:\s]*|do this task[:\s]*|to[:\s]*|do[:\s]*)", "", objective, flags=re.IGNORECASE).strip() or p
+
+        return {
+            "type": "plan",
+            "reasoning": f"Fork autonomous Antigravity background worker for: {objective}",
+            "steps": [
+                {
+                    "tool": "fork",
+                    "params": {
+                        "objective": objective,
+                        "fs_scope": "D:/workspace",
+                        "worker_type": "antigravity_worker",
+                        "max_steps": 20,
+                    },
+                    "description": f"Launch background worker: {objective}",
+                }
+            ],
+            "plan_id": str(uuid.uuid4()),
+        }
+
     def _is_actionable(self, prompt: str) -> bool:
         """Determine if a prompt requires tool execution planning."""
         p = prompt.lower()
@@ -351,6 +422,11 @@ class JarvisBrainManager:
         fast_reply = self._check_fast_path(prompt)
         if fast_reply:
             return fast_reply
+
+        # 2. Worker Intent Evaluation (instant plan generation for worker/delegate prompts)
+        worker_plan = self._check_worker_intent(prompt, history=history)
+        if worker_plan:
+            return worker_plan
 
         brain_prompt = self._build_brain_prompt(prompt, history=history, memories=memories)
 

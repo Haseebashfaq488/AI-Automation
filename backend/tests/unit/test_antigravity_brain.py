@@ -107,3 +107,31 @@ async def test_brain_manager_auto_records_explicit_remember(temp_memory_file: Pa
 
         content = manager.read_memory()
         assert "my car is a Tesla" in content
+
+
+@pytest.mark.asyncio
+async def test_brain_manager_worker_intent_fork(temp_memory_file: Path):
+    manager = JarvisBrainManager(memory_path=temp_memory_file)
+
+    # 1. Direct worker command
+    result1 = await manager.analyze_prompt("make a worker do this task: build a calculator app")
+    assert result1["type"] == "plan"
+    assert result1["steps"][0]["tool"] == "fork"
+    assert "calculator app" in result1["steps"][0]["params"]["objective"]
+
+    # 2. Delegate task command
+    result2 = await manager.analyze_prompt("delegate a task: refactor user authentication")
+    assert result2["type"] == "plan"
+    assert result2["steps"][0]["tool"] == "fork"
+    assert "refactor user authentication" in result2["steps"][0]["params"]["objective"]
+
+    # 3. Contextual worker task from history
+    history = [
+        {"role": "user", "content": "Compile the financial report document and export to PDF"},
+        {"role": "assistant", "content": "I can help with that."},
+    ]
+    result3 = await manager.analyze_prompt("make a worker do this exact task", history=history)
+    assert result3["type"] == "plan"
+    assert result3["steps"][0]["tool"] == "fork"
+    assert "financial report" in result3["steps"][0]["params"]["objective"]
+
