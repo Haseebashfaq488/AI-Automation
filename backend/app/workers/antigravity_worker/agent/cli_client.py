@@ -190,9 +190,11 @@ with open(log_path, 'w', encoding='utf-8') as lf:
         shell=False,
     )
 
+    stderr_text = ""
     try:
-        if proc.stdout:
-            for line in proc.stdout:
+        stdout_raw, stderr_raw = proc.communicate(timeout=timeout)
+        if stdout_raw:
+            for line in stdout_raw.splitlines():
                 line_str = line.strip()
                 if not line_str:
                     continue
@@ -217,15 +219,12 @@ with open(log_path, 'w', encoding='utf-8') as lf:
                     events.append({"type": "text", "content": line_str})
                     raw_parts.append(line_str)
 
-        stdout_rest, rest_err = proc.communicate(timeout=timeout)
-        if stdout_rest:
-            raw_parts.append(stdout_rest)
-        final_err = stderr_text or (rest_err or "").strip()
+        final_err = stderr_text or (stderr_raw or "").strip()
         return proc.returncode, events, "\n".join(raw_parts), final_err
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
-        return -1, events, "\n".join(raw_parts), f"Milestone timed out after {timeout}s"
+        return -1, events, "\n".join(raw_parts), f"Execution timed out after {timeout}s"
     except Exception as exc:
         proc.kill()
         proc.communicate()
@@ -315,9 +314,11 @@ async def run_antigravity_cli(
             except Exception:
                 pass
 
-    extracted_sid = _extract_session_id(events, raw_text)
-    success = returncode == 0
+    has_valid_output = bool(raw_text and len(raw_text.strip()) > 0)
+    json_success = any(ev.get("status") == "SUCCESS" for ev in events if isinstance(ev, dict))
+    success = (returncode == 0) or json_success or (has_valid_output and not stderr_text)
     error = stderr_text if not success and stderr_text else None
+    extracted_sid = _extract_session_id(events, raw_text)
 
     return RunResult(
         success=success,

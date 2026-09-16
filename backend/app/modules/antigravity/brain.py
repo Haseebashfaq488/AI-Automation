@@ -142,46 +142,129 @@ class JarvisBrainManager:
             lines.append(f"- {name}: params: {param_desc}")
         return "\n".join(lines)
 
+    def _check_fast_path(self, prompt: str) -> Optional[Dict[str, Any]]:
+        """Evaluate local fast-path intents (<5ms response time)."""
+        p = prompt.lower().strip().rstrip("?.!")
+
+        # 1. Greetings
+        if p in ("hi", "hello", "hey", "hey jarvis", "hi jarvis", "hello jarvis", "good morning", "good evening", "assalam o alaikum", "aoa", "yo"):
+            return {
+                "type": "response",
+                "message": "Hello Haseeb! I am online and ready to assist you. How can I help with your tasks today?",
+            }
+
+        # 2. Profile and Identity Queries
+        if any(p == q for q in ("who am i", "what is my name", "what's my name", "who is the owner", "who is the user")):
+            return {
+                "type": "response",
+                "message": "You are Haseeb, the owner and operator of this system.",
+            }
+
+        if any(p == q for q in ("what is my phone number", "what's my phone number", "what is my number", "what is my phone")):
+            return {
+                "type": "response",
+                "message": "Your registered phone number is **+923098956995**.",
+            }
+
+        if any(p == q for q in ("what is my workspace", "what's my workspace", "where is my workspace", "workspace")):
+            return {
+                "type": "response",
+                "message": "Your primary dedicated workspace is **`D:/workspace`**.",
+            }
+
+        if any(p == q for q in ("who are you", "what are you", "what is jarvis", "introduce yourself")):
+            return {
+                "type": "response",
+                "message": (
+                    "I am **Jarvis**, your personal AI assistant and autonomous orchestrator powered by the "
+                    "Google Antigravity engine. I can manage files, send WhatsApp messages, compose emails, and "
+                    "delegate autonomous coding workers in `D:/workspace`."
+                ),
+            }
+
+        if any(p == q for q in ("what can you do", "what tools do you have", "list your tools", "what tools are available", "show tools", "help")):
+            return {
+                "type": "response",
+                "message": (
+                    "Here are my core integrated capabilities:\n"
+                    "- 💬 **WhatsApp**: Send messages, send documents, search and list chats\n"
+                    "- ✉️ **Gmail**: Send emails with attachments, search inbox\n"
+                    "- 📁 **File Management**: Create, edit, move, trash, and archive files in `D:/workspace`\n"
+                    "- ⚡ **Autonomous Workers**: Fork complex multi-step coding tasks into dedicated background workers\n"
+                    "- 🧠 **Living Memory**: Read and update `JARVIS_MEMORY.md` persistently"
+                ),
+            }
+
+        if any(p == q for q in ("show memory", "read memory", "view memory", "what is in your memory")):
+            mem = self.read_memory()
+            return {
+                "type": "response",
+                "message": f"### 🧠 Jarvis Living Memory (`JARVIS_MEMORY.md`)\n\n{mem}",
+            }
+
+        # 3. Explicit Remember Directives (Instant save)
+        if any(p.startswith(prefix) for prefix in ("remember that", "remember:", "save note", "keep in mind that", "note that")):
+            clean_note = re.sub(r"^(?:remember that|remember:|save note|keep in mind that|note that)\s*", "", prompt, flags=re.IGNORECASE).strip()
+            if clean_note:
+                self.append_scratchpad(clean_note)
+                return {
+                    "type": "response",
+                    "message": f"I have saved that to my living memory: *\"{clean_note}\"*",
+                }
+
+        return None
+
+    def _is_actionable(self, prompt: str) -> bool:
+        """Determine if a prompt requires tool execution planning."""
+        p = prompt.lower()
+        action_keywords = [
+            "send", "whatsapp", "message", "email", "gmail", "inbox",
+            "create file", "write file", "make file", "delete", "trash",
+            "remove file", "rename", "move", "copy", "organize", "search content",
+            "archive", "zip", "extract", "touch", "append", "fork", "delegate",
+            "spawn worker", "run worker", "list files", "list directory", "list chats",
+        ]
+        return any(kw in p for kw in action_keywords)
+
     def _build_brain_prompt(
         self,
         prompt: str,
         history: Optional[List[Dict[str, str]]] = None,
         memories: Optional[List[str]] = None,
     ) -> str:
-        """Build structured planning prompt embedding memory and available tools."""
-        memory_content = self.read_memory()
-        tools = self._tools_block()
+        """Build lean or actionable structured planning prompt."""
+        is_actionable = self._is_actionable(prompt)
 
         history_block = ""
         if history:
-            history_lines = [f"{msg.get('role', 'user')}: {msg.get('content', '')}" for msg in history[-6:]]
-            history_block = "## Recent Conversation History:\n" + "\n".join(history_lines) + "\n\n"
+            history_lines = [f"{msg.get('role', 'user')}: {msg.get('content', '')}" for msg in history[-4:]]
+            history_block = "## Recent History:\n" + "\n".join(history_lines) + "\n\n"
 
-        return (
-            "You are Jarvis, a personal automation assistant. You can manage files, "
-            "send WhatsApp messages and files, and send/list emails via Gmail, and fork background worker tasks.\n\n"
-            "## LIVING SYSTEM MEMORY (JARVIS_MEMORY.md):\n"
-            f"{memory_content}\n\n"
-            f"{history_block}"
-            f"Available tools and their required params:\n{tools}\n\n"
-            "RULES:\n"
-            "1. If the prompt is NOT an actionable operation (greeting, question, "
-            "conversation, asking about memory, checking status), return a direct conversational response.\n"
-            "2. If the user asks to remember or save information (e.g. 'remember my email is ...', 'save note ...'), "
-            "acknowledge that you will store it in memory and answer conversationally.\n"
-            "3. If the prompt IS an actionable operation (file, WhatsApp, or email), plan the exact steps needed.\n"
-            "4. If the user says 'fork', 'delegate', or 'spawn a worker', plan a single step with the 'fork' tool "
-            "with objective set to the task description.\n"
-            "5. Use absolute paths for files. Never invent paths or phone numbers — use memory context.\n\n"
-            "RESPONSE FORMATS (Return ONLY one valid JSON object, no markdown codeblocks):\n\n"
-            "For non-actionable prompts (greetings, questions, conversational answers):\n"
-            '{"type": "response", "message": "<your conversational reply>"}\n\n'
-            "For actionable prompts:\n"
-            '{"type": "plan", "reasoning": "<brief explanation of what you will do>", '
-            '"steps": [{"tool": "<tool_name>", "params": {<params>}, '
-            '"description": "<short human-readable description of this step>"}]}\n\n'
-            f"User Prompt: {prompt}"
-        )
+        if is_actionable:
+            tools = self._tools_block()
+            return (
+                "You are Jarvis, a personal automation assistant. Translate user intent into a tool plan or direct reply.\n\n"
+                f"{history_block}"
+                f"Available Tools:\n{tools}\n\n"
+                "RULES:\n"
+                "1. If actionable (file, WhatsApp, Gmail, fork), return a single JSON plan.\n"
+                "2. If the user asks to 'fork', plan tool 'fork' with the objective.\n"
+                "3. Use absolute paths. Phone number for Haseeb is +923098956995.\n\n"
+                "FORMATS:\n"
+                '{"type": "response", "message": "<reply>"}\n'
+                '{"type": "plan", "reasoning": "<why>", "steps": [{"tool": "<name>", "params": {<params>}, "description": "<desc>"}]}\n\n'
+                f"User: {prompt}"
+            )
+        else:
+            # Lean conversational prompt without 30 tool definitions (Ultra-Fast)
+            return (
+                "You are Jarvis, an intelligent personal AI assistant. "
+                "The owner is Haseeb, phone: +923098956995, workspace: D:/workspace.\n\n"
+                f"{history_block}"
+                "Provide a direct, concise, and helpful response. Return ONLY a JSON object:\n"
+                '{"type": "response", "message": "<your answer>"}\n\n'
+                f"User: {prompt}"
+            )
 
     def _safe_parse_json(self, raw: str) -> Optional[Dict[str, Any]]:
         """Safely extract JSON object from raw response text."""
@@ -264,20 +347,20 @@ class JarvisBrainManager:
         """Analyze prompt and return a structured plan or direct response."""
         self.touch_activity()
 
-        # Check for explicit memory update directive
-        lowered = prompt.lower().strip()
-        if any(lowered.startswith(p) for p in ("remember that", "remember:", "save note", "keep in mind that", "note that")):
-            clean_note = re.sub(r"^(?:remember that|remember:|save note|keep in mind that|note that)\s*", "", prompt, flags=re.IGNORECASE)
-            self.append_scratchpad(clean_note)
+        # 1. Fast-Path Evaluation (<5ms for common questions & memory updates)
+        fast_reply = self._check_fast_path(prompt)
+        if fast_reply:
+            return fast_reply
 
         brain_prompt = self._build_brain_prompt(prompt, history=history, memories=memories)
 
-        # Call Antigravity CLI with persistent session ID
+        # 2. Call Antigravity CLI in clean workspace
         try:
             res = await run_antigravity_cli(
                 brain_prompt,
                 session_id=self.session_id,
                 model=self.model,
+                work_dir="D:/workspace",
             )
         except Exception as exc:
             logger.error("Antigravity CLI execution error: %s", exc)

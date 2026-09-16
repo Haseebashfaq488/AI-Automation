@@ -66,4 +66,4 @@ def get_milestone_timeout() -> int:
 
 def get_visible_console() -> bool:
     """Return whether to launch Antigravity CLI in a visible Windows terminal window."""
-    return os.getenv("ANTIGRAVITY_VISIBLE_CONSOLE", "1") == "1"
+    return os.getenv("ANTIGRAVITY_VISIBLE_CONSOLE", "0") == "1"
