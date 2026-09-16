@@ -176,9 +176,9 @@ class JarvisBrainManager:
             return {
                 "type": "response",
                 "message": (
-                    "I am **Jarvis**, your personal AI assistant and autonomous orchestrator powered by the "
-                    "Google Antigravity engine. I can manage files, send WhatsApp messages, compose emails, and "
-                    "delegate autonomous coding workers in `D:/workspace`."
+                    "I am **Jarvis**, your personal AI manager and task coordinator. "
+                    "I manage your integrated tools (WhatsApp, Gmail, Files) and delegate coding, document generation, "
+                    "and multi-step automation tasks to autonomous background workers in `D:/workspace`."
                 ),
             }
 
@@ -186,12 +186,12 @@ class JarvisBrainManager:
             return {
                 "type": "response",
                 "message": (
-                    "Here are my core integrated capabilities:\n"
-                    "- 💬 **WhatsApp**: Send messages, send documents, search and list chats\n"
-                    "- ✉️ **Gmail**: Send emails with attachments, search inbox\n"
-                    "- 📁 **File Management**: Create, edit, move, trash, and archive files in `D:/workspace`\n"
-                    "- ⚡ **Autonomous Workers**: Fork complex multi-step coding tasks into dedicated background workers\n"
-                    "- 🧠 **Living Memory**: Read and update `JARVIS_MEMORY.md` persistently"
+                    "Here is my management and delegation model:\n"
+                    "- ⚡ **Autonomous Background Workers**: I create and delegate tasks to background workers in `D:/workspace` for you to review and approve\n"
+                    "- 💬 **WhatsApp**: Manage chats, send messages and files\n"
+                    "- ✉️ **Gmail**: Send emails with attachments and search your inbox\n"
+                    "- 📁 **File Operations**: Manage files within `D:/workspace`\n"
+                    "- 🧠 **Living Memory**: Read and maintain persistent notes in `JARVIS_MEMORY.md`"
                 ),
             }
 
@@ -286,14 +286,16 @@ class JarvisBrainManager:
         }
 
     def _is_actionable(self, prompt: str) -> bool:
-        """Determine if a prompt requires tool execution planning."""
+        """Determine if a prompt requires tool execution planning or worker delegation."""
         p = prompt.lower()
         action_keywords = [
             "send", "whatsapp", "message", "email", "gmail", "inbox",
-            "create file", "write file", "make file", "delete", "trash",
-            "remove file", "rename", "move", "copy", "organize", "search content",
+            "create", "write", "make", "delete", "trash", "remove",
+            "rename", "move", "copy", "organize", "search", "find",
             "archive", "zip", "extract", "touch", "append", "fork", "delegate",
-            "spawn worker", "run worker", "list files", "list directory", "list chats",
+            "spawn", "worker", "run", "list", "build", "code", "generate",
+            "compile", "calculate", "refactor", "modify", "analyze", "test",
+            "docx", "pdf", "script", "app", "fix", "clean", "develop",
         ]
         return any(kw in p for kw in action_keywords)
 
@@ -303,7 +305,7 @@ class JarvisBrainManager:
         history: Optional[List[Dict[str, str]]] = None,
         memories: Optional[List[str]] = None,
     ) -> str:
-        """Build lean or actionable structured planning prompt."""
+        """Build structured planning prompt enforcing manager rules."""
         is_actionable = self._is_actionable(prompt)
 
         history_block = ""
@@ -314,23 +316,25 @@ class JarvisBrainManager:
         if is_actionable:
             tools = self._tools_block()
             return (
-                "You are Jarvis, a personal automation assistant. Translate user intent into a tool plan or direct reply.\n\n"
+                "You are Jarvis, a personal manager and coordinator. You DO NOT perform task reasoning, code generation, or execution yourself.\n\n"
+                "CORE MANAGER RULES:\n"
+                "1. MANAGER ROLE: You never write code, generate files, or solve multi-step tasks directly in conversational text. You ONLY coordinate and plan.\n"
+                "2. KNOWN TOOLS ONLY: You can ONLY execute actions via the predefined Available Tools below.\n"
+                "3. WORKER DELEGATION: Whenever the user requests to create, build, code, generate, compile, automate, analyze, or execute any task, document, script, or project, you MUST return a tool plan with the 'fork' tool (params: {\"objective\": \"<detailed task>\", \"fs_scope\": \"D:/workspace\", \"worker_type\": \"antigravity_worker\", \"max_steps\": 20}).\n"
+                "4. ATOMIC TOOLS: If the user requests a specific direct tool action (e.g. send WhatsApp message/file, send email, search inbox, list a directory, move/delete a file), return a plan with that specific tool.\n"
+                "5. USER APPROVAL: Every actionable request MUST be returned as a JSON 'plan' so the user can review and accept before the worker or tool executes.\n"
+                "6. System Context: Owner is Haseeb, Phone: +923098956995, Primary Workspace: D:/workspace.\n\n"
                 f"{history_block}"
                 f"Available Tools:\n{tools}\n\n"
-                "RULES:\n"
-                "1. If actionable (file, WhatsApp, Gmail, fork), return a single JSON plan.\n"
-                "2. If the user asks to 'fork', plan tool 'fork' with the objective.\n"
-                "3. Use absolute paths. Phone number for Haseeb is +923098956995.\n\n"
-                "FORMATS:\n"
-                '{"type": "response", "message": "<reply>"}\n'
-                '{"type": "plan", "reasoning": "<why>", "steps": [{"tool": "<name>", "params": {<params>}, "description": "<desc>"}]}\n\n'
+                "OUTPUT FORMAT (STRICT JSON ONLY):\n"
+                '{"type": "plan", "reasoning": "<short explanation of delegation/tool choice>", "steps": [{"tool": "<tool_name>", "params": {<parameters>}, "description": "<action description>"}]}\n\n'
                 f"User: {prompt}"
             )
         else:
-            # Lean conversational prompt without 30 tool definitions (Ultra-Fast)
+            # Lean conversational prompt for greetings, identity, status (Ultra-Fast)
             return (
-                "You are Jarvis, an intelligent personal AI assistant. "
-                "The owner is Haseeb, phone: +923098956995, workspace: D:/workspace.\n\n"
+                "You are Jarvis, a manager and assistant. The owner is Haseeb (Phone: +923098956995, Workspace: D:/workspace).\n"
+                "You DO NOT perform task execution or code generation yourself. If the user asks for a task or action, inform them you can delegate a background worker.\n\n"
                 f"{history_block}"
                 "Provide a direct, concise, and helpful response. Return ONLY a JSON object:\n"
                 '{"type": "response", "message": "<your answer>"}\n\n'
