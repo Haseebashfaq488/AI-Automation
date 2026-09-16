@@ -5,7 +5,16 @@ import Link from "next/link";
 import { UserBubble, BotMessage } from "./components/Chat";
 import VoiceInput from "./components/VoiceInput";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+function getApiUrl() {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window !== "undefined") {
+    const proto = window.location.protocol;
+    const host = window.location.hostname;
+    return `${proto}//${host}:8000`;
+  }
+  return "http://127.0.0.1:8000";
+}
+
 const CHAT_STORAGE_KEY = "jarvis_chat_messages";
 
 function generateId() {
@@ -28,7 +37,7 @@ function loadStoredMessages() {
 }
 
 const SUGGESTIONS = [
-  { label: "⚡ Fork Coding Task", prompt: "fork the task: implement user auth endpoints and tests" },
+  { label: "⚡ Fork Heading Normalization", prompt: "fork the task: normalize headings on my report.docx" },
   { label: "📂 List files", prompt: "list files in D:/Ai automation backend" },
   { label: "✉️ Recent emails", prompt: "list my recent emails" },
   { label: "💬 WhatsApp chats", prompt: "list my whatsapp chats" },
@@ -52,8 +61,9 @@ export default function Home() {
   // Check backend health
   useEffect(() => {
     async function checkHealth() {
+      const baseUrl = getApiUrl();
       try {
-        const res = await fetch(`${API_URL}/health`);
+        const res = await fetch(`${baseUrl}/health`);
         setBackendOnline(res.ok);
       } catch {
         setBackendOnline(false);
@@ -79,13 +89,28 @@ export default function Home() {
   }, [messages]);
 
   async function callAgent(body) {
-    const res = await fetch(`${API_URL}/agent/run`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || `Request failed (${res.status})`);
+    const baseUrl = getApiUrl();
+    let res;
+    try {
+      res = await fetch(`${baseUrl}/agent/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    } catch (netErr) {
+      throw new Error(`Cannot reach Jarvis backend (${baseUrl}). Please check if the backend is running.`);
+    }
+
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error(`Server returned status ${res.status}`);
+    }
+
+    if (!res.ok) {
+      throw new Error(data.detail || data.message || `Request failed (${res.status})`);
+    }
     return data;
   }
 
@@ -151,26 +176,10 @@ export default function Home() {
     setConfirmedPlanIds(new Set());
     try {
       window.sessionStorage.removeItem(CHAT_STORAGE_KEY);
-      await fetch(`${API_URL}/agent/history?session_id=default`, { method: "DELETE" });
+      const baseUrl = getApiUrl();
+      await fetch(`${baseUrl}/agent/history?session_id=default`, { method: "DELETE" });
     } catch {
       // best effort
-    }
-  }
-
-  const [launchingTerminal, setLaunchingTerminal] = useState(false);
-
-  async function openOpenCodeTerminal() {
-    setLaunchingTerminal(true);
-    try {
-      await fetch(`${API_URL}/workers/open-terminal`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ directory: "D:/Ai automation backend" }),
-      });
-    } catch {
-      /* ignore */
-    } finally {
-      setLaunchingTerminal(false);
     }
   }
 
@@ -201,14 +210,6 @@ export default function Home() {
 
         <div className="flex items-center gap-2.5">
           <button
-            onClick={openOpenCodeTerminal}
-            disabled={launchingTerminal}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-sky-700/60 bg-sky-950/60 px-3.5 py-1.5 text-xs font-semibold text-sky-300 shadow-sm transition hover:border-sky-500 hover:bg-sky-900/60 hover:text-white disabled:opacity-40"
-          >
-            <span>💻</span>
-            <span>{launchingTerminal ? "Opening..." : "Open OpenCode CLI"}</span>
-          </button>
-          <button
             onClick={newChat}
             disabled={busy}
             className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white disabled:opacity-40"
@@ -224,7 +225,6 @@ export default function Home() {
           </Link>
         </div>
       </header>
-
 
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="mx-auto flex max-w-2xl flex-col gap-4">
