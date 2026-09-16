@@ -463,7 +463,7 @@ export function AudioVisualizerWave({ level = 0, isListening = false, barCount =
         const centerDistance = Math.abs(i - barCount / 2) / (barCount / 2);
         const dynamicScale = Math.max(
           0.15,
-          isListening ? ((level / 100) * (1.1 - centerDistance * 0.5) + (Math.sin(i * 1.5 + Date.now() / 200) * 0.15)) : 0.15
+          isListening ? ((level / 100) * (1.1 - centerDistance * 0.5) + (Math.sin(i * 1.5) * 0.15)) : 0.15
         );
         const heightPercent = Math.min(100, Math.max(15, dynamicScale * 100));
 
@@ -525,24 +525,6 @@ export default function VoiceInput({
     },
   });
 
-  // Hotkey listener: Alt + V or Ctrl + Shift + V to toggle voice recognition
-  useEffect(() => {
-    function handleKeyDown(e) {
-      if ((e.altKey && e.code === "KeyV") || (e.ctrlKey && e.shiftKey && e.code === "KeyV")) {
-        e.preventDefault();
-        if (isListening) {
-          handleFinish(false);
-        } else {
-          startListening();
-          setHotkeyNotice(true);
-          setTimeout(() => setHotkeyNotice(false), 2500);
-        }
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  });
-
   const handleFinish = (shouldSend = false) => {
     const fullText = `${transcript} ${interimTranscript}`.trim();
     stopListening();
@@ -561,6 +543,24 @@ export default function VoiceInput({
     stopListening();
     resetTranscript();
   };
+
+  // Hotkey listener: Alt + V or Ctrl + Shift + V to toggle voice recognition
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if ((e.altKey && e.code === "KeyV") || (e.ctrlKey && e.shiftKey && e.code === "KeyV")) {
+        e.preventDefault();
+        if (isListening) {
+          handleFinish(false);
+        } else {
+          startListening();
+          setHotkeyNotice(true);
+          setTimeout(() => setHotkeyNotice(false), 2500);
+        }
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
 
   if (!isSupported) {
     return (
