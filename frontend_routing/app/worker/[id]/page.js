@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import VoiceInput from "../../components/VoiceInput";
+import ToolOutputViewer from "../../components/ToolOutputViewer";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -515,25 +516,7 @@ function ContractCard({ state, sessionId }) {
           </p>
         </div>
 
-        <div className="rounded-xl border border-zinc-800/50 bg-zinc-950/60 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
-            Allowed Tools
-          </p>
-          <div className="mt-1 flex flex-wrap gap-1">
-            {(state?.allowed_tools || []).length > 0 ? (
-              [...new Set(state.allowed_tools)].map((t, idx) => (
-                <span
-                  key={`${t}-${idx}`}
-                  className="rounded bg-zinc-800/80 px-1.5 py-0.5 font-mono text-[10px] text-zinc-300"
-                >
-                  {t}
-                </span>
-              ))
-            ) : (
-              <span className="text-xs text-zinc-500">Default worker toolset</span>
-            )}
-          </div>
-        </div>
+
       </div>
     </div>
   );
@@ -688,19 +671,29 @@ function StepBubble({ event }) {
           </div>
         )}
 
-        {/* Structured Output Toggle */}
-        {outputData && (
+
+        {/* Structured Output */}
+        {outputData && typeof outputData === "object" && (
           <div className="mt-2.5">
+            <ToolOutputViewer
+              tool={event.data?.step?.replace(/^milestone_/, "") || ""}
+              data={outputData}
+            />
+          </div>
+        )}
+
+        {/* Raw event data toggle */}
+        {outputData && (
+          <div className="mt-2">
             <button
               onClick={() => setShowDetails(!showDetails)}
-              className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-400 hover:text-zinc-200 transition"
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-500 hover:text-zinc-300 transition"
             >
-              <span>{showDetails ? "Hide Raw Data" : "View Raw Event Data"}</span>
-              <span>{showDetails ? "▲" : "▼"}</span>
+              <span>{showDetails ? "Hide raw ▲" : "Inspect raw JSON ▼"}</span>
             </button>
 
             {showDetails && (
-              <pre className="mt-2 max-h-48 overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-950/90 p-2.5 font-mono text-[11px] text-zinc-300">
+              <pre className="mt-1.5 max-h-48 overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-950/90 p-2.5 font-mono text-[11px] text-zinc-300">
                 {typeof outputData === "string"
                   ? outputData
                   : JSON.stringify(outputData, null, 2)}

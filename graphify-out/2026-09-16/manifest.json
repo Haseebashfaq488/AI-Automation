@@ -54,9 +54,9 @@
     "semantic_hash": "a408fc1390738a4aa419b0fa5eb8efbc"
   },
   "backend/app/api/routes/workers.py": {
-    "mtime": 1789576770.7809167,
-    "seen": 1789577363.9516146,
-    "ast_hash": "1d20020841a7ebc6dc3baf38eb17cb22",
+    "mtime": 1789573309.0113368,
+    "seen": 1789573408.730106,
+    "ast_hash": "4cf320e18c9dcce60a5a494eab2017a7",
     "semantic_hash": ""
   },
   "backend/app/core/__init__.py": {
@@ -1062,9 +1062,9 @@
     "semantic_hash": ""
   },
   "backend/app/workers/antigravity_worker/agent/config.py": {
-    "mtime": 1789576590.3041172,
-    "seen": 1789577363.9517474,
-    "ast_hash": "ccd0e2b542d754539326f76e573219be",
+    "mtime": 1789576063.3898153,
+    "seen": 1789576194.8504522,
+    "ast_hash": "d607f8f406dbe84394b8f119916816fd",
     "semantic_hash": ""
   },
   "backend/app/workers/antigravity_worker/agent/milestones.py": {
@@ -1086,15 +1086,15 @@
     "semantic_hash": ""
   },
   "backend/app/workers/antigravity_worker/agent/cli_client.py": {
-    "mtime": 1789577228.0174956,
-    "seen": 1789577363.9517457,
-    "ast_hash": "f43ac195aaf32e8afc43dbc987ab5d1f",
+    "mtime": 1789575453.8108878,
+    "seen": 1789575538.5223076,
+    "ast_hash": "865cd982161981356ff9cf5f607cf55b",
     "semantic_hash": ""
   },
   "backend/whatsapp_service/qr_dom.png": {
-    "mtime": 1789577303.2197084,
-    "seen": 1789577363.9518578,
-    "ast_hash": "34f36bf5241d10184414e8888e058206",
+    "mtime": 1789576161.9492095,
+    "seen": 1789576194.8505683,
+    "ast_hash": "4946192bed7ec3cb8dc74808e053f38b",
     "semantic_hash": ""
   }
 }

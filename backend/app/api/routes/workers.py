@@ -27,6 +27,7 @@ def _default_scope() -> str:
 class ForkRequest(BaseModel):
     objective: str
     worker_type: str = "opencode_worker"
+    model: Optional[str] = None
     requirements: List[str] = []
     constraints: List[str] = []
     success_criteria: List[str] = []
@@ -94,6 +95,39 @@ async def open_terminal(payload: Optional[OpenTerminalRequest] = None):
         raise HTTPException(status_code=500, detail=f"Failed to launch OpenCode terminal: {exc}")
 
 
+@router.post("/open-agy-terminal")
+async def open_agy_terminal(payload: Optional[OpenTerminalRequest] = None):
+    """Directly launch a visible, interactive Antigravity CLI (`agy`) window on the user's desktop."""
+    import subprocess
+    import sys
+    from app.workers.antigravity_worker.agent.config import get_agy_binary
+
+    target_dir = payload.directory if payload and payload.directory else "D:/AI-Automation"
+    if not os.path.exists(target_dir):
+        target_dir = "D:/AI-Automation"
+
+    binary = get_agy_binary() or os.path.expandvars(r"%LOCALAPPDATA%\agy\bin\agy.exe")
+
+    try:
+        if sys.platform == "win32":
+            subprocess.Popen(
+                f'start "Antigravity CLI (agy)" /max powershell.exe -NoExit '
+                f'-Command "Set-Location -LiteralPath \'{target_dir}\'; & \'{binary}\'"',
+                shell=True,
+            )
+        else:
+            subprocess.Popen([binary], cwd=target_dir)
+
+        return {
+            "status": "launched",
+            "message": f"Antigravity CLI (agy) window launched in {target_dir}",
+            "directory": target_dir,
+            "binary": binary,
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to launch Antigravity CLI terminal: {exc}")
+
+
 @router.post("/open-desktop")
 async def open_desktop():
     """Launch the OpenCode Desktop GUI application on Windows if installed."""
@@ -146,6 +180,7 @@ async def fork_worker(payload: ForkRequest):
             fs_scope=payload.fs_scope,
             allowed_tools=payload.allowed_tools,
             max_steps=payload.max_steps,
+            model=payload.model,
         )
     except Exception as exc:
         raise HTTPException(status_code=422, detail=f"Invalid contract: {exc}")
@@ -220,6 +255,23 @@ def _agent_factory_for(worker_type: str):
             )
 
         return factory
+
+    if worker_type in ("antigravity_worker", "antigravity", "agy"):
+        from app.workers.antigravity_worker.agent.worker_agent import AntigravityWorkerAgent
+
+        def factory(contract: TaskContract):
+            return AntigravityWorkerAgent(
+                objective=contract.objective,
+                allowed_tools=contract.allowed_tools,
+                fs_scope=contract.fs_scope,
+                requirements=contract.requirements,
+                constraints=contract.constraints,
+                success_criteria=contract.success_criteria,
+                model=contract.model,
+            )
+
+        return factory
+
     return None
 
 

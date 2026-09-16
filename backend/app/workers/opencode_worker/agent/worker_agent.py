@@ -1,41 +1,34 @@
-"""OpenCode Worker Agent — Jarvis's coding worker brain.
+"""Worker Agent — drives the OpenCode CLI loop.
 
-Implements the agent interface required by ``WorkerEngine``:
-  - ``available: bool``
-  - ``async decide_next_step() -> dict``
-  - ``record_step(tool, success, output, error)``
-  - ``inject_intervention(message)``
-
-The agent progresses through milestones (Analyze → Implement →
-Test/Fix → Verify), sending each as a prompt to OpenCode via the
-non-interactive CLI client while maintaining the same OpenCode session
-across all milestones.
+Replaces the placeholder loop with a real LLM-backed agent that delegates
+milestones to OpenCode via ``opencode run``, preserves session continuity,
+injects parent interventions, and reports progress back to Jarvis.
 """
 from __future__ import annotations
 
 import logging
 from typing import Any, Dict, List, Optional
 
-from app.workers.opencode_worker.agent.cli_client import run_opencode, RunResult
 from app.workers.opencode_worker.agent import config
+from app.workers.opencode_worker.agent.cli_client import RunResult, run_opencode
 from app.workers.opencode_worker.agent.milestones import (
     Milestone,
+    MilestonePhase,
     build_prompt,
     plan_milestones,
+    plan_milestones_llm_async,
 )
 
 logger = logging.getLogger("jarvis.worker.opencode.agent")
 
 
 class OpenCodeWorkerAgent:
-    """The OpenCode worker's brain.
+    """Autonomous agent driving OpenCode CLI execution for a background worker.
 
-    Drives a milestone-based workflow: for each step the engine asks for,
-    the agent picks the next uncompleted milestone, builds a prompt, runs
-    ``opencode run`` in the same session, and reports back.
-
-    When no ``opencode`` binary is found, ``available`` is ``False`` and
-    the engine falls back to its deterministic placeholder loop.
+    Follows a dynamic milestone-based workflow:
+      1. Simple tasks (create file, write text) run in 1 step + 1 fixed test step.
+      2. Moderate tasks run in 2-3 steps + 1 fixed test step.
+      3. Parent interventions are injected at line 1 with mandatory override priority.
     """
 
     def __init__(
@@ -50,18 +43,22 @@ class OpenCodeWorkerAgent:
         self.objective = objective
         self.allowed_tools = list(allowed_tools)
         self.fs_scope = fs_scope
+        self.requirements = requirements or []
+        self.constraints = constraints or []
+        self.success_criteria = success_criteria or []
 
         # Check availability
         self.available = config.get_opencode_binary() is not None
 
-        # Plan milestones
+        # Plan milestones (heuristic baseline initially, refined via LLM on step 1)
         self._milestones = plan_milestones(
             objective,
-            requirements=requirements,
-            constraints=constraints,
-            success_criteria=success_criteria,
+            requirements=self.requirements,
+            constraints=self.constraints,
+            success_criteria=self.success_criteria,
         )
         self._current_idx = 0
+        self._llm_planned = False
 
         # OpenCode session ID (set after the first run, reused for continuity)
         self._opencode_session_id: Optional[str] = None
@@ -105,6 +102,52 @@ class OpenCodeWorkerAgent:
                 "reason": "opencode CLI binary not found on PATH",
             }
 
+        # Step 0: attempt LLM dynamic decomposition if not already run
+        if not self._llm_planned and self._current_idx == 0:
+            self._llm_planned = True
+            try:
+                llm_milestones = await plan_milestones_llm_async(
+                    self.objective,
+                    requirements=self.requirements,
+                    constraints=self.constraints,
+                    success_criteria=self.success_criteria,
+                )
+                if llm_milestones:
+                    self._milestones = llm_milestones
+            except Exception as exc:
+                logger.debug("LLM dynamic milestone decomposition skipped: %s", exc)
+
+        # Handle queued parent intervention
+        intervention = self._pending_intervention
+        if intervention:
+            self._pending_intervention = None
+
+            # If already on or past the final test milestone, insert an intervention remediation milestone
+            # so the worker executes the user's guidance before concluding!
+            if self._current_idx >= len(self._milestones) - 1:
+                interv_m = Milestone(
+                    phase=MilestonePhase.INTERVENTION,
+                    title="Apply Manager Intervention",
+                    instructions=(
+                        f"## Priority Intervention Directive\n{intervention}\n\n"
+                        f"## Overall Task Context\n{self.objective}\n\n"
+                        f"## Action Required\nApply the user's intervention instructions immediately before final verification."
+                    ),
+                    verification_criteria=["Intervention instructions applied"],
+                )
+                if self._current_idx < len(self._milestones):
+                    self._milestones.insert(self._current_idx, interv_m)
+                else:
+                    self._milestones.append(interv_m)
+                    self._milestones.append(
+                        Milestone(
+                            phase=MilestonePhase.TEST,
+                            title="Test & Verify After Intervention",
+                            instructions=f"Verify all changes including the intervention:\n{intervention}",
+                            verification_criteria=["Changes and intervention verified"],
+                        )
+                    )
+
         # All milestones done?
         if self._current_idx >= len(self._milestones):
             summaries = [
@@ -118,9 +161,7 @@ class OpenCodeWorkerAgent:
 
         milestone = self._milestones[self._current_idx]
 
-        # Build prompt with optional intervention
-        intervention = self._pending_intervention
-        self._pending_intervention = None
+        # Build prompt with optional intervention at Line 1
         prompt = build_prompt(milestone, self.fs_scope, intervention=intervention)
 
         logger.info(
@@ -163,7 +204,7 @@ class OpenCodeWorkerAgent:
                 },
             }
         else:
-            # OpenCode reported failure — retry once, then signal failure
+            # OpenCode reported failure
             error_msg = result.error or "unknown error"
             logger.warning(
                 "Milestone %d failed: %s", self._current_idx + 1, error_msg

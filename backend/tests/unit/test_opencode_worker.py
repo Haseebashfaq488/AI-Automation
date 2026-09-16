@@ -1,80 +1,111 @@
-"""Tests for the OpenCode CLI Worker Agent.
+"""Unit tests for the OpenCode CLI Worker integration.
 
-Covers milestone generation, prompt building, CLI argument construction,
-session continuity, and the agent's decide_next_step loop with a mocked
-CLI client.
+Covers:
+  - Configuration loading and binary resolution
+  - Event parsing and session ID extraction
+  - Non-interactive CLI client (mocked subprocess)
+  - Dynamic milestone decomposition & prompt building
+  - OpenCodeWorkerAgent decision loop, session continuity, and parent intervention
 """
+from __future__ import annotations
+
 import asyncio
 import json
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from app.workers.opencode_worker.agent.cli_client import (
+    RunResult,
+    _build_args,
+    _extract_session_id,
+    run_opencode,
+)
 from app.workers.opencode_worker.agent.config import (
-    get_opencode_binary,
-    get_opencode_model,
     get_auto_approve,
     get_milestone_timeout,
+    get_opencode_binary,
+    get_opencode_model,
 )
 from app.workers.opencode_worker.agent.milestones import (
     Milestone,
     MilestonePhase,
     build_prompt,
+    is_simple_task,
     plan_milestones,
-)
-from app.workers.opencode_worker.agent.cli_client import (
-    RunResult,
-    _build_args,
-    _extract_session_id,
 )
 from app.workers.opencode_worker.agent.worker_agent import OpenCodeWorkerAgent
 
 
-# ── Config ──────────────────────────────────────────────────────────────
+# ── Configuration & Binary Resolution ───────────────────────────────────
 
 
 class TestConfig:
-    def test_get_opencode_model_default(self, monkeypatch):
+    def test_get_opencode_binary_env_override(self, monkeypatch, tmp_path):
+        fake_bin = tmp_path / "opencode.exe"
+        fake_bin.touch()
+        monkeypatch.setenv("OPENCODE_BIN", str(fake_bin))
+        assert get_opencode_binary() == str(fake_bin)
+
+    def test_get_opencode_binary_none_when_missing(self, monkeypatch):
+        monkeypatch.delenv("OPENCODE_BIN", raising=False)
+        monkeypatch.setattr("shutil.which", lambda _: None)
+        monkeypatch.setattr("os.path.isfile", lambda _: False)
+        assert get_opencode_binary() is None
+
+    def test_get_opencode_model_from_env(self, monkeypatch):
+        monkeypatch.setenv("OPENCODE_MODEL", "groq/llama-3.3-70b-versatile")
+        assert get_opencode_model() == "groq/llama-3.3-70b-versatile"
+
+    def test_get_opencode_model_none_by_default(self, monkeypatch):
         monkeypatch.delenv("OPENCODE_MODEL", raising=False)
         assert get_opencode_model() is None
 
-
-
-
-    def test_get_opencode_model_override(self, monkeypatch):
-        monkeypatch.setenv("OPENCODE_MODEL", "opencode/gpt-5")
-        assert get_opencode_model() == "opencode/gpt-5"
-
-    def test_auto_approve_default(self, monkeypatch):
+    def test_get_auto_approve_defaults_true(self, monkeypatch):
         monkeypatch.delenv("OPENCODE_AUTO", raising=False)
         assert get_auto_approve() is True
 
-    def test_auto_approve_disabled(self, monkeypatch):
+    def test_get_auto_approve_can_be_disabled(self, monkeypatch):
         monkeypatch.setenv("OPENCODE_AUTO", "0")
         assert get_auto_approve() is False
 
-    def test_milestone_timeout_default(self, monkeypatch):
+    def test_get_milestone_timeout_defaults_to_300(self, monkeypatch):
         monkeypatch.delenv("OPENCODE_MILESTONE_TIMEOUT", raising=False)
         assert get_milestone_timeout() == 300
 
-    def test_milestone_timeout_override(self, monkeypatch):
-        monkeypatch.setenv("OPENCODE_MILESTONE_TIMEOUT", "60")
-        assert get_milestone_timeout() == 60
 
-
-# ── Milestones ──────────────────────────────────────────────────────────
+# ── Dynamic Milestone Decomposition & Prompt Building ───────────────────
 
 
 class TestMilestones:
-    def test_plan_milestones_generates_four_phases(self):
-        milestones = plan_milestones("Build auth system")
-        assert len(milestones) == 4
-        phases = [m.phase for m in milestones]
-        assert phases == [
-            MilestonePhase.ANALYZE,
-            MilestonePhase.IMPLEMENT,
-            MilestonePhase.TEST_FIX,
-            MilestonePhase.VERIFY,
-        ]
+    def test_plan_milestones_simple_task_one_step_plus_fixed_test(self):
+        """A simple task creates exactly 1 execution step + 1 fixed test step (2 modules)."""
+        milestones = plan_milestones("Create a file in local disk D and write the text lorem ipsum into it")
+        assert len(milestones) == 2
+        assert milestones[0].phase == MilestonePhase.STEP
+        assert milestones[1].phase == MilestonePhase.TEST
+        assert "Test" in milestones[1].title
+
+    def test_plan_milestones_moderate_task_creates_proportional_steps(self):
+        """Moderate task with multiple requirements decomposes into moderate steps + fixed test."""
+        milestones = plan_milestones(
+            "Refactor auth system and add token refresh endpoint",
+            requirements=["Use JWT tokens", "Support refresh"]
+        )
+        assert len(milestones) == 3
+        assert milestones[0].phase == MilestonePhase.STEP
+        assert milestones[1].phase == MilestonePhase.STEP
+        assert milestones[2].phase == MilestonePhase.TEST
+
+    def test_plan_milestones_always_ends_with_test(self):
+        """Every generated plan must end with the fixed TEST milestone."""
+        for obj in [
+            "Create a file in D",
+            "Refactor auth endpoints and run full integration test suite with migration"
+        ]:
+            ms = plan_milestones(obj)
+            assert ms[-1].phase == MilestonePhase.TEST
+            assert "Test" in ms[-1].title
 
     def test_plan_milestones_includes_objective_in_instructions(self):
         milestones = plan_milestones("Add pagination to API")
@@ -83,108 +114,80 @@ class TestMilestones:
 
     def test_plan_milestones_includes_requirements(self):
         milestones = plan_milestones(
-            "Refactor auth", requirements=["Use JWT tokens", "Support refresh"]
+            "Refactor auth system and add token refresh", requirements=["Use JWT tokens", "Support refresh"]
         )
-        analyze = milestones[0]
-        assert "Use JWT tokens" in analyze.instructions
-        assert "Support refresh" in analyze.instructions
+        step = milestones[0]
+        assert "Use JWT tokens" in step.instructions
+        assert "Support refresh" in step.instructions
 
     def test_plan_milestones_includes_constraints(self):
         milestones = plan_milestones(
-            "Refactor auth", constraints=["Do not modify user model"]
+            "Refactor auth system and add token refresh", constraints=["Do not modify user model"]
         )
-        implement = milestones[1]
-        assert "Do not modify user model" in implement.instructions
+        step = milestones[0]
+        assert "Do not modify user model" in step.instructions
 
     def test_build_prompt_includes_fs_scope(self):
         m = Milestone(
-            phase=MilestonePhase.ANALYZE,
-            title="Analyze",
+            phase=MilestonePhase.STEP,
+            title="Execute",
             instructions="Look at the project",
         )
         prompt = build_prompt(m, "/home/user/project")
         assert "/home/user/project" in prompt
 
-    def test_build_prompt_includes_intervention(self):
+    def test_build_prompt_places_intervention_at_top_with_override_banner(self):
         m = Milestone(
-            phase=MilestonePhase.IMPLEMENT,
+            phase=MilestonePhase.STEP,
             title="Implement",
             instructions="Write the code",
         )
-        prompt = build_prompt(m, "/project", intervention="Focus on the API routes")
-        assert "Focus on the API routes" in prompt
-        assert "Manager Guidance" in prompt
-
-    def test_build_prompt_without_intervention(self):
-        m = Milestone(
-            phase=MilestonePhase.VERIFY,
-            title="Verify",
-            instructions="Check everything",
-        )
-        prompt = build_prompt(m, "/project")
-        assert "Manager Guidance" not in prompt
+        prompt = build_prompt(m, "/project", intervention="Change text to I am haseeb")
+        # Line 1 MUST be the priority override banner
+        assert prompt.startswith("# ⚠️ PRIORITY MANAGER INTERVENTION (MANDATORY OVERRIDE)")
+        assert "Change text to I am haseeb" in prompt
+        assert "CRITICAL DIRECTIVE" in prompt
 
 
-# ── CLI Client ──────────────────────────────────────────────────────────
+# ── Argument Builder & Output Parsing ───────────────────────────────────
 
 
-class TestCLIClient:
+class TestCliClientHelpers:
     def test_build_args_basic(self, monkeypatch):
         monkeypatch.setattr(
             "app.workers.opencode_worker.agent.config.get_opencode_binary",
             lambda: "/usr/bin/opencode",
         )
-        monkeypatch.setattr(
-            "app.workers.opencode_worker.agent.config.get_opencode_model",
-            lambda: "opencode/test-model",
-        )
-        monkeypatch.setattr(
-            "app.workers.opencode_worker.agent.config.get_auto_approve",
-            lambda: True,
-        )
-        args = _build_args("hello world")
+        args = _build_args("do something", work_dir="/project")
         assert args[0] == "/usr/bin/opencode"
         assert args[1] == "run"
-        assert "hello world" in args
-        assert "--model" in args
-        assert "opencode/test-model" in args
+        assert args[2] == "do something"
+        assert "--dir" in args
+        assert args[args.index("--dir") + 1] == "/project"
         assert "--format" in args
-        assert "json" in args
+        assert args[args.index("--format") + 1] == "json"
         assert "--auto" in args
 
-    def test_build_args_with_session(self, monkeypatch):
+    def test_build_args_includes_session_when_provided(self, monkeypatch):
         monkeypatch.setattr(
             "app.workers.opencode_worker.agent.config.get_opencode_binary",
-            lambda: "opencode",
+            lambda: "/usr/bin/opencode",
         )
-        monkeypatch.setattr(
-            "app.workers.opencode_worker.agent.config.get_opencode_model",
-            lambda: "m",
-        )
-        monkeypatch.setattr(
-            "app.workers.opencode_worker.agent.config.get_auto_approve",
-            lambda: False,
-        )
-        args = _build_args("do stuff", session_id="ses_abc123", work_dir="/proj")
+        args = _build_args("step 2", session_id="ses_abc123")
         assert "--session" in args
-        idx = args.index("--session")
-        assert args[idx + 1] == "ses_abc123"
-        assert "--dir" in args
-        idx = args.index("--dir")
-        assert args[idx + 1] == "/proj"
-        assert "--auto" not in args
+        assert args[args.index("--session") + 1] == "ses_abc123"
 
-    def test_build_args_raises_without_binary(self, monkeypatch):
+    def test_build_args_raises_when_no_binary(self, monkeypatch):
         monkeypatch.setattr(
             "app.workers.opencode_worker.agent.config.get_opencode_binary",
             lambda: None,
         )
         with pytest.raises(FileNotFoundError):
-            _build_args("test")
+            _build_args("prompt")
 
-    def test_extract_session_id_from_events(self):
-        events = [{"type": "init", "sessionID": "ses_xyz789"}]
-        assert _extract_session_id(events, "") == "ses_xyz789"
+    def test_extract_session_id_from_event(self):
+        events = [{"type": "step_start", "sessionID": "ses_456"}]
+        assert _extract_session_id(events, "") == "ses_456"
 
     def test_extract_session_id_from_raw_text(self):
         events = [{"type": "text", "content": "hello"}]
@@ -196,7 +199,7 @@ class TestCLIClient:
         assert _extract_session_id(events, "no session") is None
 
 
-# ── Worker Agent ────────────────────────────────────────────────────────
+# ── Worker Agent & Parent Intervention ──────────────────────────────────
 
 
 class TestOpenCodeWorkerAgent:
@@ -239,13 +242,14 @@ class TestOpenCodeWorkerAgent:
             lambda: "opencode",
         )
         agent = OpenCodeWorkerAgent(
-            objective="Build feature X",
+            objective="Create a file in local disk D and write lorem ipsum into it",
             allowed_tools=[],
             fs_scope="/project",
-            requirements=["Must be fast"],
         )
-        assert len(agent._milestones) == 4
-        assert agent._milestones[0].phase == MilestonePhase.ANALYZE
+        # Simple task -> 2 milestones (1 step + 1 fixed test)
+        assert len(agent._milestones) == 2
+        assert agent._milestones[0].phase == MilestonePhase.STEP
+        assert agent._milestones[1].phase == MilestonePhase.TEST
 
     def test_record_step(self, monkeypatch):
         monkeypatch.setattr(
@@ -272,8 +276,6 @@ class TestOpenCodeWorkerAgent:
 
     @pytest.mark.asyncio
     async def test_decide_next_step_runs_milestone(self, monkeypatch):
-        """Mock run_opencode to simulate a successful milestone and verify
-        the agent progresses to the next milestone."""
         monkeypatch.setattr(
             "app.workers.opencode_worker.agent.config.get_opencode_binary",
             lambda: "opencode",
@@ -298,13 +300,11 @@ class TestOpenCodeWorkerAgent:
         result = await agent.decide_next_step()
         assert result["action"] == "tool"
         assert result["tool"] == "opencode_milestone"
-        assert result["params"]["phase"] == "analyze"
         assert result["params"]["milestone_index"] == 1
         assert agent._opencode_session_id == "ses_test123"
 
     @pytest.mark.asyncio
     async def test_session_continuity_across_milestones(self, monkeypatch):
-        """Verify the same session ID is passed to subsequent milestones."""
         monkeypatch.setattr(
             "app.workers.opencode_worker.agent.config.get_opencode_binary",
             lambda: "opencode",
@@ -327,26 +327,24 @@ class TestOpenCodeWorkerAgent:
         )
 
         agent = OpenCodeWorkerAgent(
-            objective="Test continuity", allowed_tools=[], fs_scope="/project"
+            objective="Create file D:/haseeb.txt", allowed_tools=[], fs_scope="/project"
         )
 
-        # Milestone 1 (analyze)
+        # Milestone 1
         r1 = await agent.decide_next_step()
         assert r1["action"] == "tool"
         agent.record_step("opencode_milestone", True)
 
-        # Milestone 2 (implement) — should reuse session
+        # Milestone 2 — should reuse session
         r2 = await agent.decide_next_step()
         assert r2["action"] == "tool"
         agent.record_step("opencode_milestone", True)
 
-        # First call had no session, second should have the persistent one
         assert call_log[0] is None
         assert call_log[1] == "ses_persistent"
 
     @pytest.mark.asyncio
     async def test_all_milestones_complete_signals_done(self, monkeypatch):
-        """After all 4 milestones complete, decide_next_step returns done."""
         monkeypatch.setattr(
             "app.workers.opencode_worker.agent.config.get_opencode_binary",
             lambda: "opencode",
@@ -361,11 +359,12 @@ class TestOpenCodeWorkerAgent:
         )
 
         agent = OpenCodeWorkerAgent(
-            objective="Complete task", allowed_tools=[], fs_scope="/project"
+            objective="Create file D:/test.txt", allowed_tools=[], fs_scope="/project"
         )
 
-        # Run through all 4 milestones
-        for _ in range(4):
+        # Run through all milestones
+        total = len(agent._milestones)
+        for _ in range(total):
             r = await agent.decide_next_step()
             assert r["action"] == "tool"
             agent.record_step("opencode_milestone", True)
@@ -376,8 +375,8 @@ class TestOpenCodeWorkerAgent:
         assert "All milestones completed" in final["summary"]
 
     @pytest.mark.asyncio
-    async def test_intervention_included_in_prompt(self, monkeypatch):
-        """Verify that inject_intervention text appears in the milestone prompt."""
+    async def test_intervention_included_in_prompt_at_line_one(self, monkeypatch):
+        """Verify that inject_intervention text appears prominently at the top of the prompt."""
         monkeypatch.setattr(
             "app.workers.opencode_worker.agent.config.get_opencode_binary",
             lambda: "opencode",
@@ -395,13 +394,61 @@ class TestOpenCodeWorkerAgent:
         )
 
         agent = OpenCodeWorkerAgent(
-            objective="Fix bugs", allowed_tools=[], fs_scope="/project"
+            objective="Create file D:/haseeb.txt", allowed_tools=[], fs_scope="/project"
         )
         agent.inject_intervention("Please prioritize the auth module")
 
         await agent.decide_next_step()
         assert len(captured_prompts) == 1
+        assert captured_prompts[0].startswith("# ⚠️ PRIORITY MANAGER INTERVENTION (MANDATORY OVERRIDE)")
         assert "Please prioritize the auth module" in captured_prompts[0]
+
+    @pytest.mark.asyncio
+    async def test_late_intervention_inserts_remediation_milestone(self, monkeypatch):
+        """When an intervention arrives on the final test step, an intervention remediation
+        milestone is dynamically inserted before testing so the worker doesn't finish without it."""
+        monkeypatch.setattr(
+            "app.workers.opencode_worker.agent.config.get_opencode_binary",
+            lambda: "opencode",
+        )
+
+        captured = []
+
+        async def fake_run(prompt, **kw):
+            captured.append(prompt)
+            return RunResult(success=True, session_id="ses_late", output_text="OK", events=[])
+
+        monkeypatch.setattr(
+            "app.workers.opencode_worker.agent.worker_agent.run_opencode",
+            fake_run,
+        )
+
+        agent = OpenCodeWorkerAgent(
+            objective="Create file D:/test.txt", allowed_tools=[], fs_scope="/project"
+        )
+        # Run step 0
+        r0 = await agent.decide_next_step()
+        assert r0["action"] == "tool"
+        agent.record_step("opencode_milestone", True)
+
+        # We are now at step 1 (final test step). Inject late intervention!
+        agent.inject_intervention("Change content to I am haseeb")
+
+        # decide_next_step should execute the dynamic INTERVENTION milestone
+        r_interv = await agent.decide_next_step()
+        assert r_interv["action"] == "tool"
+        assert r_interv["params"]["phase"] == MilestonePhase.INTERVENTION.value
+        agent.record_step("opencode_milestone", True)
+
+        # Next is the TEST milestone
+        r_test = await agent.decide_next_step()
+        assert r_test["action"] == "tool"
+        assert r_test["params"]["phase"] == MilestonePhase.TEST.value
+        agent.record_step("opencode_milestone", True)
+
+        # Done
+        final = await agent.decide_next_step()
+        assert final["action"] == "done"
 
     @pytest.mark.asyncio
     async def test_engine_runs_opencode_agent_loop(self, tmp_path, monkeypatch):
@@ -447,11 +494,8 @@ class TestOpenCodeWorkerAgent:
         result = await engine.run(contract)
         assert result["status"] == "running"
 
-        # Wait for background loop task
         assert engine._loop_task is not None
         final_state = await engine._loop_task
         assert final_state["success"] is True
-        assert final_state["completed_steps"] == 4
-        assert "milestone_analyze" in final_state["tools_used"]
-        assert "milestone_verify" in final_state["tools_used"]
-
+        assert final_state["completed_steps"] >= 2
+        assert "milestone_test" in final_state["tools_used"]

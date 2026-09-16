@@ -43,6 +43,10 @@ class TaskContract(BaseModel):
         default=None,
         description="Hard timeout after which the worker is interrupted.",
     )
+    model: Optional[str] = Field(
+        default=None,
+        description="Optional LLM model override (e.g. gemini-2.5-flash, openai/gpt-oss-120b).",
+    )
 
     @field_validator("fs_scope")
     @classmethod

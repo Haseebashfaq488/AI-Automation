@@ -45,6 +45,7 @@ yarn-error.log*
 *.log
 tunnel_service.log
 dbg_*.png
+qr_dom.png
 poc_result.png
 scratch/
 tmp_source.txt
@@ -52,3 +53,6 @@ tmp_source.txt
 # OS metadata
 Thumbs.db
 .DS_Store
+
+# Graphify cache
+graphify-out/cache/

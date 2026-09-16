@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import ToolOutputViewer from "./ToolOutputViewer";
 
 // Shared chat UI components used by the parent chat (page.js) and the
 // worker pages. Extracted so both views keep the same visual language.
@@ -219,9 +220,9 @@ export function ExecutionCard({ data }) {
                 </Link>
               </div>
             ) : r.success && r.data ? (
-              <pre className="mt-2 max-h-48 overflow-x-auto rounded-lg border border-zinc-800/50 bg-zinc-950/80 p-2 font-mono text-[11px] text-zinc-400">
-                {JSON.stringify(r.data, null, 2)}
-              </pre>
+              <div className="mt-2">
+                <ToolOutputViewer tool={r.tool} data={r.data} />
+              </div>
             ) : null}
           </div>
         ))}

@@ -13,46 +13,29 @@ const STATUS_STYLE = {
   idle: "border-zinc-700 bg-zinc-800 text-zinc-400",
 };
 
-const TOOL_OPTIONS = [
-  { name: "list_directory", label: "list_directory" },
-  { name: "read_file", label: "read_file" },
-  { name: "write_file", label: "write_file" },
-  { name: "create_file", label: "create_file" },
-  { name: "create_folder", label: "create_folder" },
-  { name: "exists", label: "exists" },
-  { name: "search_content", label: "search_content" },
-  { name: "search_files", label: "search_files" },
-  { name: "delete_file", label: "delete_file" },
-];
-
-const DEFAULT_TOOLS = TOOL_OPTIONS.map((t) => t.name);
-
 function ForkForm() {
   const router = useRouter();
   const [objective, setObjective] = useState("");
-  const [fsScope, setFsScope] = useState("D:/Ai automation backend");
-  const [tools, setTools] = useState(DEFAULT_TOOLS);
+  const [fsScope, setFsScope] = useState("D:/workspace");
+  const [workerType, setWorkerType] = useState("antigravity_worker");
+  const [model, setModel] = useState("gemini-3.8-flash-medium");
+  const [customModel, setCustomModel] = useState("");
   const [maxSteps, setMaxSteps] = useState(20);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [isOpen, setIsOpen] = useState(true);
 
-  function toggleTool(name) {
-    setTools((t) => (t.includes(name) ? t.filter((x) => x !== name) : [...t, name]));
-  }
-
   function applyPreset(type) {
     if (type === "implement") {
       setObjective("Implement new feature, write clean code, and verify tests pass");
-      setTools(["list_directory", "read_file", "write_file", "create_file", "exists"]);
     } else if (type === "refactor") {
       setObjective("Refactor code module to improve structure and maintain existing tests");
-      setTools(["list_directory", "read_file", "write_file", "search_content", "search_files"]);
     } else if (type === "files") {
       setObjective("Inspect directory structure and check file existence");
-      setTools(["list_directory", "exists", "search_files"]);
     }
   }
+
+  const effectiveModel = model === "custom" ? customModel.trim() : model;
 
   async function submit(e) {
     e.preventDefault();
@@ -65,9 +48,9 @@ function ForkForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           objective: objective.trim(),
-          worker_type: "opencode_worker",
-          fs_scope: fsScope.trim() || "D:/Ai automation backend",
-          allowed_tools: tools,
+          worker_type: workerType,
+          model: effectiveModel || undefined,
+          fs_scope: fsScope.trim() || "D:/workspace",
           max_steps: Math.max(1, Number(maxSteps) || 20),
         }),
       });
@@ -153,29 +136,93 @@ function ForkForm() {
                 className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950/80 px-3.5 py-2 font-mono text-xs text-zinc-200 outline-none transition focus:border-purple-600/70"
               />
             </div>
-          </div>
 
-          <div className="mt-4">
-            <label className="text-xs font-medium text-zinc-300">Allowed Tools ({tools.length} selected)</label>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {TOOL_OPTIONS.map((t) => (
-                <label
-                  key={t.name}
-                  className={`cursor-pointer rounded-lg border px-2.5 py-1 text-xs font-medium transition ${
-                    tools.includes(t.name)
-                      ? "border-purple-700/70 bg-purple-950/50 text-purple-200 shadow-sm"
-                      : "border-zinc-800 bg-zinc-950/50 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    className="hidden"
-                    checked={tools.includes(t.name)}
-                    onChange={() => toggleTool(t.name)}
-                  />
-                  {t.label}
-                </label>
-              ))}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className="text-xs font-medium text-zinc-300">Worker Engine</label>
+                <div className="mt-1.5 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setWorkerType("antigravity_worker")}
+                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl border py-2.5 px-3 text-xs font-semibold transition ${
+                      workerType === "antigravity_worker"
+                        ? "border-sky-500 bg-sky-950/60 text-sky-200 shadow-sm shadow-sky-950/40"
+                        : "border-zinc-800 bg-zinc-950/50 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                    }`}
+                  >
+                    <span>🌌</span>
+                    <span>Antigravity (agy CLI)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWorkerType("opencode_worker")}
+                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl border py-2.5 px-3 text-xs font-semibold transition ${
+                      workerType === "opencode_worker"
+                        ? "border-purple-500 bg-purple-950/60 text-purple-200 shadow-sm shadow-purple-950/40"
+                        : "border-zinc-800 bg-zinc-950/50 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                    }`}
+                  >
+                    <span>⚡</span>
+                    <span>OpenCode CLI</span>
+                  </button>
+                </div>
+              </div>
+
+              {workerType === "antigravity_worker" ? (
+                <div>
+                  <label className="text-xs font-medium text-zinc-300">Model Selection</label>
+                  <select
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-zinc-950/80 px-3.5 py-2 font-mono text-xs text-zinc-200 outline-none transition focus:border-sky-500/70"
+                  >
+                    <optgroup label="── Gemini 3.8 ──" className="bg-zinc-900 text-zinc-300 font-sans">
+                      <option value="gemini-3.8-flash-low">Gemini 3.8 Flash (Low)</option>
+                      <option value="gemini-3.8-flash-medium">Gemini 3.8 Flash (Medium)</option>
+                      <option value="gemini-3.8-flash-high">Gemini 3.8 Flash (High)</option>
+                    </optgroup>
+                    <optgroup label="── Gemini 3.7 ──" className="bg-zinc-900 text-zinc-300 font-sans">
+                      <option value="gemini-3.7-flash-low">Gemini 3.7 Flash (Low)</option>
+                      <option value="gemini-3.7-flash-medium">Gemini 3.7 Flash (Medium)</option>
+                      <option value="gemini-3.7-flash-high">Gemini 3.7 Flash (High)</option>
+                    </optgroup>
+                    <optgroup label="── Gemini 3.6 ──" className="bg-zinc-900 text-zinc-300 font-sans">
+                      <option value="gemini-3.6-flash-low">Gemini 3.6 Flash (Low)</option>
+                      <option value="gemini-3.6-flash-medium">Gemini 3.6 Flash (Medium)</option>
+                      <option value="gemini-3.6-flash-high">Gemini 3.6 Flash (High)</option>
+                    </optgroup>
+                    <optgroup label="── Gemini 3.1 Pro ──" className="bg-zinc-900 text-zinc-300 font-sans">
+                      <option value="gemini-3.1-pro-low">Gemini 3.1 Pro (Low)</option>
+                      <option value="gemini-3.1-pro-high">Gemini 3.1 Pro (High)</option>
+                    </optgroup>
+                    <optgroup label="── Claude ──" className="bg-zinc-900 text-zinc-300 font-sans">
+                      <option value="claude-sonnet-4-6">Claude Sonnet 4.6 (Thinking)</option>
+                      <option value="claude-opus-4-6-thinking">Claude Opus 4.6 (Thinking)</option>
+                    </optgroup>
+                    <optgroup label="── Open-Source ──" className="bg-zinc-900 text-zinc-300 font-sans">
+                      <option value="gpt-oss-120b-medium">GPT-OSS 120B (Medium)</option>
+                      <option value="custom">Custom Model ID...</option>
+                    </optgroup>
+                  </select>
+                  {model === "custom" && (
+                    <input
+                      value={customModel}
+                      onChange={(e) => setCustomModel(e.target.value)}
+                      placeholder="e.g. meta-llama/llama-3.1-405b"
+                      className="mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-1.5 font-mono text-xs text-zinc-200 outline-none focus:border-sky-500"
+                    />
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-purple-900/40 bg-purple-950/20 p-3 flex flex-col justify-center">
+                  <p className="text-xs font-semibold text-purple-200 flex items-center gap-1.5">
+                    <span>⚡</span> OpenCode Default Model
+                  </p>
+                  <p className="text-[11px] text-zinc-400 mt-1">
+                    OpenCode operates with its single configured native model.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -193,7 +240,7 @@ function ForkForm() {
             </label>
             <button
               type="submit"
-              disabled={busy || !objective.trim() || tools.length === 0}
+              disabled={busy || !objective.trim()}
               className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-2 text-xs font-semibold text-white shadow-md shadow-purple-950/40 transition hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40"
             >
               {busy ? "Forking..." : "⚡ Launch Worker"}
@@ -422,23 +469,6 @@ export default function WorkersPage() {
                       ) : ""}
                     </p>
 
-                    {w.allowed_tools && w.allowed_tools.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {[...new Set(w.allowed_tools)].slice(0, 5).map((tool, idx) => (
-                          <span
-                            key={`${tool}-${idx}`}
-                            className="rounded bg-zinc-950/80 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400 border border-zinc-800/50"
-                          >
-                            {tool}
-                          </span>
-                        ))}
-                        {w.allowed_tools.length > 5 && (
-                          <span className="text-[10px] text-zinc-500 self-center">
-                            +{w.allowed_tools.length - 5} more
-                          </span>
-                        )}
-                      </div>
-                    )}
                   </div>
 
                   <div className="flex shrink-0 flex-col items-end gap-2.5">
