@@ -293,7 +293,7 @@ async def run_antigravity_cli(
     except FileNotFoundError as exc:
         return RunResult(success=False, error=str(exc))
 
-    logger.info("agy run: %s", " ".join(args[:6]) + " ...")
+    logger.info("agy run: %s --model %s (prompt_len=%d)", args[0], model or "default", len(prompt))
 
     try:
         returncode, events, raw_text, stderr_text = await asyncio.to_thread(

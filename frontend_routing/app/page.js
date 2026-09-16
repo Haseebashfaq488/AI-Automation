@@ -151,7 +151,7 @@ export default function Home() {
     setConfirmedPlanIds(new Set());
     try {
       window.sessionStorage.removeItem(CHAT_STORAGE_KEY);
-      await fetch(`${API_URL}/agent/history?session_id=default`, { method: "DELETE" });
+      // Persistent brain memory is preserved in JARVIS_MEMORY.md across visual chat resets
     } catch {
       // best effort
     }
@@ -165,7 +165,7 @@ export default function Home() {
       await fetch(`${API_URL}/workers/open-terminal`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ directory: "D:/Ai automation backend" }),
+        body: JSON.stringify({ directory: "D:/workspace" }),
       });
     } catch {
       /* ignore */
@@ -194,8 +194,11 @@ export default function Home() {
                 }`}
                 title={backendOnline ? "Backend online" : "Backend offline"}
               />
+              <span className="rounded-full border border-sky-800/50 bg-sky-950/60 px-2 py-0.5 text-[10px] font-medium text-sky-300">
+                🌌 Antigravity Brain
+              </span>
             </div>
-            <p className="text-xs text-zinc-400">Agent & Worker Orchestrator</p>
+            <p className="text-xs text-zinc-400">Living Memory & Agent Orchestrator</p>
           </div>
         </div>
 
@@ -206,14 +209,15 @@ export default function Home() {
             className="inline-flex items-center gap-1.5 rounded-xl border border-sky-700/60 bg-sky-950/60 px-3.5 py-1.5 text-xs font-semibold text-sky-300 shadow-sm transition hover:border-sky-500 hover:bg-sky-900/60 hover:text-white disabled:opacity-40"
           >
             <span>💻</span>
-            <span>{launchingTerminal ? "Opening..." : "Open OpenCode CLI"}</span>
+            <span>{launchingTerminal ? "Opening..." : "Open Terminal"}</span>
           </button>
           <button
             onClick={newChat}
             disabled={busy}
+            title="Clear current screen (brain memory is retained)"
             className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white disabled:opacity-40"
           >
-            New Chat
+            ✨ New Chat
           </button>
           <Link
             href="/workers"

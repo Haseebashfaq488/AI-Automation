@@ -13,17 +13,22 @@ from app.registry import registry
 router = APIRouter(prefix="/agent", tags=["agent"])
 logger = logging.getLogger("jarvis.agent")
 
-# Adapter is created lazily so the app boots even when GROQ_API_KEY is missing.
-_adapter: Optional[OpenCodeAdapter] = None
+# Adapter is created lazily so the app boots smoothly.
+_adapter: Optional[Any] = None
 
 
-def _get_adapter() -> OpenCodeAdapter:
+def _get_adapter() -> Any:
     global _adapter
     if _adapter is None:
-        try:
-            _adapter = OpenCodeAdapter(registry=registry)
-        except RuntimeError as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        from app.workers.antigravity_worker.agent import config as agy_config
+        if agy_config.get_agy_binary():
+            from app.modules.antigravity.brain import get_brain_manager
+            _adapter = get_brain_manager(registry=registry)
+        else:
+            try:
+                _adapter = OpenCodeAdapter(registry=registry)
+            except RuntimeError as exc:
+                raise HTTPException(status_code=503, detail=str(exc)) from exc
     return _adapter
 
 
