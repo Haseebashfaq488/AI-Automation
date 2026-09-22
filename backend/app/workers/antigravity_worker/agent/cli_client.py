@@ -114,14 +114,90 @@ def _extract_session_id(events: List[Dict[str, Any]], raw_text: str) -> Optional
     return None
 
 
+def _run_subprocess_sync(
+    args: List[str],
+    prompt: str,
+    work_dir: Optional[str] = None,
+    on_event: Optional[Callable[[Dict[str, Any]], None]] = None,
+) -> Tuple[int, List[Dict[str, Any]], str, Optional[str], Optional[str]]:
+    events: List[Dict[str, Any]] = []
+    text_parts: List[str] = []
+    stderr_text = ""
+    extracted_sid = None
+
+    proc = subprocess.Popen(
+        args,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        cwd=work_dir or "D:/AI-Automation",
+        bufsize=1,
+    )
+
+    payload = json.dumps({"event": "user", "message": {"content": prompt}}) + "\n"
+    proc.stdin.write(payload)
+    proc.stdin.flush()
+
+    while True:
+        line = proc.stdout.readline()
+        if not line:
+            break
+        line_str = line.strip()
+        if not line_str:
+            continue
+        try:
+            ev = json.loads(line_str)
+            events.append(ev)
+
+            if on_event:
+                try:
+                    on_event(ev)
+                except Exception as cb_err:
+                    logger.debug("on_event callback error: %s", cb_err)
+
+            if not extracted_sid:
+                extracted_sid = ev.get("conversation_id") or ev.get("conversationId")
+
+            event_type = ev.get("event")
+            if event_type == "init":
+                continue
+
+            delta = ev.get("step_update", {}).get("text_delta")
+            if delta:
+                text_parts.append(str(delta))
+
+            if event_type == "result":
+                res_obj = ev.get("result", {})
+                if not extracted_sid:
+                    extracted_sid = res_obj.get("conversation_id")
+                final_resp = res_obj.get("response")
+                if final_resp and not text_parts:
+                    text_parts.append(str(final_resp))
+                if res_obj.get("status") == "ERROR" and res_obj.get("error"):
+                    stderr_text = str(res_obj.get("error"))
+                break
+        except json.JSONDecodeError:
+            text_parts.append(line_str)
+
+    try:
+        proc.wait(timeout=3.0)
+    except Exception:
+        proc.terminate()
+        proc.wait()
+
+    return proc.returncode, events, "".join(text_parts).strip(), stderr_text or None, extracted_sid
+
+
 async def run_antigravity_cli(
     prompt: str,
-    *,
     session_id: Optional[str] = None,
     work_dir: Optional[str] = None,
     model: Optional[str] = None,
+    on_event: Optional[Callable[[Dict[str, Any]], None]] = None,
     timeout: Optional[int] = None,
-    on_event: Any = None,
 ) -> RunResult:
     """Execute `agy` via stream-json stdin/stdout and collect structured results."""
     timeout = timeout or config.get_milestone_timeout()
@@ -137,74 +213,9 @@ async def run_antigravity_cli(
 
     logger.info("agy run: %s --model %s (prompt_len=%d)", args[0], model or "default", len(prompt))
 
-    def _sync_oneshot() -> Tuple[int, List[Dict[str, Any]], str, Optional[str], Optional[str]]:
-        events: List[Dict[str, Any]] = []
-        text_parts: List[str] = []
-        stderr_text = ""
-        extracted_sid = None
-
-        proc = subprocess.Popen(
-            args,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            cwd=work_dir or "D:/AI-Automation",
-            bufsize=1,
-        )
-
-        payload = json.dumps({"event": "user", "message": {"content": prompt}}) + "\n"
-        proc.stdin.write(payload)
-        proc.stdin.flush()
-
-        while True:
-            line = proc.stdout.readline()
-            if not line:
-                break
-            line_str = line.strip()
-            if not line_str:
-                continue
-            try:
-                ev = json.loads(line_str)
-                events.append(ev)
-
-                if not extracted_sid:
-                    extracted_sid = ev.get("conversation_id") or ev.get("conversationId")
-
-                event_type = ev.get("event")
-                if event_type == "init":
-                    continue
-
-                delta = ev.get("step_update", {}).get("text_delta")
-                if delta:
-                    text_parts.append(str(delta))
-
-                if event_type == "result":
-                    res_obj = ev.get("result", {})
-                    if not extracted_sid:
-                        extracted_sid = res_obj.get("conversation_id")
-                    final_resp = res_obj.get("response")
-                    if final_resp and not text_parts:
-                        text_parts.append(str(final_resp))
-                    if res_obj.get("status") == "ERROR" and res_obj.get("error"):
-                        stderr_text = str(res_obj.get("error"))
-                    break
-            except json.JSONDecodeError:
-                text_parts.append(line_str)
-
-        try:
-            proc.wait(timeout=3.0)
-        except Exception:
-            proc.terminate()
-            proc.wait()
-
-        return proc.returncode, events, "".join(text_parts).strip(), stderr_text or None, extracted_sid
-
     try:
         returncode, events, output_text, stderr_text, extracted_sid = await asyncio.wait_for(
-            asyncio.to_thread(_sync_oneshot),
+            asyncio.to_thread(_run_subprocess_sync, args, prompt, work_dir, on_event),
             timeout=timeout,
         )
     except asyncio.TimeoutError:
@@ -217,15 +228,6 @@ async def run_antigravity_cli(
         )
     except Exception as exc:
         return RunResult(success=False, error=f"Failed to start agy: {exc}")
-
-    if on_event and events:
-        for ev in events:
-            try:
-                res = on_event(ev)
-                if asyncio.iscoroutine(res):
-                    await res
-            except Exception:
-                pass
 
     has_valid_output = bool(output_text and len(output_text.strip()) > 0)
     success = (returncode == 0) or has_valid_output or not stderr_text

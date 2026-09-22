@@ -32,36 +32,24 @@ class JarvisBrainManager:
     """Central orchestrator for Jarvis's persistent Antigravity Brain."""
 
     _KNOWN_TOOLS = {
-        "list_directory": {"path": "absolute path of the directory to list"},
-        "exists": {"path": "absolute path to check existence of"},
-        "metadata": {"path": "absolute path to get metadata for"},
-        "search_files": {"path": "directory to search in", "pattern": "glob pattern to match file names (e.g. *.txt)"},
-        "read_file": {"path": "absolute path of the file to read"},
-        "create_file": {"path": "absolute path of the new file"},
-        "create_folder": {"path": "absolute path of the new folder"},
-        "write_file": {"path": "absolute path of the file to write", "content": "file contents"},
-        "copy": {"source": "absolute source path", "destination": "absolute destination path"},
-        "move": {"source": "absolute source path", "destination": "absolute destination path"},
-        "rename": {"source": "absolute path of the file/folder to rename", "destination": "absolute new path"},
-        "organize_downloads": {"source_dir": "directory containing the files", "target_dir": "optional destination directory"},
-        "search_content": {"path": "file or directory to search in", "query": "text to find inside files"},
-        "delete_file": {"path": "absolute path of the file to delete"},
-        "delete_folder": {"path": "absolute path of the folder to delete"},
-        "archive": {"source": "file or folder to zip", "destination": "absolute path of the .zip archive to create"},
-        "extract": {"path": "absolute path of the .zip archive", "destination": "optional folder to extract into"},
-        "touch": {"path": "file to create or update the timestamp of"},
-        "bulk_rename": {"path": "folder containing the files", "pattern": "new name pattern, use # for a counter"},
-        "append_file": {"path": "file to append to", "content": "text to append"},
+        # 1. WhatsApp Module (Communication)
         "send_message": {"to": "WhatsApp chat name or phone number", "message": "text to send"},
         "send_file": {"to": "WhatsApp chat name or phone number", "path": "absolute path of the local file to send"},
         "list_chats": {},
         "get_messages": {"chat": "WhatsApp chat name or id", "limit": "optional number of messages"},
         "search_messages": {"chat": "WhatsApp chat name or id", "query": "text to search for"},
-        "send_report": {"to": "WhatsApp chat name or phone number", "path": "file or folder to summarize and send"},
-        "unread_digest": {"to": "optional — chat to send the digest to"},
+
+        # 2. Gmail Module (Email & Search)
         "send_email": {"to": "recipient email address", "subject": "optional subject", "body": "email body text", "attachments": "optional list of absolute file paths to attach"},
         "list_recent_emails": {"query": "optional search query (e.g. from:user subject:hello)", "max_results": "optional maximum number of emails"},
-        "fork": {"objective": "description of the coding task to fork to the worker"},
+
+        # 3. Autonomous Task Delegation & Worker Forking
+        "fork": {
+            "objective": "Clear description of the engineering, coding, file, or multi-step task to delegate to the worker",
+            "fs_scope": "Target workspace directory (default 'D:/workspace')",
+            "worker_type": "Worker engine type ('antigravity_worker')",
+            "max_steps": "Maximum execution steps (default 20)",
+        },
     }
 
     def __init__(
@@ -231,12 +219,12 @@ class JarvisBrainManager:
         tools = self._tools_block()
 
         return (
-            "You are Jarvis, a personal AI manager and task coordinator for Haseeb (Phone: +923098956995, Workspace: D:/workspace).\n\n"
+            "You are Jarvis, a personal AI executive manager and task coordinator for Haseeb (Phone: +923098956995, Workspace: D:/workspace).\n\n"
             "### CORE RESPONSIBILITIES & DECISION RULES:\n"
-            "1. ORCHESTRATION & DELEGATION: You never write code, generate files, or solve multi-step engineering tasks directly in conversational text. You coordinate and plan.\n"
-            "2. AUTONOMOUS WORKERS (`fork`): Whenever the user asks to create, build, code, develop, scrape, refactor, test, analyze, or generate multi-step documents/scripts/apps, ALWAYS return a plan using the `fork` tool with `objective` set to the task description, `fs_scope` set to 'D:/workspace', and `worker_type` set to 'antigravity_worker'.\n"
-            "3. ATOMIC TOOLS: When the user requests an explicit single-step operation (WhatsApp send/read, Gmail send/search, File read/create/move/delete/archive/list/exists), return a plan with that exact tool and the extracted parameters.\n"
-            "4. DIRECT CONVERSATION: If the user is asking a conversational question, inquiring about system capabilities, or discussing general topics, return a direct `response` object.\n"
+            "1. ORCHESTRATION & TASK DELEGATION: You never write raw code, create files, edit directories, or execute engineering tasks directly in chat text. You coordinate, manage tasks, and plan.\n"
+            "2. AUTONOMOUS TASK FORKING (`fork`): Whenever the user asks to create files, write code, build apps, develop scripts, scrape web data, refactor, run terminal commands, test, analyze, or perform ANY file/directory operations, ALWAYS return a plan using the `fork` tool with `objective` set to the task description, `fs_scope` set to 'D:/workspace', and `worker_type` set to 'antigravity_worker'. The forked worker has the full native Antigravity toolkit (write_to_file, replace_file_content, run_command, view_file, list_dir, grep_search, search_web, etc.).\n"
+            "3. ATOMIC COMMUNICATION TOOLS: When the user requests an explicit single-step communication operation (WhatsApp send message/file or read chats, Gmail send email with attachments or search inbox), return a plan with that exact tool and the extracted parameters.\n"
+            "4. DIRECT CONVERSATION: If the user is asking a conversational question, inquiring about system capabilities, checking task/memory status, or discussing general topics, return a direct `response` object.\n"
             "5. NO PERMISSION ASKING: Never ask 'Would you like me to do that?'. Always return the structured JSON `plan` so the UI presents confirmation buttons directly.\n"
             "6. JSON OUTPUT ONLY: Output must strictly be a single valid JSON object without extra markdown explanations.\n\n"
             f"{memory_block}"

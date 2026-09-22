@@ -2,11 +2,52 @@ import asyncio
 import json
 import threading
 from collections.abc import Callable, Coroutine
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 # Global in‑process bus: session_id → list of callbacks (async or sync)
 _bus: Dict[str, List[Callable]] = {}
 _bus_lock = threading.Lock()
+
+# Global in-process queue bus for SSE live streaming: session_id → list of asyncio.Queue
+_queues: Dict[str, List[asyncio.Queue]] = {}
+_queues_lock = threading.Lock()
+
+
+def subscribe(session_id: str) -> asyncio.Queue:
+    """Subscribe a new asyncio.Queue to receive live streaming events for session_id."""
+    q: asyncio.Queue = asyncio.Queue(maxsize=500)
+    with _queues_lock:
+        _queues.setdefault(session_id, []).append(q)
+    return q
+
+
+def unsubscribe(session_id: str, queue: asyncio.Queue) -> None:
+    """Unsubscribe and remove an asyncio.Queue from session_id's active subscribers."""
+    with _queues_lock:
+        queue_list = _queues.get(session_id, [])
+        if queue in queue_list:
+            queue_list.remove(queue)
+        if not queue_list and session_id in _queues:
+            _queues.pop(session_id, None)
+
+
+def emit_to_queues(session_id: str, event: Dict[str, Any]) -> None:
+    """Forward a streaming event to all active async queues subscribed to session_id (thread-safe)."""
+    with _queues_lock:
+        queues = _queues.get(session_id, []).copy()
+
+    for q in queues:
+        try:
+            loop = getattr(q, "_loop", None)
+            if loop and loop.is_running():
+                loop.call_soon_threadsafe(
+                    lambda _q=q, _ev=event: _q.put_nowait(_ev) if not _q.full() else None
+                )
+            else:
+                if not q.full():
+                    q.put_nowait(event)
+        except Exception:
+            pass
 
 
 def on(session_id: str, callback: Callable) -> None:

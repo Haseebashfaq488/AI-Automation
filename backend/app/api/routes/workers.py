@@ -298,6 +298,7 @@ def _agent_factory_for(worker_type: str):
                 success_criteria=contract.success_criteria,
                 model=contract.model,
                 master_prompt=contract.master_prompt,
+                worker_session_id=contract.task_id,
             )
 
         return factory
@@ -481,6 +482,87 @@ async def worker_events(session_id: str, request: Request):
 
     return StreamingResponse(
         event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+@router.get("/{session_id}/stream")
+async def worker_stream(session_id: str, request: Request):
+    """Real-time SSE stream of raw Antigravity CLI events (step_update deltas, tool calls, and result)."""
+    from app.workers.base.session import WorkerSession
+
+    eng = _engines.get(session_id)
+    session_dir = (
+        eng._session.path if eng and eng._session else WorkerSession.SESSIONS_ROOT / session_id
+    )
+
+    if not eng and not (session_dir / "task.json").is_file():
+        raise HTTPException(status_code=404, detail="Worker session not found")
+
+    # If the session is already completed before connection, return final result
+    is_completed = False
+    result_data = None
+    if eng:
+        state = eng.get_state()
+        if state.get("status") in ("completed", "cancelled"):
+            is_completed = True
+            result_data = eng.get_result()
+    else:
+        result_file = session_dir / "result.json"
+        if result_file.is_file():
+            is_completed = True
+            try:
+                result_data = json.loads(result_file.read_text(encoding="utf-8"))
+            except Exception:
+                result_data = {}
+
+    if is_completed:
+        async def finished_generator():
+            yield f"data: {json.dumps({'event': 'result', 'result': result_data or {}})}\n\n"
+
+        return StreamingResponse(
+            finished_generator(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+                "Connection": "keep-alive",
+            },
+        )
+
+    queue = bus_mod.subscribe(session_id)
+
+    async def stream_generator():
+        try:
+            while not await request.is_disconnected():
+                try:
+                    event = await asyncio.wait_for(queue.get(), timeout=1.0)
+                    yield f"data: {json.dumps(event)}\n\n"
+
+                    # If this is the terminal result event, finish streaming cleanly
+                    if isinstance(event, dict):
+                        if event.get("event") == "result" or event.get("type") == "WORK_COMPLETED":
+                            break
+                except asyncio.TimeoutError:
+                    # Check if engine finished while waiting
+                    if eng:
+                        cur_status = eng.get_state().get("status")
+                        if cur_status in ("completed", "cancelled") and queue.empty():
+                            final_res = eng.get_result()
+                            yield f"data: {json.dumps({'event': 'result', 'result': final_res or {}})}\n\n"
+                            break
+                    # SSE comment keep-alive heartbeat every 30s
+                    yield ": keep-alive\n\n"
+        finally:
+            bus_mod.unsubscribe(session_id, queue)
+
+    return StreamingResponse(
+        stream_generator(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

@@ -170,3 +170,29 @@ class TestWorkersAPI:
         assert resp.status_code == 200
         assert resp.text == "hello artifact"
 
+    def test_raw_worker_stream_sse(self, client):
+        from app.workers.base import bus as bus_mod
+
+        # 1. Test bus queue pub/sub directly
+        test_sid = "test_stream_session_123"
+        q = bus_mod.subscribe(test_sid)
+        test_event = {"event": "step_update", "step_update": {"text_delta": "Processing live"}}
+        bus_mod.emit_to_queues(test_sid, test_event)
+        assert not q.empty()
+        assert q.get_nowait() == test_event
+        bus_mod.unsubscribe(test_sid, q)
+
+        # 2. Test endpoint on completed session
+        resp = client.post("/workers/fork", json={
+            "objective": "raw sse test",
+            "allowed_tools": ["create_file"],
+            "fs_scope": SCOPE,
+        })
+        session_id = resp.json()["session_id"]
+        _wait_for_terminal_state(client, session_id)
+
+        # Session is completed; endpoint should return result event stream
+        resp_stream = client.get(f"/workers/{session_id}/stream")
+        assert resp_stream.status_code == 200
+        assert "result" in resp_stream.text
+

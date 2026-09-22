@@ -43,7 +43,7 @@ class TestAntigravityCLIClient:
 
     @pytest.mark.asyncio
     async def test_run_antigravity_cli_success(self):
-        mock_result = (0, [{"type": "text", "content": "done"}], "agy execution complete", "")
+        mock_result = (0, [{"type": "text", "content": "done"}], "agy execution complete", "", "agy_ses_123")
         with patch.object(config, "get_agy_binary", return_value="agy.exe"), \
              patch("app.workers.antigravity_worker.agent.cli_client._run_subprocess_sync", return_value=mock_result):
             res = await run_antigravity_cli("test prompt")

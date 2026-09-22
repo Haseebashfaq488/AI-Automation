@@ -7,11 +7,12 @@ standard engineering testing protocols, and real-time manager intervention injec
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from app.workers.antigravity_worker.agent import config
 from app.workers.antigravity_worker.agent.cli_client import RunResult, run_antigravity_cli
 from app.workers.antigravity_worker.agent.milestones import build_master_task_prompt
+from app.workers.base import bus as bus_mod
 
 logger = logging.getLogger("jarvis.worker.antigravity.agent")
 
@@ -29,6 +30,7 @@ class AntigravityWorkerAgent:
         success_criteria: List[str] | None = None,
         model: Optional[str] = None,
         master_prompt: Optional[str] = None,
+        worker_session_id: Optional[str] = None,
     ):
         self.objective = objective
         self.fs_scope = fs_scope
@@ -37,6 +39,7 @@ class AntigravityWorkerAgent:
         self.success_criteria = success_criteria or []
         self.model = model
         self.master_prompt = master_prompt
+        self.worker_session_id = worker_session_id
 
         # Check binary availability for CLI
         self.cli_binary = config.get_agy_binary()
@@ -51,6 +54,25 @@ class AntigravityWorkerAgent:
         self._execution_summary: Optional[str] = None
         self._executed_autonomous: bool = False
         self._step_count: int = 0
+
+    def _make_on_event(self) -> Optional[Callable[[Dict[str, Any]], None]]:
+        """Create a real-time event forwarder for SSE consumers."""
+        target_ids = []
+        if self.worker_session_id:
+            target_ids.append(self.worker_session_id)
+        if self._session_id and self._session_id not in target_ids:
+            target_ids.append(self._session_id)
+
+        def _on_event(ev: Dict[str, Any]) -> None:
+            # Also capture agy session id if it appears in stream
+            agy_sid = ev.get("conversation_id") or ev.get("conversationId")
+            for tid in target_ids:
+                bus_mod.emit_to_queues(tid, ev)
+            if agy_sid and agy_sid not in target_ids:
+                target_ids.append(agy_sid)
+                bus_mod.emit_to_queues(agy_sid, ev)
+
+        return _on_event
 
     def record_step(
         self, tool: str, success: bool, output: Any = None, error: Any = None
@@ -99,6 +121,7 @@ class AntigravityWorkerAgent:
                 session_id=self._session_id,
                 work_dir=self.fs_scope,
                 model=self.model,
+                on_event=self._make_on_event(),
             )
             if res.session_id:
                 self._session_id = res.session_id
@@ -147,6 +170,7 @@ class AntigravityWorkerAgent:
                 session_id=self._session_id,
                 work_dir=self.fs_scope,
                 model=self.model,
+                on_event=self._make_on_event(),
             )
 
             if res.session_id:

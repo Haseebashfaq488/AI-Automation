@@ -56,6 +56,7 @@ class WorkerEngine:
 
     def fork(self, contract: TaskContract) -> WorkerSession:
         """Create the on‑disk worker session from a contract."""
+        contract.task_id = contract.task_id or self._session_id
         self._contract = contract
         self._session = WorkerSession(self._session_id, contract)
         self._session.fork()
@@ -148,6 +149,8 @@ class WorkerEngine:
 
         agent = self._agent_factory(contract) if self._agent_factory else None
         if agent is not None:
+            if hasattr(agent, "worker_session_id") and not getattr(agent, "worker_session_id", None):
+                agent.worker_session_id = self._session_id
             binary_check = None
             try:
                 from app.workers.antigravity_worker.agent import config as agy_config

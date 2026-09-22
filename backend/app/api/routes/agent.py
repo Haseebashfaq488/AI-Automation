@@ -208,18 +208,26 @@ _DEFAULT_FORK_TOOLS = [
 
 
 async def _fork_task(params: Dict[str, Any], prompt: str) -> Dict[str, Any]:
-    """Fork a background worker session via the workers module.
-
-    `fork` is a pseudo-tool: the LLM plans it like any other tool, but it is
-    executed here against the worker engine store instead of the tool registry.
-    """
+    """Fork a background worker session via the workers module and record a tracked Task in SQLite."""
     import os
     from app.api.routes import workers as workers_routes
     from app.workers.base.contract import TaskContract
 
     objective = (params.get("objective") or "").strip() or prompt.strip() or "Forked task"
-    fs_scope = params.get("fs_scope") or os.path.abspath(os.sep)
+    fs_scope = params.get("fs_scope") or "D:/workspace"
     allowed = params.get("allowed_tools") or list(_DEFAULT_FORK_TOOLS)
+
+    # 1. Create a tracked Task record in SQLite database
+    db_task_id = None
+    try:
+        from app.modules.database.db import SessionLocal
+        from app.modules.database.repository import Repository
+        with SessionLocal() as db:
+            repo = Repository(db)
+            db_task = repo.create_task(name=objective, status="running")
+            db_task_id = db_task.id
+    except Exception as exc:
+        logger.warning("Could not persist Task to database: %s", exc)
 
     try:
         contract = TaskContract(
@@ -234,6 +242,12 @@ async def _fork_task(params: Dict[str, Any], prompt: str) -> Dict[str, Any]:
             model=params.get("model"),
         )
     except Exception as exc:
+        if db_task_id:
+            try:
+                with SessionLocal() as db:
+                    Repository(db).update_task_status(db_task_id, "failed")
+            except Exception:
+                pass
         return {"success": False, "data": None, "error": {"code": "INVALID_CONTRACT", "message": str(exc)}}
 
     try:
@@ -241,16 +255,24 @@ async def _fork_task(params: Dict[str, Any], prompt: str) -> Dict[str, Any]:
             contract, worker_type=params.get("worker_type", "antigravity_worker")
         )
     except Exception as exc:
+        if db_task_id:
+            try:
+                with SessionLocal() as db:
+                    Repository(db).update_task_status(db_task_id, "failed")
+            except Exception:
+                pass
         return {"success": False, "data": None, "error": {"code": "FORK_FAILED", "message": str(exc)}}
 
     session_id = state["session_id"]
     return {
         "success": True,
         "data": {
+            "task_id": db_task_id,
             "session_id": session_id,
             "status": state.get("status"),
             "worker_url": f"/worker/{session_id}",
-            "message": f"Worker {session_id} forked — open /worker/{session_id} to watch it live.",
+            "stream_url": f"/workers/{session_id}/stream",
+            "message": f"Task #{db_task_id or session_id} forked — open /workers/{session_id}/stream to watch live.",
         },
     }
 
