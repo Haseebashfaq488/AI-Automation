@@ -1,7 +1,7 @@
 # Graph Report - AI-Automation  (2026-09-22)
 
 ## Corpus Check
-- 188 files · ~83,802 words
+- 188 files · ~86,827 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 10 file(s) not represented in the graph (top: (none) 5, .bat 2, .example 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9e6ea5db`
+- Built from commit: `35d1fdf2`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -226,7 +226,7 @@ Nodes (12): LongTermMemory, SQLite-backed store of durable facts (deduplicated, 
 
 ### Community 10 - "OpenCodeAdapter"
 Cohesion: 0.12
-Nodes (15): OpenCodeAdapter, Any, Adapter to communicate with the Groq LLM and translate prompts into tool plans.…, Prompt used for single-step execution (legacy / fallback)., Send a chat-completion request from a full messages array and return content., Send a chat-completion request and return the raw content string., Parse the LLM's raw output as JSON, returning None on failure., Phase 1 — Analyze the user's prompt and return a plan or direct response. Args:… (+7 more)
+Nodes (15): OpenCodeAdapter, Any, Prompt that makes the LLM return a structured plan (or direct response)., Adapter to communicate with the Groq LLM and translate prompts into tool plans.…, Prompt used for single-step execution (legacy / fallback)., Send a chat-completion request from a full messages array and return content., Send a chat-completion request and return the raw content string., Parse the LLM's raw output as JSON, returning None on failure. (+7 more)
 
 ### Community 11 - "What You Must Do When Invoked"
 Cohesion: 0.08

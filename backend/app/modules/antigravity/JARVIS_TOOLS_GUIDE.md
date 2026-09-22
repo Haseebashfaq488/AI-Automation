@@ -64,7 +64,7 @@ Spawns an autonomous background worker powered by Google Antigravity to execute 
 
 | Tool Name | Purpose / When to Use | Parameters |
 | :--- | :--- | :--- |
-| `fork` | Spawn an autonomous worker to build code, create files, scrape web pages, execute terminal commands, or conduct research. Automatically creates and tracks a `Task` record in SQLite. | `objective` (str, detailed task description), `fs_scope` (str, default `"D:/workspace"`), `worker_type` (str, default `"antigravity_worker"`), `max_steps` (int, default 20) |
+| `fork` | Spawn an autonomous worker to build code, create files, scrape web pages, execute terminal commands, or conduct research. Automatically creates and tracks a `Task` record in SQLite. | `objective` (str, primary goal), `requirements` (list of str, optional), `constraints` (list of str, optional), `success_criteria` (list of str, optional), `fs_scope` (str, default `"D:/AI-Automation"`), `worker_type` (str, default `"antigravity_worker"`), `max_steps` (int, default 20) |
 
 #### Antigravity Native Worker Capabilities:
 When an Antigravity Worker is spawned via `fork`, it has native access to the full Antigravity tool engine:

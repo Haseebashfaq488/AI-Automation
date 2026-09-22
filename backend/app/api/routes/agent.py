@@ -214,8 +214,18 @@ async def _fork_task(params: Dict[str, Any], prompt: str) -> Dict[str, Any]:
     from app.workers.base.contract import TaskContract
 
     objective = (params.get("objective") or "").strip() or prompt.strip() or "Forked task"
-    fs_scope = params.get("fs_scope") or "D:/workspace"
+    fs_scope = params.get("fs_scope") or "D:/AI-Automation"
     allowed = params.get("allowed_tools") or list(_DEFAULT_FORK_TOOLS)
+
+    reqs = params.get("requirements") or []
+    if isinstance(reqs, str):
+        reqs = [reqs.strip()]
+    cons = params.get("constraints") or []
+    if isinstance(cons, str):
+        cons = [cons.strip()]
+    crit = params.get("success_criteria") or []
+    if isinstance(crit, str):
+        crit = [crit.strip()]
 
     # 1. Create a tracked Task record in SQLite database
     db_task_id = None
@@ -232,9 +242,9 @@ async def _fork_task(params: Dict[str, Any], prompt: str) -> Dict[str, Any]:
     try:
         contract = TaskContract(
             objective=objective,
-            requirements=params.get("requirements", []),
-            constraints=params.get("constraints", []),
-            success_criteria=params.get("success_criteria", []),
+            requirements=reqs,
+            constraints=cons,
+            success_criteria=crit,
             fs_scope=fs_scope,
             allowed_tools=allowed,
             max_steps=int(params.get("max_steps", 20)),

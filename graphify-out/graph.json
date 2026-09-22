@@ -1589,7 +1589,7 @@
       "file_type": "code",
       "norm_label": ".analyze_prompt()",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L181"
+      "source_location": "L191"
     },
     {
       "id": "backend_app_modules_opencode_adapter_opencodeadapter_call_llm",
@@ -1601,7 +1601,7 @@
       "file_type": "code",
       "norm_label": "._call_llm()",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L163"
+      "source_location": "L173"
     },
     {
       "id": "backend_app_modules_opencode_adapter_opencodeadapter_chat",
@@ -1613,7 +1613,7 @@
       "file_type": "code",
       "norm_label": "._chat()",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L147"
+      "source_location": "L157"
     },
     {
       "id": "backend_app_modules_opencode_adapter_opencodeadapter_close",
@@ -1625,7 +1625,7 @@
       "file_type": "code",
       "norm_label": ".close()",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L253"
+      "source_location": "L263"
     },
     {
       "id": "backend_app_modules_opencode_adapter_opencodeadapter_execution_system_prompt",
@@ -1637,7 +1637,7 @@
       "file_type": "code",
       "norm_label": "._execution_system_prompt()",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L129"
+      "source_location": "L139"
     },
     {
       "id": "backend_app_modules_opencode_adapter_opencodeadapter_extract_memories",
@@ -1649,7 +1649,7 @@
       "file_type": "code",
       "norm_label": ".extract_memories()",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L257"
+      "source_location": "L267"
     },
     {
       "id": "backend_app_modules_opencode_adapter_opencodeadapter_init",
@@ -1661,7 +1661,7 @@
       "file_type": "code",
       "norm_label": ".__init__()",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L59"
+      "source_location": "L65"
     },
     {
       "id": "backend_app_modules_opencode_adapter_opencodeadapter_planning_system_prompt",
@@ -1673,7 +1673,7 @@
       "file_type": "code",
       "norm_label": "._planning_system_prompt()",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L96"
+      "source_location": "L102"
     },
     {
       "id": "backend_app_modules_opencode_adapter_opencodeadapter_required_params",
@@ -1685,7 +1685,7 @@
       "file_type": "code",
       "norm_label": "._required_params()",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L328"
+      "source_location": "L338"
     },
     {
       "id": "backend_app_modules_opencode_adapter_opencodeadapter_run_prompt",
@@ -1697,7 +1697,7 @@
       "file_type": "code",
       "norm_label": ".run_prompt()",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L235"
+      "source_location": "L245"
     },
     {
       "id": "backend_app_modules_opencode_adapter_opencodeadapter_safe_parse",
@@ -1709,7 +1709,7 @@
       "file_type": "code",
       "norm_label": "._safe_parse()",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L170"
+      "source_location": "L180"
     },
     {
       "id": "backend_app_modules_opencode_adapter_opencodeadapter_tools_block",
@@ -1721,7 +1721,7 @@
       "file_type": "code",
       "norm_label": "._tools_block()",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L89"
+      "source_location": "L95"
     },
     {
       "id": "backend_app_modules_opencode_adapter_opencodeadapter_validate_plan_steps",
@@ -1733,7 +1733,7 @@
       "file_type": "code",
       "norm_label": "._validate_plan_steps()",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L289"
+      "source_location": "L299"
     },
     {
       "id": "backend_app_api_routes_events_event_generator",
@@ -3797,7 +3797,7 @@
       "file_type": "code",
       "norm_label": "clear_history()",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L299"
+      "source_location": "L309"
     },
     {
       "id": "backend_app_api_routes_agent_clear_memory",
@@ -3809,7 +3809,7 @@
       "file_type": "code",
       "norm_label": "clear_memory()",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L287"
+      "source_location": "L297"
     },
     {
       "id": "backend_app_api_routes_agent_get_adapter",
@@ -3833,7 +3833,7 @@
       "file_type": "code",
       "norm_label": "get_history()",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L293"
+      "source_location": "L303"
     },
     {
       "id": "backend_app_api_routes_agent_get_memory",
@@ -3845,7 +3845,7 @@
       "file_type": "code",
       "norm_label": "get_memory()",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L281"
+      "source_location": "L291"
     },
     {
       "id": "backend_app_api_routes_agent_learn_from_turn",
@@ -8805,6 +8805,17 @@
       "source_location": ""
     },
     {
+      "id": "backend_app_modules_opencode_adapter_rationale_103",
+      "label": "Prompt that makes the LLM return a structured plan (or direct response).",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "OpenCodeAdapter",
+      "file_type": "rationale",
+      "norm_label": "prompt that makes the llm return a structured plan (or direct response).",
+      "source_file": "backend/app/modules/opencode/adapter.py",
+      "source_location": "L103"
+    },
+    {
       "id": "backend_app_modules_opencode_adapter_rationale_11",
       "label": "Adapter to communicate with the Groq LLM and translate prompts into tool plans.\u2026",
       "_origin": "ast",
@@ -8816,7 +8827,7 @@
       "source_location": "L11"
     },
     {
-      "id": "backend_app_modules_opencode_adapter_rationale_130",
+      "id": "backend_app_modules_opencode_adapter_rationale_140",
       "label": "Prompt used for single-step execution (legacy / fallback).",
       "_origin": "ast",
       "community": 10,
@@ -8824,10 +8835,10 @@
       "file_type": "rationale",
       "norm_label": "prompt used for single-step execution (legacy / fallback).",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L130"
+      "source_location": "L140"
     },
     {
-      "id": "backend_app_modules_opencode_adapter_rationale_148",
+      "id": "backend_app_modules_opencode_adapter_rationale_158",
       "label": "Send a chat-completion request from a full messages array and return content.",
       "_origin": "ast",
       "community": 10,
@@ -8835,10 +8846,10 @@
       "file_type": "rationale",
       "norm_label": "send a chat-completion request from a full messages array and return content.",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L148"
+      "source_location": "L158"
     },
     {
-      "id": "backend_app_modules_opencode_adapter_rationale_164",
+      "id": "backend_app_modules_opencode_adapter_rationale_174",
       "label": "Send a chat-completion request and return the raw content string.",
       "_origin": "ast",
       "community": 10,
@@ -8846,10 +8857,10 @@
       "file_type": "rationale",
       "norm_label": "send a chat-completion request and return the raw content string.",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L164"
+      "source_location": "L174"
     },
     {
-      "id": "backend_app_modules_opencode_adapter_rationale_171",
+      "id": "backend_app_modules_opencode_adapter_rationale_181",
       "label": "Parse the LLM's raw output as JSON, returning None on failure.",
       "_origin": "ast",
       "community": 10,
@@ -8857,10 +8868,10 @@
       "file_type": "rationale",
       "norm_label": "parse the llm's raw output as json, returning none on failure.",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L171"
+      "source_location": "L181"
     },
     {
-      "id": "backend_app_modules_opencode_adapter_rationale_187",
+      "id": "backend_app_modules_opencode_adapter_rationale_197",
       "label": "Phase 1 \u2014 Analyze the user's prompt and return a plan or direct response. Args:\u2026",
       "_origin": "ast",
       "community": 10,
@@ -8868,10 +8879,10 @@
       "file_type": "rationale",
       "norm_label": "phase 1 \u2014 analyze the user's prompt and return a plan or direct response. args:...",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L187"
+      "source_location": "L197"
     },
     {
-      "id": "backend_app_modules_opencode_adapter_rationale_236",
+      "id": "backend_app_modules_opencode_adapter_rationale_246",
       "label": "Legacy single-step execution (kept for backward compatibility).",
       "_origin": "ast",
       "community": 10,
@@ -8879,10 +8890,10 @@
       "file_type": "rationale",
       "norm_label": "legacy single-step execution (kept for backward compatibility).",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L236"
+      "source_location": "L246"
     },
     {
-      "id": "backend_app_modules_opencode_adapter_rationale_254",
+      "id": "backend_app_modules_opencode_adapter_rationale_264",
       "label": "Close the underlying HTTP client.",
       "_origin": "ast",
       "community": 10,
@@ -8890,10 +8901,10 @@
       "file_type": "rationale",
       "norm_label": "close the underlying http client.",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L254"
+      "source_location": "L264"
     },
     {
-      "id": "backend_app_modules_opencode_adapter_rationale_258",
+      "id": "backend_app_modules_opencode_adapter_rationale_268",
       "label": "Extract durable facts worth remembering from an agent turn. Returns a list of\u2026",
       "_origin": "ast",
       "community": 10,
@@ -8901,10 +8912,10 @@
       "file_type": "rationale",
       "norm_label": "extract durable facts worth remembering from an agent turn. returns a list of...",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L258"
+      "source_location": "L268"
     },
     {
-      "id": "backend_app_modules_opencode_adapter_rationale_290",
+      "id": "backend_app_modules_opencode_adapter_rationale_300",
       "label": "Filter the LLM's plan steps to only those using known tools. A step is kept\u2026",
       "_origin": "ast",
       "community": 10,
@@ -8912,10 +8923,10 @@
       "file_type": "rationale",
       "norm_label": "filter the llm's plan steps to only those using known tools. a step is kept...",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L290"
+      "source_location": "L300"
     },
     {
-      "id": "backend_app_modules_opencode_adapter_rationale_329",
+      "id": "backend_app_modules_opencode_adapter_rationale_339",
       "label": "Return the required params for a tool from its registered input schema.",
       "_origin": "ast",
       "community": 10,
@@ -8923,18 +8934,7 @@
       "file_type": "rationale",
       "norm_label": "return the required params for a tool from its registered input schema.",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L329"
-    },
-    {
-      "id": "backend_app_modules_opencode_adapter_rationale_97",
-      "label": "Prompt that makes the LLM return a structured plan (or direct response).",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "OpenCodeAdapter",
-      "file_type": "rationale",
-      "norm_label": "prompt that makes the llm return a structured plan (or direct response).",
-      "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L97"
+      "source_location": "L339"
     },
     {
       "id": "backend_app_api_routes_events",
@@ -12429,7 +12429,7 @@
       "source_location": "L138"
     },
     {
-      "id": "backend_app_api_routes_agent_rationale_282",
+      "id": "backend_app_api_routes_agent_rationale_292",
       "label": "List stored long-term memories (most recent first).",
       "_origin": "ast",
       "community": 23,
@@ -12437,10 +12437,10 @@
       "file_type": "rationale",
       "norm_label": "list stored long-term memories (most recent first).",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L282"
+      "source_location": "L292"
     },
     {
-      "id": "backend_app_api_routes_agent_rationale_288",
+      "id": "backend_app_api_routes_agent_rationale_298",
       "label": "Clear all long-term memories.",
       "_origin": "ast",
       "community": 23,
@@ -12448,10 +12448,10 @@
       "file_type": "rationale",
       "norm_label": "clear all long-term memories.",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L288"
+      "source_location": "L298"
     },
     {
-      "id": "backend_app_api_routes_agent_rationale_294",
+      "id": "backend_app_api_routes_agent_rationale_304",
       "label": "View the short-term chat history for a session.",
       "_origin": "ast",
       "community": 23,
@@ -12459,10 +12459,10 @@
       "file_type": "rationale",
       "norm_label": "view the short-term chat history for a session.",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L294"
+      "source_location": "L304"
     },
     {
-      "id": "backend_app_api_routes_agent_rationale_300",
+      "id": "backend_app_api_routes_agent_rationale_310",
       "label": "Clear short-term history for a session (or all sessions with session_id=all).",
       "_origin": "ast",
       "community": 23,
@@ -12470,7 +12470,7 @@
       "file_type": "rationale",
       "norm_label": "clear short-term history for a session (or all sessions with session_id=all).",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L300"
+      "source_location": "L310"
     },
     {
       "id": "backend_app_api_routes_agent_rationale_55",
@@ -15485,7 +15485,7 @@
       "source_location": "L1"
     },
     {
-      "id": "backend_app_modules_antigravity_jarvis_memory_jarvis_living_memory_system_context_157",
+      "id": "backend_app_modules_antigravity_jarvis_memory_jarvis_living_memory_system_context_381",
       "label": "\ud83e\udde0 JARVIS LIVING MEMORY & SYSTEM CONTEXT",
       "_origin": "ast",
       "community": 50,
@@ -15494,7 +15494,7 @@
       "node_kind": "heading",
       "norm_label": "\ud83e\udde0 jarvis living memory & system context",
       "source_file": "backend/app/modules/antigravity/JARVIS_MEMORY.md",
-      "source_location": "L157"
+      "source_location": "L381"
     },
     {
       "id": "backend_app_modules_antigravity_jarvis_memory_scratchpad_ongoing_directives",
@@ -20157,7 +20157,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L226",
+      "source_location": "L236",
       "weight": 1.0
     },
     {
@@ -20169,7 +20169,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L233",
+      "source_location": "L243",
       "weight": 1.0
     },
     {
@@ -20181,7 +20181,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L254",
+      "source_location": "L264",
       "weight": 1.0
     },
     {
@@ -22113,7 +22113,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L199",
+      "source_location": "L209",
       "weight": 1.0
     },
     {
@@ -22125,7 +22125,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L209",
+      "source_location": "L219",
       "weight": 1.0
     },
     {
@@ -22137,7 +22137,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L210",
+      "source_location": "L220",
       "weight": 1.0
     },
     {
@@ -22149,7 +22149,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L217",
+      "source_location": "L227",
       "weight": 1.0
     },
     {
@@ -22161,7 +22161,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L165",
+      "source_location": "L175",
       "weight": 1.0
     },
     {
@@ -22173,7 +22173,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L131",
+      "source_location": "L141",
       "weight": 1.0
     },
     {
@@ -22185,7 +22185,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L274",
+      "source_location": "L284",
       "weight": 1.0
     },
     {
@@ -22197,7 +22197,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L275",
+      "source_location": "L285",
       "weight": 1.0
     },
     {
@@ -22209,7 +22209,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L98",
+      "source_location": "L104",
       "weight": 1.0
     },
     {
@@ -22221,7 +22221,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L238",
+      "source_location": "L248",
       "weight": 1.0
     },
     {
@@ -22233,7 +22233,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L238",
+      "source_location": "L248",
       "weight": 1.0
     },
     {
@@ -22245,7 +22245,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L239",
+      "source_location": "L249",
       "weight": 1.0
     },
     {
@@ -22257,7 +22257,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L316",
+      "source_location": "L326",
       "weight": 1.0
     },
     {
@@ -25461,7 +25461,7 @@
       "confidence_score": 1.0,
       "context": "decorator",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L298",
+      "source_location": "L308",
       "weight": 1.0
     },
     {
@@ -25473,7 +25473,7 @@
       "confidence_score": 1.0,
       "context": "decorator",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L286",
+      "source_location": "L296",
       "weight": 1.0
     },
     {
@@ -25485,7 +25485,7 @@
       "confidence_score": 1.0,
       "context": "decorator",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L292",
+      "source_location": "L302",
       "weight": 1.0
     },
     {
@@ -25497,7 +25497,7 @@
       "confidence_score": 1.0,
       "context": "decorator",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L280",
+      "source_location": "L290",
       "weight": 1.0
     },
     {
@@ -27453,7 +27453,7 @@
       "confidence_score": 1.0,
       "context": "generic_arg",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L299",
+      "source_location": "L309",
       "weight": 1.0
     },
     {
@@ -27465,7 +27465,7 @@
       "confidence_score": 1.0,
       "context": "generic_arg",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L287",
+      "source_location": "L297",
       "weight": 1.0
     },
     {
@@ -27501,7 +27501,7 @@
       "confidence_score": 1.0,
       "context": "generic_arg",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L293",
+      "source_location": "L303",
       "weight": 1.0
     },
     {
@@ -27513,7 +27513,7 @@
       "confidence_score": 1.0,
       "context": "generic_arg",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L281",
+      "source_location": "L291",
       "weight": 1.0
     },
     {
@@ -28257,7 +28257,7 @@
       "confidence_score": 1.0,
       "context": "generic_arg",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L181",
+      "source_location": "L191",
       "weight": 1.0
     },
     {
@@ -28269,7 +28269,7 @@
       "confidence_score": 1.0,
       "context": "generic_arg",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L59",
+      "source_location": "L65",
       "weight": 1.0
     },
     {
@@ -28281,7 +28281,7 @@
       "confidence_score": 1.0,
       "context": "generic_arg",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L235",
+      "source_location": "L245",
       "weight": 1.0
     },
     {
@@ -29013,7 +29013,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L224",
+      "source_location": "L234",
       "weight": 1.0
     },
     {
@@ -36177,7 +36177,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L289",
+      "source_location": "L299",
       "weight": 1.0
     },
     {
@@ -36693,7 +36693,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L170",
+      "source_location": "L180",
       "weight": 1.0
     },
     {
@@ -38123,7 +38123,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L281",
+      "source_location": "L291",
       "weight": 1.0
     },
     {
@@ -38134,7 +38134,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L287",
+      "source_location": "L297",
       "weight": 1.0
     },
     {
@@ -38145,7 +38145,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L293",
+      "source_location": "L303",
       "weight": 1.0
     },
     {
@@ -38156,7 +38156,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L299",
+      "source_location": "L309",
       "weight": 1.0
     },
     {
@@ -38788,13 +38788,13 @@
     },
     {
       "source": "backend_app_modules_antigravity_jarvis_memory",
-      "target": "backend_app_modules_antigravity_jarvis_memory_jarvis_living_memory_system_context_157",
+      "target": "backend_app_modules_antigravity_jarvis_memory_jarvis_living_memory_system_context_381",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/antigravity/JARVIS_MEMORY.md",
-      "source_location": "L157",
+      "source_location": "L381",
       "weight": 1.0
     },
     {
@@ -46926,13 +46926,24 @@
     },
     {
       "source": "backend_app_modules_opencode_adapter_opencodeadapter",
+      "target": "backend_app_modules_opencode_adapter_opencodeadapter_planning_system_prompt",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/app/modules/opencode/adapter.py",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_app_modules_opencode_adapter_opencodeadapter",
       "target": "backend_app_modules_opencode_adapter_opencodeadapter_execution_system_prompt",
       "relation": "method",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L129",
+      "source_location": "L139",
       "weight": 1.0
     },
     {
@@ -46943,7 +46954,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L147",
+      "source_location": "L157",
       "weight": 1.0
     },
     {
@@ -46954,7 +46965,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L163",
+      "source_location": "L173",
       "weight": 1.0
     },
     {
@@ -46965,7 +46976,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L170",
+      "source_location": "L180",
       "weight": 1.0
     },
     {
@@ -46976,7 +46987,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L181",
+      "source_location": "L191",
       "weight": 1.0
     },
     {
@@ -46987,7 +46998,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L235",
+      "source_location": "L245",
       "weight": 1.0
     },
     {
@@ -46998,7 +47009,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L253",
+      "source_location": "L263",
       "weight": 1.0
     },
     {
@@ -47009,7 +47020,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L257",
+      "source_location": "L267",
       "weight": 1.0
     },
     {
@@ -47020,7 +47031,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L289",
+      "source_location": "L299",
       "weight": 1.0
     },
     {
@@ -47031,7 +47042,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L328",
+      "source_location": "L338",
       "weight": 1.0
     },
     {
@@ -47042,7 +47053,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L59",
+      "source_location": "L65",
       "weight": 1.0
     },
     {
@@ -47053,18 +47064,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L89",
-      "weight": 1.0
-    },
-    {
-      "source": "backend_app_modules_opencode_adapter_opencodeadapter",
-      "target": "backend_app_modules_opencode_adapter_opencodeadapter_planning_system_prompt",
-      "relation": "method",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L96",
+      "source_location": "L95",
       "weight": 1.0
     },
     {
@@ -48960,47 +48960,47 @@
       "weight": 1.0
     },
     {
-      "source": "backend_app_api_routes_agent_rationale_282",
+      "source": "backend_app_api_routes_agent_rationale_292",
       "target": "backend_app_api_routes_agent_get_memory",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L282",
+      "source_location": "L292",
       "weight": 1.0
     },
     {
-      "source": "backend_app_api_routes_agent_rationale_288",
+      "source": "backend_app_api_routes_agent_rationale_298",
       "target": "backend_app_api_routes_agent_clear_memory",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L288",
+      "source_location": "L298",
       "weight": 1.0
     },
     {
-      "source": "backend_app_api_routes_agent_rationale_294",
+      "source": "backend_app_api_routes_agent_rationale_304",
       "target": "backend_app_api_routes_agent_get_history",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L294",
+      "source_location": "L304",
       "weight": 1.0
     },
     {
-      "source": "backend_app_api_routes_agent_rationale_300",
+      "source": "backend_app_api_routes_agent_rationale_310",
       "target": "backend_app_api_routes_agent_clear_history",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/api/routes/agent.py",
-      "source_location": "L300",
+      "source_location": "L310",
       "weight": 1.0
     },
     {
@@ -50005,6 +50005,17 @@
       "weight": 1.0
     },
     {
+      "source": "backend_app_modules_opencode_adapter_rationale_103",
+      "target": "backend_app_modules_opencode_adapter_opencodeadapter_planning_system_prompt",
+      "relation": "rationale_for",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/app/modules/opencode/adapter.py",
+      "source_location": "L103",
+      "weight": 1.0
+    },
+    {
       "source": "backend_app_modules_opencode_adapter_rationale_11",
       "target": "backend_app_modules_opencode_adapter_opencodeadapter",
       "relation": "rationale_for",
@@ -50016,69 +50027,58 @@
       "weight": 1.0
     },
     {
-      "source": "backend_app_modules_opencode_adapter_rationale_130",
+      "source": "backend_app_modules_opencode_adapter_rationale_140",
       "target": "backend_app_modules_opencode_adapter_opencodeadapter_execution_system_prompt",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L130",
+      "source_location": "L140",
       "weight": 1.0
     },
     {
-      "source": "backend_app_modules_opencode_adapter_rationale_148",
+      "source": "backend_app_modules_opencode_adapter_rationale_158",
       "target": "backend_app_modules_opencode_adapter_opencodeadapter_chat",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L148",
+      "source_location": "L158",
       "weight": 1.0
     },
     {
-      "source": "backend_app_modules_opencode_adapter_rationale_164",
+      "source": "backend_app_modules_opencode_adapter_rationale_174",
       "target": "backend_app_modules_opencode_adapter_opencodeadapter_call_llm",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L164",
+      "source_location": "L174",
       "weight": 1.0
     },
     {
-      "source": "backend_app_modules_opencode_adapter_rationale_171",
+      "source": "backend_app_modules_opencode_adapter_rationale_181",
       "target": "backend_app_modules_opencode_adapter_opencodeadapter_safe_parse",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L171",
+      "source_location": "L181",
       "weight": 1.0
     },
     {
-      "source": "backend_app_modules_opencode_adapter_rationale_187",
+      "source": "backend_app_modules_opencode_adapter_rationale_197",
       "target": "backend_app_modules_opencode_adapter_opencodeadapter_analyze_prompt",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L187",
-      "weight": 1.0
-    },
-    {
-      "source": "backend_app_modules_opencode_adapter_rationale_236",
-      "target": "backend_app_modules_opencode_adapter_opencodeadapter_run_prompt",
-      "relation": "rationale_for",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L236",
+      "source_location": "L197",
       "weight": 1.0
     },
     {
@@ -50093,58 +50093,58 @@
       "weight": 1.0
     },
     {
-      "source": "backend_app_modules_opencode_adapter_rationale_254",
+      "source": "backend_app_modules_opencode_adapter_rationale_246",
+      "target": "backend_app_modules_opencode_adapter_opencodeadapter_run_prompt",
+      "relation": "rationale_for",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/app/modules/opencode/adapter.py",
+      "source_location": "L246",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_app_modules_opencode_adapter_rationale_264",
       "target": "backend_app_modules_opencode_adapter_opencodeadapter_close",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L254",
+      "source_location": "L264",
       "weight": 1.0
     },
     {
-      "source": "backend_app_modules_opencode_adapter_rationale_258",
+      "source": "backend_app_modules_opencode_adapter_rationale_268",
       "target": "backend_app_modules_opencode_adapter_opencodeadapter_extract_memories",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L258",
+      "source_location": "L268",
       "weight": 1.0
     },
     {
-      "source": "backend_app_modules_opencode_adapter_rationale_290",
+      "source": "backend_app_modules_opencode_adapter_rationale_300",
       "target": "backend_app_modules_opencode_adapter_opencodeadapter_validate_plan_steps",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L290",
+      "source_location": "L300",
       "weight": 1.0
     },
     {
-      "source": "backend_app_modules_opencode_adapter_rationale_329",
+      "source": "backend_app_modules_opencode_adapter_rationale_339",
       "target": "backend_app_modules_opencode_adapter_opencodeadapter_required_params",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L329",
-      "weight": 1.0
-    },
-    {
-      "source": "backend_app_modules_opencode_adapter_rationale_97",
-      "target": "backend_app_modules_opencode_adapter_opencodeadapter_planning_system_prompt",
-      "relation": "rationale_for",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L97",
+      "source_location": "L339",
       "weight": 1.0
     },
     {
@@ -51700,7 +51700,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L76",
+      "source_location": "L82",
       "weight": 1.0
     },
     {
@@ -51712,7 +51712,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L251",
+      "source_location": "L261",
       "weight": 1.0
     },
     {
@@ -52454,7 +52454,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/modules/opencode/adapter.py",
-      "source_location": "L62",
+      "source_location": "L68",
       "weight": 0.8
     },
     {
@@ -54433,5 +54433,5 @@
       "source_file": "backend/ADDING_MODULES.md"
     }
   ],
-  "built_at_commit": "9e6ea5dbad420e9e7ef353c6e86267e8e69b7c00"
+  "built_at_commit": "35d1fdf21fb89772d18f185c6f3ae0736b4a7baa"
 }

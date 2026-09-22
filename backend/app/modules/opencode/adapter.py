@@ -53,7 +53,13 @@ class OpenCodeAdapter:
         "unread_digest": {"to": "optional — chat to send the digest to; omit to just return it"},
         "send_email": {"to": "recipient email address", "subject": "optional email subject (omit for no subject)", "body": "email body text", "attachments": "optional list of absolute file paths to attach to the email"},
         "list_recent_emails": {"query": "optional search query (e.g. from:user subject:hello); omit to list recent inbox mail", "max_results": "optional maximum number of emails to return"},
-        "fork": {"objective": "description of the coding task to fork to the OpenCode worker (e.g. 'implement authentication endpoints and run tests')"},
+        "fork": {
+            "objective": "Concise high-level description of the primary coding/automation task",
+            "requirements": "(optional) List of explicit technical requirements or libraries the worker must fulfill",
+            "constraints": "(optional) List of negative boundaries (files/tables/APIs the worker must NOT modify)",
+            "success_criteria": "(optional) List of measurable pass/fail completion conditions",
+            "fs_scope": "(optional) Target project root directory path (defaults to 'D:/AI-Automation')",
+        },
     }
 
     def __init__(
@@ -97,18 +103,22 @@ class OpenCodeAdapter:
         """Prompt that makes the LLM return a structured plan (or direct response)."""
         tools = self._tools_block()
         return (
-            "You are Jarvis, a personal automation assistant. You can manage files, "
-            "send WhatsApp messages and files, and send/list emails via Gmail. "
+            "You are Jarvis, an executive AI assistant and orchestrator. You manage WhatsApp, "
+            "Gmail, and autonomous development workers (Antigravity). "
             "Analyze the user's request and decide what to do.\n\n"
             f"Available tools and their required params:\n{tools}\n\n"
             "RULES:\n"
             "1. If the prompt is NOT an actionable operation (greeting, question, "
             "conversation), return a direct conversational response.\n"
-            "2. If the prompt IS an actionable operation (file, WhatsApp, or email), "
+            "2. If the prompt IS an actionable operation (WhatsApp or email), "
             "plan the exact steps needed.\n"
-            "2b. If the user says \"fork\", \"delegate\", or \"spawn a worker\" for a task, "
-            "plan a single step with the \"fork\" tool. Put a short description of the task in "
-            "its \"objective\" param (omit it only if the task is exactly what the user asked).\n"
+            "2b. If the user asks for a coding, development, testing, refactoring, building, or multi-step engineering task (or explicitly says 'fork', 'delegate', 'spawn worker'):\n"
+            "   - Plan a single step with the 'fork' tool.\n"
+            "   - In 'objective', provide a clear concise summary of the primary goal.\n"
+            "   - In 'requirements', extract a list of specific requirements/libraries/features requested (if any).\n"
+            "   - In 'constraints', extract any negative boundaries or things NOT to touch/break (if any).\n"
+            "   - In 'success_criteria', extract measurable pass/fail conditions like tests passing (if any).\n"
+            "   - In 'fs_scope', specify the target workspace folder (defaults to 'D:/AI-Automation').\n"
             "3. Each step maps to exactly ONE of the available tools listed above, using the "
             "exact param names shown.\n"
             "4. Use absolute paths for files (including email/WhatsApp attachments). "
