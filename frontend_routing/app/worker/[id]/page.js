@@ -42,14 +42,23 @@ export default function WorkerPage() {
 
   const [state, setState] = useState(null);
   const [events, setEvents] = useState([]);
+  const [liveStreamText, setLiveStreamText] = useState("");
+  const [streamActive, setStreamActive] = useState(false);
+  const [streamStatus, setStreamStatus] = useState("connecting");
   const [artifacts, setArtifacts] = useState([]);
   const [resolution, setResolution] = useState(null);
   const [intervention, setIntervention] = useState("");
   const [copiedId, setCopiedId] = useState(false);
+  const [copiedStream, setCopiedStream] = useState(false);
+  const [autoScrollStream, setAutoScrollStream] = useState(true);
+  const [activeTab, setActiveTab] = useState("terminal"); // "terminal" | "trace" | "artifacts" | "review"
   const [notFound, setNotFound] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+
   const eventsEndRef = useRef(null);
+  const streamEndRef = useRef(null);
   const eventSourceRef = useRef(null);
+  const rawStreamSourceRef = useRef(null);
 
   // ── 1. Fetch artifacts ────────────────────────────────────────────────
   const fetchArtifacts = useCallback(async () => {
@@ -96,6 +105,8 @@ export default function WorkerPage() {
         if (!cancelled) {
           setState(data);
           if (data.status === "completed" || data.status === "cancelled") {
+            setStreamActive(false);
+            setStreamStatus("completed");
             fetchArtifacts();
             fetchResolution();
           }
@@ -118,7 +129,63 @@ export default function WorkerPage() {
     };
   }, [sessionId, fetchArtifacts, fetchResolution]);
 
-  // ── 4. SSE event stream with auto-close on WORK_COMPLETED ────────────
+  // ── 4. Raw SSE live stream from CLI (/workers/{session_id}/stream) ──
+  useEffect(() => {
+    if (!sessionId) return;
+
+    setStreamActive(true);
+    setStreamStatus("streaming");
+
+    const rawSource = new EventSource(`${API_URL}/workers/${sessionId}/stream`);
+    rawStreamSourceRef.current = rawSource;
+
+    rawSource.onmessage = (msg) => {
+      if (!msg.data || msg.data.startsWith(":")) return; // heartbeat
+      try {
+        const ev = JSON.parse(msg.data);
+
+        if (ev.event === "step_update") {
+          const delta = ev.step_update?.text_delta;
+          if (delta) {
+            setLiveStreamText((prev) => prev + delta);
+          }
+        } else if (ev.event === "result") {
+          const resp = ev.result?.response;
+          if (resp) {
+            setLiveStreamText((prev) => (prev ? prev : resp));
+          }
+          setStreamActive(false);
+          setStreamStatus("completed");
+          fetchArtifacts();
+          fetchResolution();
+          rawSource.close();
+        } else if (ev.type === "WORK_COMPLETED") {
+          setStreamActive(false);
+          setStreamStatus("completed");
+          fetchArtifacts();
+          fetchResolution();
+          rawSource.close();
+        }
+      } catch {
+        // Plain text stream fallback
+        setLiveStreamText((prev) => prev + msg.data + "\n");
+      }
+    };
+
+    rawSource.onerror = () => {
+      if (state?.status === "completed" || state?.status === "cancelled") {
+        setStreamActive(false);
+        setStreamStatus("completed");
+        rawSource.close();
+      }
+    };
+
+    return () => {
+      rawSource.close();
+    };
+  }, [sessionId, state?.status, fetchArtifacts, fetchResolution]);
+
+  // ── 5. High-Level SSE lifecycle event stream (/workers/{session_id}/events) ──
   useEffect(() => {
     if (!sessionId) return;
     const seen = new Set();
@@ -158,6 +225,13 @@ export default function WorkerPage() {
     };
   }, [sessionId, state?.status, fetchArtifacts, fetchResolution]);
 
+  // Auto-scroll terminal stream
+  useEffect(() => {
+    if (autoScrollStream) {
+      streamEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [liveStreamText, autoScrollStream]);
+
   // Auto-scroll raw events feed
   useEffect(() => {
     eventsEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -192,18 +266,23 @@ export default function WorkerPage() {
   const [launchingTerminal, setLaunchingTerminal] = useState(false);
   const [terminalMsg, setTerminalMsg] = useState(null);
 
-  const openOpenCodeTerminal = useCallback(async () => {
+  const openDesktopTerminal = useCallback(async () => {
     setLaunchingTerminal(true);
     setTerminalMsg(null);
     try {
-      const res = await fetch(`${API_URL}/workers/open-terminal`, {
+      const endpoint =
+        state?.worker_type === "opencode_worker" || state?.worker_type === "opencode"
+          ? `${API_URL}/workers/open-terminal`
+          : `${API_URL}/workers/open-agy-terminal`;
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ directory: state?.fs_scope || "D:/workspace" }),
+        body: JSON.stringify({ directory: state?.fs_scope || "D:/AI-Automation" }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
-      setTerminalMsg(data.message || "✓ OpenCode CLI window opened on desktop!");
+      setTerminalMsg(data.message || "✓ Terminal CLI window launched on desktop!");
       setTimeout(() => setTerminalMsg(null), 5000);
     } catch (e) {
       setTerminalMsg(`Failed: ${e.message}`);
@@ -211,13 +290,19 @@ export default function WorkerPage() {
     } finally {
       setLaunchingTerminal(false);
     }
-  }, [state?.fs_scope]);
+  }, [state?.fs_scope, state?.worker_type]);
 
   const copySessionId = useCallback(() => {
     navigator.clipboard.writeText(sessionId);
     setCopiedId(true);
     setTimeout(() => setCopiedId(false), 2000);
   }, [sessionId]);
+
+  const copyLiveStream = useCallback(() => {
+    navigator.clipboard.writeText(liveStreamText);
+    setCopiedStream(true);
+    setTimeout(() => setCopiedStream(false), 2000);
+  }, [liveStreamText]);
 
   if (notFound) {
     return (
@@ -273,14 +358,35 @@ export default function WorkerPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {terminalMsg && (
+            <span className="text-xs text-emerald-400 font-medium animate-fade-in">
+              {terminalMsg}
+            </span>
+          )}
+
           <button
-            onClick={openOpenCodeTerminal}
+            onClick={openDesktopTerminal}
             disabled={launchingTerminal}
             className="inline-flex items-center gap-1.5 rounded-lg border border-sky-700/60 bg-sky-950/60 px-3 py-1.5 text-xs font-semibold text-sky-300 shadow-sm transition hover:border-sky-500 hover:bg-sky-900/60 hover:text-white disabled:opacity-40"
           >
             <span>💻</span>
-            <span>{launchingTerminal ? "Opening..." : "Open CLI"}</span>
+            <span>{launchingTerminal ? "Opening..." : "Launch CLI"}</span>
           </button>
+
+          {/* Real-time Streaming Pulse Indicator */}
+          <div className="flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/90 px-3 py-1 text-xs">
+            {streamActive ? (
+              <span className="flex items-center gap-1.5 text-sky-400 font-medium">
+                <span className="h-2 w-2 animate-ping rounded-full bg-sky-400" />
+                <span>Live Stream Active</span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-zinc-400">
+                <span className="h-2 w-2 rounded-full bg-zinc-500" />
+                <span>Stream Closed</span>
+              </span>
+            )}
+          </div>
 
           <span
             className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${
@@ -313,43 +419,155 @@ export default function WorkerPage() {
 
       {/* ── Main Two-Column View ── */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Column: Execution Details & Chat Feed */}
+        {/* Left Column: Live Streaming Terminal & Trace Views */}
         <div className="flex-1 overflow-y-auto px-6 py-6 scrollbar-thin">
-          <div className="mx-auto flex max-w-3xl flex-col gap-5">
+          <div className="mx-auto flex max-w-4xl flex-col gap-5">
             {/* Task Contract Card */}
             <ContractCard state={state} sessionId={sessionId} />
 
-            {/* Jarvis Executive Review Card (Quality Guardian) */}
-            {resolution && (
+            {/* Navigation Tabs */}
+            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveTab("terminal")}
+                  className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                    activeTab === "terminal"
+                      ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-900/30"
+                      : "bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-zinc-800"
+                  }`}
+                >
+                  <span className="h-2 w-2 rounded-full bg-sky-400 animate-pulse" />
+                  <span>⚡ Live Output & Thoughts</span>
+                  {liveStreamText && (
+                    <span className="ml-1 rounded bg-black/40 px-1.5 py-0.5 text-[10px] font-mono">
+                      {liveStreamText.length} chars
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("trace")}
+                  className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                    activeTab === "trace"
+                      ? "bg-zinc-800 text-white shadow-md border border-zinc-700"
+                      : "bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-zinc-800"
+                  }`}
+                >
+                  <span>📋 Execution Trace</span>
+                  <span className="ml-1 rounded bg-black/40 px-1.5 py-0.5 text-[10px] font-mono">
+                    {events.filter((e) => e.type.startsWith("STEP_")).length}
+                  </span>
+                </button>
+
+                {artifacts.length > 0 && (
+                  <button
+                    onClick={() => setActiveTab("artifacts")}
+                    className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                      activeTab === "artifacts"
+                        ? "bg-purple-950/80 text-purple-200 border border-purple-700"
+                        : "bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-zinc-800"
+                    }`}
+                  >
+                    <span>📦 Artifacts</span>
+                    <span className="rounded bg-purple-900/60 px-1.5 py-0.5 text-[10px] font-mono text-purple-300">
+                      {artifacts.length}
+                    </span>
+                  </button>
+                )}
+
+                {resolution && (
+                  <button
+                    onClick={() => setActiveTab("review")}
+                    className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                      activeTab === "review"
+                        ? "bg-purple-900 text-white shadow-md"
+                        : "bg-zinc-900/80 text-purple-300 hover:bg-zinc-800 border border-purple-900/40"
+                    }`}
+                  >
+                    <span>🧠 Quality Review</span>
+                  </button>
+                )}
+              </div>
+
+              {activeTab === "terminal" && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setAutoScrollStream(!autoScrollStream)}
+                    className={`rounded-lg border px-2.5 py-1 text-[11px] transition ${
+                      autoScrollStream
+                        ? "border-sky-700 bg-sky-950/60 text-sky-300"
+                        : "border-zinc-800 bg-zinc-900 text-zinc-500"
+                    }`}
+                  >
+                    {autoScrollStream ? "✓ Auto-scroll ON" : "Auto-scroll OFF"}
+                  </button>
+                  <button
+                    onClick={copyLiveStream}
+                    disabled={!liveStreamText}
+                    className="rounded-lg border border-zinc-800 bg-zinc-900/90 px-2.5 py-1 text-[11px] font-mono text-zinc-300 transition hover:bg-zinc-800 disabled:opacity-40"
+                  >
+                    {copiedStream ? "✓ Copied" : "Copy Output"}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* TAB CONTENT 1: Real-Time Live Terminal */}
+            {activeTab === "terminal" && (
+              <LiveWorkerTerminal
+                liveStreamText={liveStreamText}
+                streamActive={streamActive}
+                streamStatus={streamStatus}
+                streamEndRef={streamEndRef}
+                state={state}
+              />
+            )}
+
+            {/* TAB CONTENT 2: Execution Trace Steps */}
+            {activeTab === "trace" && (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                    Execution Trace & Tool Results
+                  </span>
+                  <span className="text-xs text-zinc-500">
+                    {events.filter((e) => e.type.startsWith("STEP_")).length} step events
+                  </span>
+                </div>
+
+                {events
+                  .filter((e) => e.type.startsWith("STEP_") || e.type === "PARENT_INTERVENTION")
+                  .map((e, i) => (
+                    <StepBubble key={i} event={e} stepIndex={i + 1} />
+                  ))}
+
+                {events.length === 0 && (
+                  <div className="flex items-center justify-center rounded-2xl border border-dashed border-zinc-800/80 p-8 text-center text-xs text-zinc-500">
+                    Waiting for worker to start execution…
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB CONTENT 3: Artifacts */}
+            {activeTab === "artifacts" && (
+              <ArtifactsPanel artifacts={artifacts} sessionId={sessionId} />
+            )}
+
+            {/* TAB CONTENT 4: Review */}
+            {activeTab === "review" && resolution && (
+              <JarvisExecutiveReviewCard evaluation={resolution} />
+            )}
+
+            {/* Always display quality review on completion if available */}
+            {resolution && activeTab !== "review" && (
               <JarvisExecutiveReviewCard evaluation={resolution} />
             )}
 
             {/* Artifacts Download Panel */}
-            <ArtifactsPanel artifacts={artifacts} sessionId={sessionId} />
-
-            {/* Step Bubbles */}
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between px-1">
-                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                  Execution Trace & Tool Results
-                </span>
-                <span className="text-xs text-zinc-500">
-                  {events.filter((e) => e.type.startsWith("STEP_")).length} step events
-                </span>
-              </div>
-
-              {events
-                .filter((e) => e.type.startsWith("STEP_") || e.type === "PARENT_INTERVENTION")
-                .map((e, i) => (
-                  <StepBubble key={i} event={e} stepIndex={i + 1} />
-                ))}
-
-              {events.length === 0 && (
-                <div className="flex items-center justify-center rounded-2xl border border-dashed border-zinc-800/80 p-8 text-center text-xs text-zinc-500">
-                  Waiting for worker to start execution…
-                </div>
-              )}
-            </div>
+            {artifacts.length > 0 && activeTab !== "artifacts" && (
+              <ArtifactsPanel artifacts={artifacts} sessionId={sessionId} />
+            )}
 
             {/* Result Card when completed */}
             {events.some((e) => e.type === "WORK_COMPLETED") && !resolution && (
@@ -495,6 +713,78 @@ export default function WorkerPage() {
   );
 }
 
+// ── Live Worker Terminal Component ──────────────────────────────────────
+function LiveWorkerTerminal({ liveStreamText, streamActive, streamStatus, streamEndRef, state }) {
+  return (
+    <div className="flex flex-col rounded-2xl border border-zinc-800/90 bg-zinc-950 shadow-2xl overflow-hidden">
+      {/* Terminal Title Bar */}
+      <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-900/90 px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded-full bg-red-500/80" />
+            <span className="h-3 w-3 rounded-full bg-yellow-500/80" />
+            <span className="h-3 w-3 rounded-full bg-emerald-500/80" />
+          </div>
+          <div className="flex items-center gap-2 border-l border-zinc-800 pl-3">
+            <span className="font-mono text-xs font-semibold text-zinc-200">
+              Antigravity Stream Console
+            </span>
+            <span className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400">
+              {state?.model || "default model"}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          {streamActive ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/40 bg-sky-950/70 px-2.5 py-0.5 text-[11px] font-semibold text-sky-300">
+              <span className="h-2 w-2 animate-ping rounded-full bg-sky-400" />
+              <span>STREAMING</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-2.5 py-0.5 text-[11px] text-zinc-400">
+              <span>FINISHED</span>
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Terminal Output Area */}
+      <div className="p-4 font-mono text-xs leading-relaxed text-zinc-200 max-h-[560px] min-h-[320px] overflow-y-auto whitespace-pre-wrap selection:bg-purple-500/40">
+        {liveStreamText ? (
+          <>
+            <span>{liveStreamText}</span>
+            {streamActive && (
+              <span className="inline-block h-4 w-2 animate-pulse bg-sky-400 align-middle ml-0.5" />
+            )}
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16 text-center text-zinc-600">
+            <div className="mb-2 h-5 w-5 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
+            <p className="text-xs">Connecting to Antigravity CLI live stream…</p>
+            <p className="mt-1 text-[11px] text-zinc-600">
+              Streaming real-time step updates, thinking deltas, and tool executions.
+            </p>
+          </div>
+        )}
+        <div ref={streamEndRef} />
+      </div>
+
+      {/* Terminal Footer */}
+      <div className="flex items-center justify-between border-t border-zinc-800/80 bg-zinc-900/40 px-4 py-2 text-[11px] text-zinc-500">
+        <div className="flex items-center gap-3">
+          <span>Mode: <strong className="text-zinc-400">stream-json</strong></span>
+          <span>•</span>
+          <span>Buffer: <strong className="text-zinc-400">{liveStreamText.length} chars</strong></span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span>Worker: <strong className="text-purple-400">{state?.worker_type || "antigravity"}</strong></span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Contract Card Component ─────────────────────────────────────────────
 function ContractCard({ state, sessionId }) {
   return (
@@ -529,7 +819,7 @@ function ContractCard({ state, sessionId }) {
             Filesystem Scope
           </p>
           <p className="mt-1 truncate font-mono text-xs text-zinc-300" title={state?.fs_scope}>
-            {state?.fs_scope || "D:/workspace"}
+            {state?.fs_scope || "D:/AI-Automation"}
           </p>
         </div>
 
