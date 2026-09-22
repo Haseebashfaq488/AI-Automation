@@ -265,6 +265,22 @@ export default function WorkersPage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [launchingTerminal, setLaunchingTerminal] = useState(false);
   const [terminalMsg, setTerminalMsg] = useState(null);
+  const [clearing, setClearing] = useState(false);
+
+  async function clearAllWorkers() {
+    if (!confirm("Are you sure you want to clear all worker sessions and history?")) return;
+    setClearing(true);
+    try {
+      const res = await fetch(`${API_URL}/workers`, { method: "DELETE" });
+      if (res.ok) {
+        setWorkers([]);
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setClearing(false);
+    }
+  }
 
   async function openOpenCodeTerminal(dir = "D:/Ai automation backend") {
     setLaunchingTerminal(true);
@@ -428,12 +444,22 @@ export default function WorkersPage() {
               ))}
             </div>
 
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search workers or objectives..."
-              className="rounded-xl border border-zinc-800 bg-zinc-900/70 px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 outline-none focus:border-purple-600/60"
-            />
+            <div className="flex items-center gap-2">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search workers..."
+                className="rounded-xl border border-zinc-800 bg-zinc-900/70 px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 outline-none focus:border-purple-600/60"
+              />
+              <button
+                onClick={clearAllWorkers}
+                disabled={clearing || workers.length === 0}
+                className="inline-flex items-center gap-1 rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-red-900/50 hover:bg-red-950/30 hover:text-red-300 disabled:opacity-30"
+              >
+                <span>🗑️</span>
+                <span>{clearing ? "Clearing..." : "Clear History"}</span>
+              </button>
+            </div>
           </div>
 
           {filtered.length === 0 && (

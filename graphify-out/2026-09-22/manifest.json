@@ -582,9 +582,9 @@
     "semantic_hash": ""
   },
   "backend/app/workers/base/engine.py": {
-    "mtime": 1790087618.7799642,
-    "seen": 1790087803.9722207,
-    "ast_hash": "f847e090588c7b8d9dbb2992b762f109",
+    "mtime": 1790084014.024619,
+    "seen": 1790084185.9252875,
+    "ast_hash": "866f4a30562b2634c3881be083b516cd",
     "semantic_hash": ""
   },
   "backend/app/workers/base/scoped_registry.py": {
@@ -822,16 +822,16 @@
     "semantic_hash": "bebec5ab1263c739239380dd7f2a3787"
   },
   "backend/app/workers/opencode_worker/agent/worker_agent.py": {
-    "mtime": 1790087454.3977401,
-    "seen": 1790087803.9722352,
-    "ast_hash": "9cda948e1f1c0cd0d16f927610b5f5b3",
-    "semantic_hash": ""
+    "mtime": 1789569626.6339843,
+    "seen": 1789571637.8493848,
+    "ast_hash": "38a94f1b57bf61fbee643623cf444989",
+    "semantic_hash": "38a94f1b57bf61fbee643623cf444989"
   },
   "backend/tests/unit/test_opencode_worker.py": {
-    "mtime": 1790087653.8446968,
-    "seen": 1790087803.97226,
-    "ast_hash": "858a1e0888fbf21594f4e491bfb851d3",
-    "semantic_hash": ""
+    "mtime": 1789569793.5873296,
+    "seen": 1789571637.8494074,
+    "ast_hash": "157965179222e0689b61fd242d6b2863",
+    "semantic_hash": "157965179222e0689b61fd242d6b2863"
   },
   ".agents/rules/graphify.md": {
     "mtime": 1789533605.0,
@@ -1044,10 +1044,10 @@
     "semantic_hash": "6276e75a59f44846c957f5e5e434ba14"
   },
   "frontend_routing/app/components/ToolOutputViewer.js": {
-    "mtime": 1790087759.7956302,
-    "seen": 1790087803.9722838,
-    "ast_hash": "b2285a2fb8c4fcc305658398742aa090",
-    "semantic_hash": ""
+    "mtime": 1789570010.190045,
+    "seen": 1789571637.8494282,
+    "ast_hash": "e57b2be003660f4666dfa65e09d572a2",
+    "semantic_hash": "e57b2be003660f4666dfa65e09d572a2"
   },
   "backend/app/workers/antigravity_worker/__init__.py": {
     "mtime": 1789573224.975962,
@@ -1074,15 +1074,15 @@
     "semantic_hash": ""
   },
   "backend/app/workers/antigravity_worker/agent/worker_agent.py": {
-    "mtime": 1790087433.3600724,
-    "seen": 1790087803.972214,
-    "ast_hash": "6c53b316ad8ac90fae37efd9a9e6dd57",
+    "mtime": 1790084064.841786,
+    "seen": 1790084185.925282,
+    "ast_hash": "36572b4e3ab4a2f61e2f358faa8d896d",
     "semantic_hash": ""
   },
   "backend/tests/unit/test_antigravity_worker.py": {
-    "mtime": 1790087635.912744,
-    "seen": 1790087803.972246,
-    "ast_hash": "49f776e797cf094bce2d7e6670a70c12",
+    "mtime": 1789576118.1217954,
+    "seen": 1789576194.8504827,
+    "ast_hash": "dddafa9707364678e9b1fc2720e8d7d3",
     "semantic_hash": ""
   },
   "backend/app/workers/antigravity_worker/agent/cli_client.py": {
@@ -1146,9 +1146,9 @@
     "semantic_hash": ""
   },
   "JARVIS_MEMORY.md": {
-    "mtime": 1790087336.9452963,
-    "seen": 1790087803.9723182,
-    "ast_hash": "77656f35105a1cdf2f15af050780a89e",
+    "mtime": 1790087120.168384,
+    "seen": 1790087122.8329308,
+    "ast_hash": "520359c7b1218595a93a0d7e5ffd4903",
     "semantic_hash": ""
   },
   "backend/tests/unit/test_persistent_daemon.py": {

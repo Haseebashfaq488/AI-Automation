@@ -22,33 +22,35 @@ def mem_db_factory():
     Base.metadata.create_all(engine)
     factory = sessionmaker(bind=engine)
     yield factory
-    engine.dispose()
+
 
 
 # ---------------------------------------------------------------------------
 # ChatMemory (short-term)
 # ---------------------------------------------------------------------------
 
-def test_chat_memory_add_and_history():
-    mem = ChatMemory(max_messages=3)
-    mem.add("s1", "user", "one")
-    mem.add("s1", "assistant", "two")
-    history = mem.history("s1")
+def test_chat_memory_add_and_history(mem_db_factory):
+    mem = ChatMemory(max_messages=3, session_factory=mem_db_factory)
+    mem.clear("s1_test")
+    mem.add("s1_test", "user", "one")
+    mem.add("s1_test", "assistant", "two")
+    history = mem.history("s1_test")
     assert [m["content"] for m in history] == ["one", "two"]
     assert history[0]["role"] == "user"
 
 
-def test_chat_memory_sliding_window():
-    mem = ChatMemory(max_messages=3)
+def test_chat_memory_sliding_window(mem_db_factory):
+    mem = ChatMemory(max_messages=3, session_factory=mem_db_factory)
+    mem.clear("s_window_test")
     for i in range(5):
-        mem.add("s", "user", f"msg{i}")
-    history = mem.history("s")
+        mem.add("s_window_test", "user", f"msg{i}")
+    history = mem.history("s_window_test")
     assert len(history) == 3
     assert history[0]["content"] == "msg2"  # oldest within window
 
 
-def test_chat_memory_sessions_isolated_and_clear():
-    mem = ChatMemory()
+def test_chat_memory_sessions_isolated_and_clear(mem_db_factory):
+    mem = ChatMemory(session_factory=mem_db_factory)
     mem.add("a", "user", "for-a")
     mem.add("b", "user", "for-b")
     assert mem.history("a")[0]["content"] == "for-a"
@@ -63,47 +65,60 @@ def test_chat_memory_sessions_isolated_and_clear():
 # LongTermMemory
 # ---------------------------------------------------------------------------
 
-def test_long_term_add_dedupe_and_list(mem_db_factory):
+def test_long_term_memory_remember_and_recall(mem_db_factory):
     mem = LongTermMemory(session_factory=mem_db_factory)
-    assert mem.add("My downloads folder is D:/Downloads") is True
-    assert mem.add("My downloads folder is D:/Downloads") is False  # duplicate
-    assert mem.add("  ") is False  # empty
-    assert mem.all() == ["My downloads folder is D:/Downloads"]
+    mem.remember("user prefers concise answers", category="preference")
+    mem.remember("user works in Python", category="context")
+
+    recalled = mem.recall()
+    assert len(recalled) == 2
+
+    # category filtering
+    prefs = mem.recall(category="preference")
+    assert len(prefs) == 1
+    assert "concise" in prefs[0]
 
 
-def test_long_term_search_and_clear(mem_db_factory):
+def test_long_term_memory_search(mem_db_factory):
     mem = LongTermMemory(session_factory=mem_db_factory)
-    mem.add("Downloads live at D:/Downloads")
-    mem.add("I prefer dark mode")
-    assert mem.search("downloads") == ["Downloads live at D:/Downloads"]
-    assert mem.search("missing") == []
-    assert mem.clear() == 2
-    assert mem.all() == []
+    mem.remember("favorite editor is VS Code")
+    mem.remember("favorite language is Python")
+
+    found = mem.search("editor")
+    assert len(found) == 1
+    assert "VS Code" in found[0]
+
+    not_found = mem.search("golang")
+    assert len(not_found) == 0
+
+
+def test_long_term_memory_forget(mem_db_factory):
+    mem = LongTermMemory(session_factory=mem_db_factory)
+    mem.remember("will be forgotten")
+    assert len(mem.recall()) == 1
+
+    mem.forget("will be forgotten")
+    assert len(mem.recall()) == 0
 
 
 # ---------------------------------------------------------------------------
-# Agent integration with a fake adapter
+# /agent route integration with memory
 # ---------------------------------------------------------------------------
 
 class FakeAdapter:
-    """Records history/memories; returns canned plans; extracts canned facts."""
-
+    """Mock adapter that records calls and returns a fake plan or response."""
     def __init__(self):
         self.calls = []
 
-    async def analyze_prompt(self, prompt, history=None, memories=None):
-        self.calls.append({"prompt": prompt, "history": list(history or []), "memories": list(memories or [])})
-        if prompt == "plan please":
+    async def plan(self, prompt: str, session_id: str, history=None, memories=None):
+        self.calls.append({"prompt": prompt, "session_id": session_id, "history": history or [], "memories": memories or []})
+        if "plan" in prompt:
             return {
-                "type": "plan", "reasoning": "r", "plan_id": "fakeplan1",
-                "steps": [{"tool": "exists", "params": {"path": "."}, "description": "check"}],
+                "mode": "plan",
+                "reasoning": "fake plan",
+                "steps": [{"tool": "list_directory", "params": {"path": "."}, "description": "list dir"}],
             }
-        return {"type": "response", "message": "fake reply"}
-
-    async def extract_memories(self, prompt, outcome, max_facts=3):
-        if "remember" in prompt.lower():
-            return ["User's favorite folder is D:/Stuff"]
-        return []
+        return {"mode": "direct", "response": "fake reply"}
 
     async def close(self):
         pass
@@ -113,7 +128,7 @@ class FakeAdapter:
 def fake_agent_env(monkeypatch, mem_db_factory):
     fake = FakeAdapter()
     monkeypatch.setattr(agent_route, "_adapter", fake)
-    monkeypatch.setattr(agent_route, "chat_memory", ChatMemory(max_messages=10))
+    monkeypatch.setattr(agent_route, "chat_memory", ChatMemory(max_messages=10, session_factory=mem_db_factory))
     monkeypatch.setattr(agent_route, "long_term_memory", LongTermMemory(session_factory=mem_db_factory))
     # clear any cached plans
     agent_route._plan_cache.clear()

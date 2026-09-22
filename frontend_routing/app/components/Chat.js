@@ -41,7 +41,7 @@ export function BotMessage({ msg, onConfirm }) {
     );
   }
 
-  if (msg.data?.mode === "response") {
+  if (msg.data?.mode === "response" || msg.data?.mode === "clarify") {
     return (
       <div className="flex justify-start">
         <div className="max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-bl-md bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100">
@@ -57,6 +57,16 @@ export function BotMessage({ msg, onConfirm }) {
 
   if (msg.data?.mode === "plan") {
     return <PlanCard data={msg.data} prompt={msg.prompt} onConfirm={onConfirm} />;
+  }
+
+  if (msg.data?.message) {
+    return (
+      <div className="flex justify-start">
+        <div className="max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-bl-md bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100">
+          {msg.data.message}
+        </div>
+      </div>
+    );
   }
 
   return null;

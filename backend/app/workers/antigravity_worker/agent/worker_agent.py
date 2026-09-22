@@ -1,8 +1,8 @@
 """Antigravity Worker Agent implementation.
 
-Drives autonomous milestone execution via the Antigravity CLI (`agy run`)
-with full session continuity across milestones, milestone decomposition,
-and manager intervention injection.
+Drives direct autonomous execution via the Antigravity CLI (`agy run`)
+with full session continuity, Master Task Specification prompts,
+standard engineering testing protocols, and real-time manager intervention injection.
 """
 from __future__ import annotations
 
@@ -11,12 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from app.workers.antigravity_worker.agent import config
 from app.workers.antigravity_worker.agent.cli_client import RunResult, run_antigravity_cli
-from app.workers.antigravity_worker.agent.milestones import (
-    Milestone,
-    MilestonePhase,
-    build_prompt,
-    plan_milestones,
-)
+from app.workers.antigravity_worker.agent.milestones import build_master_task_prompt
 
 logger = logging.getLogger("jarvis.worker.antigravity.agent")
 
@@ -33,6 +28,7 @@ class AntigravityWorkerAgent:
         constraints: List[str] | None = None,
         success_criteria: List[str] | None = None,
         model: Optional[str] = None,
+        master_prompt: Optional[str] = None,
     ):
         self.objective = objective
         self.fs_scope = fs_scope
@@ -40,19 +36,11 @@ class AntigravityWorkerAgent:
         self.constraints = constraints or []
         self.success_criteria = success_criteria or []
         self.model = model
+        self.master_prompt = master_prompt
 
         # Check binary availability for CLI
         self.cli_binary = config.get_agy_binary()
         self.available = self.cli_binary is not None
-
-        # Plan proportional milestones
-        self._milestones: List[Milestone] = plan_milestones(
-            objective,
-            requirements=self.requirements,
-            constraints=self.constraints,
-            success_criteria=self.success_criteria,
-        )
-        self._current_idx = 0
 
         # Antigravity session ID for CLI continuity
         self._session_id: Optional[str] = None
@@ -60,6 +48,9 @@ class AntigravityWorkerAgent:
         # Step results and pending parent interventions
         self._step_results: List[Dict[str, Any]] = []
         self._pending_intervention: Optional[str] = None
+        self._execution_summary: Optional[str] = None
+        self._executed_autonomous: bool = False
+        self._step_count: int = 0
 
     def record_step(
         self, tool: str, success: bool, output: Any = None, error: Any = None
@@ -73,11 +64,14 @@ class AntigravityWorkerAgent:
         self._step_results.append(entry)
 
     def inject_intervention(self, message: str) -> None:
-        """Queue parent/manager guidance for the next milestone."""
+        """Queue parent/manager guidance for the next turn."""
         self._pending_intervention = message
 
     async def decide_next_step(self) -> Dict[str, Any]:
-        """Execute the next milestone via Antigravity CLI (`agy run`)."""
+        """Execute autonomous task steps via Antigravity CLI (`agy run`)."""
+        current_binary = config.get_agy_binary()
+        if not current_binary:
+            self.available = False
         if not self.available:
             return {
                 "action": "fail",
@@ -91,97 +85,101 @@ class AntigravityWorkerAgent:
         intervention = self._pending_intervention
         if intervention:
             self._pending_intervention = None
+            self._step_count += 1
+            prompt = (
+                f"# ⚠️ PRIORITY MANAGER INTERVENTION DIRECTIVE\n"
+                f"{intervention}\n\n"
+                f"## Overall Task Context\n{self.objective}\n\n"
+                f"Apply the manager's intervention directive immediately and verify results."
+            )
 
-            # Late intervention remediation milestone injection
-            if self._current_idx >= len(self._milestones) - 1:
-                interv_m = Milestone(
-                    phase=MilestonePhase.INTERVENTION,
-                    title="Apply Manager Intervention",
-                    instructions=(
-                        f"## Priority Intervention Directive\n{intervention}\n\n"
-                        f"## Overall Task Context\n{self.objective}\n\n"
-                        f"## Action Required\nApply the user's intervention directive immediately before concluding."
-                    ),
-                    verification_criteria=["Intervention applied"],
-                )
-                if self._current_idx < len(self._milestones):
-                    self._milestones.insert(self._current_idx, interv_m)
-                else:
-                    self._milestones.append(interv_m)
-                    self._milestones.append(
-                        Milestone(
-                            phase=MilestonePhase.TEST,
-                            title="Verify After Intervention",
-                            instructions=f"Verify all changes including the intervention:\n{intervention}",
-                            verification_criteria=["Changes and intervention verified"],
-                        )
-                    )
+            logger.info("Executing Manager Intervention in Antigravity Worker")
+            res: RunResult = await run_antigravity_cli(
+                prompt,
+                session_id=self._session_id,
+                work_dir=self.fs_scope,
+                model=self.model,
+            )
+            if res.session_id:
+                self._session_id = res.session_id
 
-        # All milestones done?
-        if self._current_idx >= len(self._milestones):
-            summaries = [
-                f"[{m.phase.value}] {m.title}: {m.result_summary or 'completed'}"
-                for m in self._milestones
-            ]
-            return {
-                "action": "done",
-                "summary": "All milestones completed.\n" + "\n".join(summaries),
-            }
+            if res.success:
+                self._execution_summary = res.output_text
+                return {
+                    "action": "tool",
+                    "tool": "apply_intervention",
+                    "params": {
+                        "step": "Apply Manager Intervention",
+                        "message": intervention,
+                        "session_id": self._session_id,
+                        "output_preview": (res.output_text or "")[:500],
+                        "model": self.model or config.get_antigravity_model(),
+                    },
+                }
+            else:
+                error_msg = res.error or "Intervention execution error"
+                return {
+                    "action": "tool",
+                    "tool": "apply_intervention",
+                    "params": {
+                        "step": "Apply Manager Intervention (Failed)",
+                        "error": error_msg[:500],
+                        "session_id": self._session_id,
+                    },
+                }
 
-        milestone = self._milestones[self._current_idx]
-        prompt = build_prompt(milestone, self.fs_scope, intervention=intervention)
+        # Main Task Execution
+        if not self._executed_autonomous:
+            self._executed_autonomous = True
+            self._step_count += 1
 
-        logger.info(
-            "Antigravity Milestone %d/%d [%s]: %s",
-            self._current_idx + 1,
-            len(self._milestones),
-            milestone.phase.value,
-            milestone.title,
-        )
+            prompt = self.master_prompt or build_master_task_prompt(
+                objective=self.objective,
+                fs_scope=self.fs_scope,
+                requirements=self.requirements,
+                constraints=self.constraints,
+                success_criteria=self.success_criteria,
+            )
 
-        phase_val = milestone.phase.value
+            logger.info("Antigravity Worker executing task: %s", self.objective[:80])
+            res: RunResult = await run_antigravity_cli(
+                prompt,
+                session_id=self._session_id,
+                work_dir=self.fs_scope,
+                model=self.model,
+            )
 
-        # Execute via agy run CLI
-        res: RunResult = await run_antigravity_cli(
-            prompt,
-            session_id=self._session_id,
-            work_dir=self.fs_scope,
-            model=self.model,
-        )
+            if res.session_id:
+                self._session_id = res.session_id
 
-        if res.session_id:
-            self._session_id = res.session_id
+            if res.success:
+                self._execution_summary = res.output_text
+                return {
+                    "action": "tool",
+                    "tool": "task_execution",
+                    "params": {
+                        "step": "Execute & Verify Task",
+                        "objective": self.objective,
+                        "session_id": self._session_id,
+                        "output_preview": (res.output_text or "")[:500],
+                        "model": self.model or config.get_antigravity_model(),
+                    },
+                }
+            else:
+                error_msg = res.error or "CLI execution error"
+                logger.warning("Antigravity CLI execution failed: %s", error_msg)
+                return {
+                    "action": "tool",
+                    "tool": "task_execution",
+                    "params": {
+                        "step": "Execute & Verify Task (Failed)",
+                        "error": error_msg[:500],
+                        "session_id": self._session_id,
+                    },
+                }
 
-        if res.success:
-            milestone.completed = True
-            milestone.result_summary = (res.output_text or "completed")[:1000]
-            self._current_idx += 1
-
-            return {
-                "action": "tool",
-                "tool": "opencode_milestone",
-                "params": {
-                    "milestone": milestone.title,
-                    "phase": phase_val,
-                    "milestone_index": self._current_idx,
-                    "total_milestones": len(self._milestones),
-                    "session_id": self._session_id,
-                    "output_preview": (res.output_text or "")[:500],
-                    "model": self.model or config.get_antigravity_model(),
-                },
-            }
-        else:
-            error_msg = res.error or "Unknown CLI execution error"
-            logger.warning("Antigravity CLI milestone %d failed: %s", self._current_idx + 1, error_msg)
-            return {
-                "action": "tool",
-                "tool": "opencode_milestone",
-                "params": {
-                    "milestone": milestone.title,
-                    "phase": phase_val,
-                    "milestone_index": self._current_idx + 1,
-                    "total_milestones": len(self._milestones),
-                    "session_id": self._session_id,
-                    "error": error_msg[:500],
-                },
-            }
+        # All execution complete
+        return {
+            "action": "done",
+            "summary": self._execution_summary or f"Task '{self.objective}' successfully completed.",
+        }

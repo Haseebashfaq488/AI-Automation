@@ -12,19 +12,18 @@ import asyncio
 import json
 import logging
 import os
-import re
 import time
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from app.workers.antigravity_worker.agent import config
-from app.workers.antigravity_worker.agent.cli_client import run_antigravity_cli
+from app.workers.antigravity_worker.agent.cli_client import get_persistent_agy_daemon, run_antigravity_cli
 from app.registry.tool_registry import ToolRegistry
 
 logger = logging.getLogger("jarvis.brain.antigravity")
 
-DEFAULT_MEMORY_PATH = Path("D:/AI-Automation/JARVIS_MEMORY.md")
+DEFAULT_MEMORY_PATH = Path(__file__).parent / "JARVIS_MEMORY.md"
 DEFAULT_SESSION_ID = "jarvis-core-brain"
 IDLE_CHECKPOINT_SECONDS = 600  # 10 minutes
 
@@ -139,40 +138,40 @@ class JarvisBrainManager:
         lines = []
         for name, params in self._KNOWN_TOOLS.items():
             param_desc = ", ".join(f"{k} ({desc})" for k, desc in params.items())
-            lines.append(f"- {name}: params: {param_desc}")
+            lines.append(f"- `{name}`: params: {param_desc}")
         return "\n".join(lines)
 
     def _check_fast_path(self, prompt: str) -> Optional[Dict[str, Any]]:
-        """Evaluate local fast-path intents (<5ms response time)."""
+        """Evaluate instant conversational intents (<5ms response time)."""
         p = prompt.lower().strip().rstrip("?.!")
 
         # 1. Greetings
-        if p in ("hi", "hello", "hey", "hey jarvis", "hi jarvis", "hello jarvis", "good morning", "good evening", "assalam o alaikum", "aoa", "yo"):
+        if p in ("hi", "hello", "hey", "hey jarvis", "hi jarvis", "hello jarvis", "good morning", "good evening", "assalam o alaikum", "aoa", "yo", "how are you", "how are you doing", "how's it going", "how are you today"):
             return {
                 "type": "response",
-                "message": "Hello Haseeb! I am online and ready to assist you. How can I help with your tasks today?",
+                "message": "Hello Haseeb! I am doing well and ready to assist you. How can I help with your tasks today?",
             }
 
         # 2. Profile and Identity Queries
-        if any(p == q for q in ("who am i", "what is my name", "what's my name", "who is the owner", "who is the user")):
+        if p in ("who am i", "what is my name", "what's my name", "who is the owner", "who is the user"):
             return {
                 "type": "response",
                 "message": "You are Haseeb, the owner and operator of this system.",
             }
 
-        if any(p == q for q in ("what is my phone number", "what's my phone number", "what is my number", "what is my phone")):
+        if p in ("what is my phone number", "what's my phone number", "what is my number", "what is my phone"):
             return {
                 "type": "response",
                 "message": "Your registered phone number is **+923098956995**.",
             }
 
-        if any(p == q for q in ("what is my workspace", "what's my workspace", "where is my workspace", "workspace")):
+        if p in ("what is my workspace", "what's my workspace", "where is my workspace", "workspace"):
             return {
                 "type": "response",
                 "message": "Your primary dedicated workspace is **`D:/workspace`**.",
             }
 
-        if any(p == q for q in ("who are you", "what are you", "what is jarvis", "introduce yourself")):
+        if p in ("who are you", "what are you", "what is jarvis", "introduce yourself"):
             return {
                 "type": "response",
                 "message": (
@@ -182,7 +181,7 @@ class JarvisBrainManager:
                 ),
             }
 
-        if any(p == q for q in ("what can you do", "what tools do you have", "list your tools", "what tools are available", "show tools", "help")):
+        if p in ("what can you do", "what tools do you have", "list your tools", "what tools are available", "show tools", "help"):
             return {
                 "type": "response",
                 "message": (
@@ -195,122 +194,25 @@ class JarvisBrainManager:
                 ),
             }
 
-        if any(p == q for q in ("show memory", "read memory", "view memory", "what is in your memory")):
+        if p in ("show memory", "read memory", "view memory", "what is in your memory"):
             mem = self.read_memory()
             return {
                 "type": "response",
                 "message": f"### 🧠 Jarvis Living Memory (`JARVIS_MEMORY.md`)\n\n{mem}",
             }
 
-        # 3. Explicit Remember Directives (Instant save)
-        if any(p.startswith(prefix) for prefix in ("remember that", "remember:", "save note", "keep in mind that", "note that")):
-            clean_note = re.sub(r"^(?:remember that|remember:|save note|keep in mind that|note that)\s*", "", prompt, flags=re.IGNORECASE).strip()
-            if clean_note:
-                self.append_scratchpad(clean_note)
-                return {
-                    "type": "response",
-                    "message": f"I have saved that to my living memory: *\"{clean_note}\"*",
-                }
+        # 3. Explicit Remember Directives
+        for prefix in ("remember that ", "remember: ", "save note: ", "note that ", "keep in mind that "):
+            if p.startswith(prefix):
+                note = prompt.strip()[len(prefix):].strip()
+                if note:
+                    self.append_scratchpad(note)
+                    return {
+                        "type": "response",
+                        "message": f"I have saved that to my living memory: *\"{note}\"*",
+                    }
 
         return None
-
-    def _check_worker_intent(self, prompt: str, history: Optional[List[Dict[str, str]]] = None) -> Optional[Dict[str, Any]]:
-        """Detect explicit user requests to delegate or fork a background worker."""
-        p = prompt.strip()
-        lowered = p.lower()
-
-        worker_triggers = [
-            "make a worker", "delegate a task", "delegate task", "delegate to worker",
-            "do this task by a worker", "do this by a worker", "run a worker",
-            "spawn a worker", "spawn worker", "fork worker", "fork a worker",
-            "fork task", "fork the task", "fork this task", "use a worker to",
-            "use a worker", "assign a worker", "assign to worker", "worker do this",
-            "by a worker", "let a worker", "have a worker",
-        ]
-
-        affirmative_triggers = {"yes", "y", "proceed", "sure", "do it", "go ahead", "ok", "okay", "yep", "please do", "yes please", "do that"}
-
-        is_affirmative = lowered in affirmative_triggers
-        matched = any(trig in lowered for trig in worker_triggers)
-        if not matched and not lowered.startswith("fork ") and not lowered.startswith("delegate ") and not is_affirmative:
-            return None
-
-        # Extract objective
-        objective = ""
-        if is_affirmative:
-            # Look at previous conversation history to find the task
-            if history:
-                for msg in reversed(history):
-                    if msg.get("role") == "user" and msg.get("content") and msg.get("content").lower() not in affirmative_triggers:
-                        objective = msg["content"].strip()
-                        break
-            if not objective:
-                return None
-        else:
-            # Sort triggers by descending length to match longest first
-            sorted_triggers = sorted(worker_triggers + ["fork", "delegate"], key=len, reverse=True)
-            generic_refs = {
-                "do this", "do this task", "this", "it", "do this exact task", "do exact task",
-                "exact task", "this exact task", "the task", "this task", "that", "do that",
-                "do it", "task", "job", "do the job"
-            }
-
-            for trig in sorted_triggers:
-                if trig in lowered:
-                    parts = re.split(re.escape(trig), p, flags=re.IGNORECASE, maxsplit=1)
-                    if len(parts) > 1 and parts[1].strip(" :,-"):
-                        candidate = parts[1].strip(" :,-")
-                        # Also strip common prefixes like 'to', 'for'
-                        candidate_clean = re.sub(r"^(?:to\s+|for\s+|do\s+)", "", candidate, flags=re.IGNORECASE).strip(" :,-")
-                        if candidate_clean.lower() not in generic_refs and candidate.lower() not in generic_refs:
-                            objective = candidate_clean or candidate
-                            break
-
-            # If generic phrase like "make a worker do this exact task", look at recent history
-            if not objective or objective.lower() in generic_refs:
-                if history:
-                    for msg in reversed(history):
-                        if msg.get("role") == "user" and msg.get("content") and msg.get("content") != prompt:
-                            objective = msg["content"].strip()
-                            break
-
-        if not objective:
-            objective = p
-
-        # Clean prefix
-        objective = re.sub(r"^(?:do this exact task[:\s]*|do this task[:\s]*|to[:\s]*|do[:\s]*)", "", objective, flags=re.IGNORECASE).strip() or p
-
-        return {
-            "type": "plan",
-            "reasoning": f"Fork autonomous Antigravity background worker for: {objective}",
-            "steps": [
-                {
-                    "tool": "fork",
-                    "params": {
-                        "objective": objective,
-                        "fs_scope": "D:/workspace",
-                        "worker_type": "antigravity_worker",
-                        "max_steps": 20,
-                    },
-                    "description": f"Launch background worker: {objective}",
-                }
-            ],
-            "plan_id": str(uuid.uuid4()),
-        }
-
-    def _is_actionable(self, prompt: str) -> bool:
-        """Determine if a prompt requires tool execution planning or worker delegation."""
-        p = prompt.lower()
-        action_keywords = [
-            "send", "whatsapp", "message", "email", "gmail", "inbox",
-            "create", "write", "make", "delete", "trash", "remove",
-            "rename", "move", "copy", "organize", "search", "find",
-            "archive", "zip", "extract", "touch", "append", "fork", "delegate",
-            "spawn", "worker", "run", "list", "build", "code", "generate",
-            "compile", "calculate", "refactor", "modify", "analyze", "test",
-            "docx", "pdf", "script", "app", "fix", "clean", "develop", "files",
-        ]
-        return any(kw in p for kw in action_keywords)
 
     def _build_brain_prompt(
         self,
@@ -318,64 +220,67 @@ class JarvisBrainManager:
         history: Optional[List[Dict[str, str]]] = None,
         memories: Optional[List[str]] = None,
     ) -> str:
-        """Build structured planning prompt enforcing manager rules."""
-        is_actionable = self._is_actionable(prompt)
-
+        """Build structured planning prompt with complete tool knowledge."""
         history_block = ""
         if history:
-            history_lines = [f"{msg.get('role', 'user')}: {msg.get('content', '')}" for msg in history[-4:]]
-            history_block = "## Recent History:\n" + "\n".join(history_lines) + "\n\n"
+            history_lines = [f"{msg.get('role', 'user')}: {msg.get('content', '')}" for msg in history[-10:]]
+            history_block = "## Recent Conversation History:\n" + "\n".join(history_lines) + "\n\n"
 
-        if is_actionable:
-            tools = self._tools_block()
-            return (
-                "You are Jarvis, a personal manager and coordinator. You DO NOT perform task reasoning, code generation, or execution yourself.\n\n"
-                "CORE MANAGER RULES:\n"
-                "1. MANAGER ROLE: You never write code, generate files, or solve multi-step tasks directly in conversational text. You ONLY coordinate and plan.\n"
-                "2. NO PERMISSION ASKING: NEVER ask conversational questions like 'Would you like me to proceed with that?'. ALWAYS directly return the JSON 'plan'. The UI displays an interactive Accept button for the user to confirm.\n"
-                "3. KNOWN TOOLS ONLY: You can ONLY execute actions via the predefined Available Tools below.\n"
-                "4. WORKER DELEGATION: Whenever the user requests to create, build, code, generate, compile, automate, analyze, or execute any task, document, script, or project, you MUST return a tool plan with the 'fork' tool (params: {\"objective\": \"<detailed task>\", \"fs_scope\": \"D:/workspace\", \"worker_type\": \"antigravity_worker\", \"max_steps\": 20}).\n"
-                "5. ATOMIC TOOLS: If the user requests a specific direct tool action (e.g. send WhatsApp message/file, send email, search inbox, list a directory, move/delete a file), return a plan with that specific tool.\n"
-                "6. USER APPROVAL: Every actionable request MUST be returned as a JSON 'plan' so the user can review and accept before the worker or tool executes.\n"
-                "7. System Context: Owner is Haseeb, Phone: +923098956995, Primary Workspace: D:/workspace.\n\n"
-                f"{history_block}"
-                f"Available Tools:\n{tools}\n\n"
-                "OUTPUT FORMAT (STRICT JSON ONLY):\n"
-                '{"type": "plan", "reasoning": "<short explanation of delegation/tool choice>", "steps": [{"tool": "<tool_name>", "params": {<parameters>}, "description": "<action description>"}]}\n\n'
-                f"User: {prompt}"
-            )
-        else:
-            # Lean conversational prompt for greetings, identity, status (Ultra-Fast)
-            return (
-                "You are Jarvis, a manager and assistant. The owner is Haseeb (Phone: +923098956995, Workspace: D:/workspace).\n"
-                "You DO NOT perform task execution or code generation yourself. If the user asks for a task or action, inform them you can delegate a background worker.\n\n"
-                f"{history_block}"
-                "Provide a direct, concise, and helpful response. Return ONLY a JSON object:\n"
-                '{"type": "response", "message": "<your answer>"}\n\n'
-                f"User: {prompt}"
-            )
+        memory_text = self.read_memory()
+        memory_block = f"## Living Memory & Context:\n{memory_text}\n\n" if memory_text else ""
+        tools = self._tools_block()
+
+        return (
+            "You are Jarvis, a personal AI manager and task coordinator for Haseeb (Phone: +923098956995, Workspace: D:/workspace).\n\n"
+            "### CORE RESPONSIBILITIES & DECISION RULES:\n"
+            "1. ORCHESTRATION & DELEGATION: You never write code, generate files, or solve multi-step engineering tasks directly in conversational text. You coordinate and plan.\n"
+            "2. AUTONOMOUS WORKERS (`fork`): Whenever the user asks to create, build, code, develop, scrape, refactor, test, analyze, or generate multi-step documents/scripts/apps, ALWAYS return a plan using the `fork` tool with `objective` set to the task description, `fs_scope` set to 'D:/workspace', and `worker_type` set to 'antigravity_worker'.\n"
+            "3. ATOMIC TOOLS: When the user requests an explicit single-step operation (WhatsApp send/read, Gmail send/search, File read/create/move/delete/archive/list/exists), return a plan with that exact tool and the extracted parameters.\n"
+            "4. DIRECT CONVERSATION: If the user is asking a conversational question, inquiring about system capabilities, or discussing general topics, return a direct `response` object.\n"
+            "5. NO PERMISSION ASKING: Never ask 'Would you like me to do that?'. Always return the structured JSON `plan` so the UI presents confirmation buttons directly.\n"
+            "6. JSON OUTPUT ONLY: Output must strictly be a single valid JSON object without extra markdown explanations.\n\n"
+            f"{memory_block}"
+            f"{history_block}"
+            f"### AVAILABLE TOOLS & SCHEMAS:\n"
+            f"{tools}\n\n"
+            "### OUTPUT JSON FORMATS:\n"
+            "- For Actions/Plans:\n"
+            '{"type": "plan", "reasoning": "<short explanation of tool choice>", "steps": [{"tool": "<tool_name>", "params": {<parameters>}, "description": "<action description>"}]}\n'
+            "- For Conversational Responses:\n"
+            '{"type": "response", "message": "<direct conversational reply>"}\n\n'
+            f"User Prompt: {prompt}"
+        )
 
     def _safe_parse_json(self, raw: str) -> Optional[Dict[str, Any]]:
         """Safely extract JSON object from raw response text."""
         if not raw:
             return None
         text = raw.strip()
-        # Remove markdown fences if present
+
+        # Handle markdown fences
         if "```" in text:
-            m = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
-            if m:
-                text = m.group(1).strip()
+            first_idx = text.find("```")
+            last_idx = text.rfind("```")
+            if first_idx != -1 and last_idx != -1 and last_idx > first_idx:
+                inner = text[first_idx + 3:last_idx].strip()
+                if inner.startswith("json"):
+                    inner = inner[4:].strip()
+                try:
+                    return json.loads(inner)
+                except Exception:
+                    pass
 
         try:
             return json.loads(text)
         except Exception:
             pass
 
-        # Try regex extract
-        m2 = re.search(r"\{[\s\S]*\}", text)
-        if m2:
+        # Extract outer curly braces
+        start = text.find("{")
+        end = text.rfind("}")
+        if start != -1 and end != -1 and end > start:
             try:
-                return json.loads(m2.group(0))
+                return json.loads(text[start:end + 1])
             except Exception:
                 pass
 
@@ -433,40 +338,46 @@ class JarvisBrainManager:
         history: Optional[List[Dict[str, str]]] = None,
         memories: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
-        """Analyze prompt and return a structured plan or direct response."""
+        """Analyze prompt and return a structured plan or direct response via LLM reasoning."""
         self.touch_activity()
 
-        # 1. Fast-Path Evaluation (<5ms for common questions & memory updates)
+        # 1. Fast-Path Evaluation (<5ms for simple greetings, identity, and memory notes)
         fast_reply = self._check_fast_path(prompt)
         if fast_reply:
             return fast_reply
 
-        # 2. Worker Intent Evaluation (instant plan generation for worker/delegate prompts)
-        worker_plan = self._check_worker_intent(prompt, history=history)
-        if worker_plan:
-            return worker_plan
-
+        # 2. Build structured prompt and query Antigravity Brain
         brain_prompt = self._build_brain_prompt(prompt, history=history, memories=memories)
 
-        # 2. Call Antigravity CLI in clean workspace
         try:
-            res = await run_antigravity_cli(
+            daemon = get_persistent_agy_daemon()
+            res = await daemon.send_turn(
                 brain_prompt,
-                session_id=self.session_id,
-                model=self.model,
-                work_dir="D:/workspace",
+                timeout=45,
             )
         except Exception as exc:
-            logger.error("Antigravity CLI execution error: %s", exc)
+            err_msg = str(exc)
+            logger.error("Antigravity CLI execution error: %s", err_msg)
+            if "model output" in err_msg.lower() or "output text or tool calls" in err_msg.lower():
+                return {
+                    "type": "response",
+                    "message": "I was unable to generate a plan for that request. Could you rephrase or provide more details?",
+                }
             return {
                 "type": "response",
-                "message": f"I encountered an error communicating with the Antigravity Brain: {exc}",
+                "message": f"I encountered an error communicating with the Antigravity Brain: {err_msg}",
             }
 
         if not res.success and not res.output_text:
+            err_msg = res.error or "No response received"
+            if "model output" in err_msg.lower() or "output text or tool calls" in err_msg.lower():
+                return {
+                    "type": "response",
+                    "message": "The AI model returned an empty response. Please rephrase your request or try again.",
+                }
             return {
                 "type": "response",
-                "message": f"Antigravity Brain error: {res.error or 'No response received'}",
+                "message": f"Antigravity Brain error: {err_msg}",
             }
 
         parsed = self._safe_parse_json(res.output_text)
@@ -490,9 +401,71 @@ class JarvisBrainManager:
         reply = (parsed.get("message") if isinstance(parsed, dict) and "message" in parsed else None) or res.output_text or "I have processed your request."
         return {"type": "response", "message": reply.strip()}
 
+    def generate_worker_task_specification(
+        self,
+        objective: str,
+        fs_scope: str = "D:/workspace",
+        requirements: Optional[List[str]] = None,
+        constraints: Optional[List[str]] = None,
+        success_criteria: Optional[List[str]] = None,
+    ) -> str:
+        """Synthesize a complete Master Task Specification prompt for autonomous workers."""
+        from app.workers.antigravity_worker.agent.milestones import build_master_task_prompt
+        return build_master_task_prompt(
+            objective=objective,
+            fs_scope=fs_scope,
+            requirements=requirements,
+            constraints=constraints,
+            success_criteria=success_criteria,
+        )
+
+    def evaluate_worker_completion(
+        self,
+        session_id: str,
+        contract: Any,
+        result: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Evaluate worker execution results against task criteria and produce an executive report."""
+        success = result.get("success", False)
+        cancelled = result.get("cancelled", False)
+        errors = result.get("errors", [])
+        tools_used = result.get("tools_used", [])
+        output_summary = result.get("output_summary") or result.get("summary") or ""
+
+        if isinstance(contract, dict):
+            objective = contract.get("objective") or "Worker task"
+        else:
+            objective = getattr(contract, "objective", None) or "Worker task"
+
+        if cancelled:
+            headline = f"Worker task `{session_id}` was cancelled."
+            verdict = "CANCELLED"
+        elif success:
+            headline = f"Task successfully completed and verified: \"{objective}\""
+            verdict = "RESOLVED"
+        else:
+            err_summary = "; ".join(e.get("message", "") for e in errors) if errors else "Execution encountered errors"
+            headline = f"Task execution failed or partially resolved: {err_summary}"
+            verdict = "BLOCKED"
+
+        report = {
+            "session_id": session_id,
+            "verdict": verdict,
+            "headline": headline,
+            "objective": objective,
+            "success": success,
+            "steps_completed": result.get("completed_steps", len(tools_used)),
+            "errors": errors,
+            "summary": output_summary,
+        }
+
+        if success:
+            self.append_scratchpad(f"Worker [{session_id}] resolved: {objective}")
+
+        return report
+
     async def extract_memories(self, prompt: str, outcome: str, max_facts: int = 3) -> List[str]:
         """Extract durable facts to record in memory."""
-        # Auto-append outcome to living scratchpad if meaningful
         if "succeeded" in outcome.lower() or "executed" in outcome.lower():
             self.append_scratchpad(f"Task completed: {prompt} -> {outcome[:120]}")
         return []

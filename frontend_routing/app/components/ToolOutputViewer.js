@@ -365,8 +365,9 @@ export default function ToolOutputViewer({ tool, data }) {
     if (msgs) return <WhatsAppChatsView data={{ chats: msgs }} />;
   }
 
-  if (FILE_ACTION_TOOLS.has(tool)) {
-    return <FileActionView tool={tool} data={data} />;
+  // Direct Task Execution / Intervention special cases (already rendered by StepBubble)
+  if (tool === "task_execution" || tool === "apply_intervention" || tool === "opencode_milestone") {
+    return null;
   }
 
   // Worker URL special case

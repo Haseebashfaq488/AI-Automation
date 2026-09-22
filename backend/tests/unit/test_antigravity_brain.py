@@ -56,17 +56,10 @@ def test_brain_manager_validates_plan_steps(temp_memory_file: Path):
 async def test_brain_manager_analyze_prompt_conversational(temp_memory_file: Path):
     manager = JarvisBrainManager(memory_path=temp_memory_file)
 
-    mock_run_result = RunResult(
-        success=True,
-        output_text='{"type": "response", "message": "Hello Haseeb! How can I help you today?"}',
-    )
-
-    with patch("app.modules.antigravity.brain.run_antigravity_cli", new_callable=AsyncMock) as mock_cli:
-        mock_cli.return_value = mock_run_result
-        result = await manager.analyze_prompt("Hi Jarvis")
-
-        assert result["type"] == "response"
-        assert "Hello Haseeb!" in result["message"]
+    # Fast-path greeting
+    result = await manager.analyze_prompt("Hi Jarvis")
+    assert result["type"] == "response"
+    assert "Hello Haseeb!" in result["message"]
 
 
 @pytest.mark.asyncio
@@ -82,8 +75,11 @@ async def test_brain_manager_analyze_prompt_plan(temp_memory_file: Path):
         ),
     )
 
-    with patch("app.modules.antigravity.brain.run_antigravity_cli", new_callable=AsyncMock) as mock_cli:
-        mock_cli.return_value = mock_run_result
+    with patch("app.modules.antigravity.brain.get_persistent_agy_daemon") as mock_get_daemon:
+        mock_daemon = AsyncMock()
+        mock_daemon.send_turn.return_value = mock_run_result
+        mock_get_daemon.return_value = mock_daemon
+
         result = await manager.analyze_prompt("Send message to Haseeb saying Test")
 
         assert result["type"] == "plan"
@@ -96,52 +92,33 @@ async def test_brain_manager_analyze_prompt_plan(temp_memory_file: Path):
 async def test_brain_manager_auto_records_explicit_remember(temp_memory_file: Path):
     manager = JarvisBrainManager(memory_path=temp_memory_file)
 
-    mock_run_result = RunResult(
-        success=True,
-        output_text='{"type": "response", "message": "I will remember that your car is a Tesla."}',
-    )
+    await manager.analyze_prompt("Remember that my car is a Tesla")
 
-    with patch("app.modules.antigravity.brain.run_antigravity_cli", new_callable=AsyncMock) as mock_cli:
-        mock_cli.return_value = mock_run_result
-        await manager.analyze_prompt("Remember that my car is a Tesla")
-
-        content = manager.read_memory()
-        assert "my car is a Tesla" in content
+    content = manager.read_memory()
+    assert "my car is a Tesla" in content
 
 
 @pytest.mark.asyncio
-async def test_brain_manager_worker_intent_fork(temp_memory_file: Path):
+async def test_brain_manager_worker_fork_llm_plan(temp_memory_file: Path):
     manager = JarvisBrainManager(memory_path=temp_memory_file)
 
-    # 1. Direct worker command
-    result1 = await manager.analyze_prompt("make a worker do this task: build a calculator app")
-    assert result1["type"] == "plan"
-    assert result1["steps"][0]["tool"] == "fork"
-    assert "calculator app" in result1["steps"][0]["params"]["objective"]
+    mock_run_result = RunResult(
+        success=True,
+        output_text=(
+            '{"type": "plan", "reasoning": "Delegate web scraping task to autonomous worker", '
+            '"steps": [{"tool": "fork", "params": {"objective": "build a web scraper in D:/workspace", '
+            '"fs_scope": "D:/workspace", "worker_type": "antigravity_worker", "max_steps": 20}, '
+            '"description": "Launch background worker"}]}'
+        ),
+    )
 
-    # 2. Delegate task command
-    result2 = await manager.analyze_prompt("delegate a task: refactor user authentication")
-    assert result2["type"] == "plan"
-    assert result2["steps"][0]["tool"] == "fork"
-    assert "refactor user authentication" in result2["steps"][0]["params"]["objective"]
+    with patch("app.modules.antigravity.brain.get_persistent_agy_daemon") as mock_get_daemon:
+        mock_daemon = AsyncMock()
+        mock_daemon.send_turn.return_value = mock_run_result
+        mock_get_daemon.return_value = mock_daemon
 
-    # 3. Contextual worker task from history
-    history = [
-        {"role": "user", "content": "Compile the financial report document and export to PDF"},
-        {"role": "assistant", "content": "I can help with that."},
-    ]
-    result3 = await manager.analyze_prompt("make a worker do this exact task", history=history)
-    assert result3["type"] == "plan"
-    assert result3["steps"][0]["tool"] == "fork"
-    assert "financial report" in result3["steps"][0]["params"]["objective"]
-
-    # 4. Affirmative confirmation follow-up from history
-    history_affirm = [
-        {"role": "user", "content": "please list the files in the local disk D"},
-        {"role": "assistant", "content": "I can delegate a background worker to list the files on your D drive."},
-    ]
-    result4 = await manager.analyze_prompt("yes", history=history_affirm)
-    assert result4["type"] == "plan"
-    assert result4["steps"][0]["tool"] == "fork"
-    assert "list the files in the local disk D" in result4["steps"][0]["params"]["objective"]
+        result = await manager.analyze_prompt("build a web scraper for financial articles")
+        assert result["type"] == "plan"
+        assert result["steps"][0]["tool"] == "fork"
+        assert "web scraper" in result["steps"][0]["params"]["objective"]
 

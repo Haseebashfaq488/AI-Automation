@@ -167,6 +167,35 @@ async def list_workers():
     return {"workers": workers}
 
 
+@router.delete("")
+@router.delete("/")
+@router.post("/clear")
+async def clear_all_workers():
+    """Purge all on-disk worker sessions and clear the in-memory engine cache."""
+    import shutil
+    from app.workers.base.session import WorkerSession
+
+    for eng in list(_engines.values()):
+        try:
+            eng.cancel()
+        except Exception:
+            pass
+    _engines.clear()
+
+    root = WorkerSession.SESSIONS_ROOT
+    purged_count = 0
+    if root.is_dir():
+        for child in list(root.iterdir()):
+            if child.is_dir():
+                try:
+                    shutil.rmtree(child)
+                    purged_count += 1
+                except Exception:
+                    pass
+
+    return {"status": "cleared", "purged_sessions_count": purged_count}
+
+
 
 @router.post("/fork")
 async def fork_worker(payload: ForkRequest):
@@ -268,11 +297,46 @@ def _agent_factory_for(worker_type: str):
                 constraints=contract.constraints,
                 success_criteria=contract.success_criteria,
                 model=contract.model,
+                master_prompt=contract.master_prompt,
             )
 
         return factory
 
     return None
+
+
+@router.get("/{session_id}/supervisor-status")
+async def get_worker_supervisor_status(session_id: str):
+    """Retrieve active stream guardian supervision metrics and violations."""
+    eng = _engines.get(session_id)
+    if eng:
+        return {"session_id": session_id, **eng.get_guardian_status()}
+    return {"session_id": session_id, "status": "guardian_inactive_or_completed"}
+
+
+@router.get("/{session_id}/resolution")
+async def get_worker_resolution(session_id: str):
+    """Retrieve Jarvis's post-execution evaluation and completion verdict."""
+    from app.modules.antigravity.brain import get_brain_manager
+    from app.workers.base.session import WorkerSession
+
+    eng = _engines.get(session_id)
+    result_data = eng.get_result() if eng else None
+    
+    if not result_data:
+        session = WorkerSession(session_id)
+        if (session.path / "result.json").is_file():
+            result_data = session.read_result()
+
+    if not result_data:
+        raise HTTPException(status_code=404, detail="Worker result not yet available")
+
+    # Evaluate resolution via brain manager
+    brain = get_brain_manager()
+    session = WorkerSession(session_id)
+    task_contract = session.read_task()
+    evaluation = brain.evaluate_worker_completion(session_id, task_contract, result_data)
+    return {"session_id": session_id, "evaluation": evaluation}
 
 
 @router.get("/{session_id}")

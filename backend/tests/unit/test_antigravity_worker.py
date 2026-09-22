@@ -1,4 +1,4 @@
-"""Unit tests for the Antigravity Autonomous Worker (Pure CLI Mode)."""
+"""Unit tests for the Antigravity Autonomous Worker (Direct Execution & Streaming Mode)."""
 from __future__ import annotations
 
 import json
@@ -10,13 +10,6 @@ import pytest_asyncio
 
 from app.workers.antigravity_worker.agent import config
 from app.workers.antigravity_worker.agent.cli_client import RunResult, run_antigravity_cli
-from app.workers.antigravity_worker.agent.milestones import (
-    Milestone,
-    MilestonePhase,
-    build_prompt,
-    is_simple_task,
-    plan_milestones,
-)
 from app.workers.antigravity_worker.agent.worker_agent import AntigravityWorkerAgent
 from app.workers.base.contract import TaskContract
 from app.workers.base.engine import WorkerEngine
@@ -38,32 +31,6 @@ class TestAntigravityConfig:
         fake_bin.write_text("echo fake agy")
         monkeypatch.setenv("ANTIGRAVITY_BIN", str(fake_bin))
         assert config.get_agy_binary() == str(fake_bin)
-
-
-class TestAntigravityMilestones:
-    def test_is_simple_task(self):
-        assert is_simple_task("Create a file in local disk D and write lorem ipsum") is True
-        assert is_simple_task("write file text.txt") is True
-        assert is_simple_task("Refactor authentication pipeline across all models and write full stack tests") is False
-
-    def test_plan_milestones_simple_task(self):
-        ms = plan_milestones("Create a file hello.txt")
-        assert len(ms) == 2
-        assert ms[0].phase == MilestonePhase.STEP
-        assert ms[1].phase == MilestonePhase.TEST
-
-    def test_plan_milestones_complex_task(self):
-        ms = plan_milestones("Refactor architecture and build full stack database integration")
-        assert len(ms) == 3
-        assert ms[0].phase == MilestonePhase.STEP
-        assert ms[1].phase == MilestonePhase.STEP
-        assert ms[2].phase == MilestonePhase.TEST
-
-    def test_build_prompt_includes_intervention_at_top(self):
-        m = Milestone(phase=MilestonePhase.STEP, title="Step 1", instructions="Do step 1")
-        prompt = build_prompt(m, fs_scope="D:/test", intervention="Stop and do X instead")
-        assert prompt.startswith("# ⚠️ PRIORITY MANAGER INTERVENTION (MANDATORY OVERRIDE)")
-        assert "Stop and do X instead" in prompt
 
 
 class TestAntigravityCLIClient:
@@ -94,7 +61,7 @@ class TestAntigravityWorkerAgent:
             assert "not found" in step["reason"]
 
     @pytest.mark.asyncio
-    async def test_agent_decide_next_step_runs_milestones_via_cli(self):
+    async def test_agent_decide_next_step_runs_task_via_cli(self):
         agent = AntigravityWorkerAgent(
             objective="Create test file",
             fs_scope="D:/test",
@@ -112,20 +79,16 @@ class TestAntigravityWorkerAgent:
         with patch("app.workers.antigravity_worker.agent.worker_agent.run_antigravity_cli", new=AsyncMock(return_value=mock_result)):
             step1 = await agent.decide_next_step()
             assert step1["action"] == "tool"
-            assert step1["params"]["phase"] == "step"
-            assert step1["params"]["milestone_index"] == 1
+            assert step1["tool"] == "task_execution"
+            assert step1["params"]["step"] == "Execute & Verify Task"
             assert step1["params"]["session_id"] == "agy_ses_123"
 
             step2 = await agent.decide_next_step()
-            assert step2["action"] == "tool"
-            assert step2["params"]["phase"] == "test"
-            assert step2["params"]["milestone_index"] == 2
-
-            step3 = await agent.decide_next_step()
-            assert step3["action"] == "done"
+            assert step2["action"] == "done"
+            assert "Created test file" in step2["summary"]
 
     @pytest.mark.asyncio
-    async def test_intervention_injection_adds_remediation(self):
+    async def test_intervention_injection_executes_intervention(self):
         agent = AntigravityWorkerAgent(
             objective="Create test file",
             fs_scope="D:/test",
@@ -136,13 +99,14 @@ class TestAntigravityWorkerAgent:
         mock_result = RunResult(success=True, output_text="Ok", session_id="agy_ses_456")
 
         with patch("app.workers.antigravity_worker.agent.worker_agent.run_antigravity_cli", new=AsyncMock(return_value=mock_result)):
-            # Advance past step 1
+            # Advance past main task
             await agent.decide_next_step()
-            # Inject intervention at final test step
+            # Inject intervention
             agent.inject_intervention("Change content to 'Updated Text'")
             step_interv = await agent.decide_next_step()
-            assert step_interv["params"]["phase"] == "intervention"
-            assert "Intervention" in step_interv["params"]["milestone"]
+            assert step_interv["action"] == "tool"
+            assert step_interv["tool"] == "apply_intervention"
+            assert "Apply Manager Intervention" in step_interv["params"]["step"]
 
 
 class TestAntigravityEngineIntegration:
@@ -176,4 +140,4 @@ class TestAntigravityEngineIntegration:
 
             state = eng.get_state()
             assert state["status"] == "completed"
-            assert len(state["completed"]) >= 2
+            assert len(state["completed"]) >= 1

@@ -43,6 +43,7 @@ export default function WorkerPage() {
   const [state, setState] = useState(null);
   const [events, setEvents] = useState([]);
   const [artifacts, setArtifacts] = useState([]);
+  const [resolution, setResolution] = useState(null);
   const [intervention, setIntervention] = useState("");
   const [copiedId, setCopiedId] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -64,7 +65,21 @@ export default function WorkerPage() {
     }
   }, [sessionId]);
 
-  // ── 2. Poll worker state ─────────────────────────────────────────────
+  // ── 2. Fetch Jarvis Executive Resolution ──────────────────────────────
+  const fetchResolution = useCallback(async () => {
+    if (!sessionId) return;
+    try {
+      const res = await fetch(`${API_URL}/workers/${sessionId}/resolution`);
+      if (res.ok) {
+        const data = await res.json();
+        setResolution(data.evaluation || null);
+      }
+    } catch {
+      /* resolution available only after completion */
+    }
+  }, [sessionId]);
+
+  // ── 3. Poll worker state ─────────────────────────────────────────────
   useEffect(() => {
     if (!sessionId) return;
     let cancelled = false;
@@ -80,9 +95,9 @@ export default function WorkerPage() {
         const data = await res.json();
         if (!cancelled) {
           setState(data);
-          // If finished, refresh artifacts and we can slow down or stop polling
           if (data.status === "completed" || data.status === "cancelled") {
             fetchArtifacts();
+            fetchResolution();
           }
         }
       } catch {
@@ -94,7 +109,6 @@ export default function WorkerPage() {
     fetchArtifacts();
 
     const id = setInterval(() => {
-      // Only keep fast poll if running
       poll();
     }, 2000);
 
@@ -102,9 +116,9 @@ export default function WorkerPage() {
       cancelled = true;
       clearInterval(id);
     };
-  }, [sessionId, fetchArtifacts]);
+  }, [sessionId, fetchArtifacts, fetchResolution]);
 
-  // ── 3. SSE event stream with auto-close on WORK_COMPLETED ────────────
+  // ── 4. SSE event stream with auto-close on WORK_COMPLETED ────────────
   useEffect(() => {
     if (!sessionId) return;
     const seen = new Set();
@@ -119,13 +133,13 @@ export default function WorkerPage() {
 
         if (evt.type === "WORK_COMPLETED") {
           fetchArtifacts();
-          // Cleanly close EventSource to prevent endless reconnection loops
+          fetchResolution();
           if (eventSourceRef.current) {
             eventSourceRef.current.close();
           }
         }
       } catch {
-        /* ignore malformed lines (comments / heartbeats) */
+        /* ignore malformed lines */
       }
     }
 
@@ -134,7 +148,6 @@ export default function WorkerPage() {
 
     source.onmessage = (msg) => pushEvent(msg.data);
     source.onerror = () => {
-      // If already finished, close permanently
       if (state?.status === "completed" || state?.status === "cancelled") {
         source.close();
       }
@@ -143,7 +156,7 @@ export default function WorkerPage() {
     return () => {
       source.close();
     };
-  }, [sessionId, state?.status, fetchArtifacts]);
+  }, [sessionId, state?.status, fetchArtifacts, fetchResolution]);
 
   // Auto-scroll raw events feed
   useEffect(() => {
@@ -186,7 +199,7 @@ export default function WorkerPage() {
       const res = await fetch(`${API_URL}/workers/open-terminal`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ directory: state?.fs_scope || "D:/Ai automation backend" }),
+        body: JSON.stringify({ directory: state?.fs_scope || "D:/workspace" }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
@@ -266,7 +279,7 @@ export default function WorkerPage() {
             className="inline-flex items-center gap-1.5 rounded-lg border border-sky-700/60 bg-sky-950/60 px-3 py-1.5 text-xs font-semibold text-sky-300 shadow-sm transition hover:border-sky-500 hover:bg-sky-900/60 hover:text-white disabled:opacity-40"
           >
             <span>💻</span>
-            <span>{launchingTerminal ? "Opening..." : "Open OpenCode CLI"}</span>
+            <span>{launchingTerminal ? "Opening..." : "Open CLI"}</span>
           </button>
 
           <span
@@ -298,7 +311,6 @@ export default function WorkerPage() {
         </div>
       </header>
 
-
       {/* ── Main Two-Column View ── */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Column: Execution Details & Chat Feed */}
@@ -307,6 +319,11 @@ export default function WorkerPage() {
             {/* Task Contract Card */}
             <ContractCard state={state} sessionId={sessionId} />
 
+            {/* Jarvis Executive Review Card (Quality Guardian) */}
+            {resolution && (
+              <JarvisExecutiveReviewCard evaluation={resolution} />
+            )}
+
             {/* Artifacts Download Panel */}
             <ArtifactsPanel artifacts={artifacts} sessionId={sessionId} />
 
@@ -314,7 +331,7 @@ export default function WorkerPage() {
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between px-1">
                 <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                  Execution Trace
+                  Execution Trace & Tool Results
                 </span>
                 <span className="text-xs text-zinc-500">
                   {events.filter((e) => e.type.startsWith("STEP_")).length} step events
@@ -324,7 +341,7 @@ export default function WorkerPage() {
               {events
                 .filter((e) => e.type.startsWith("STEP_") || e.type === "PARENT_INTERVENTION")
                 .map((e, i) => (
-                  <StepBubble key={i} event={e} />
+                  <StepBubble key={i} event={e} stepIndex={i + 1} />
                 ))}
 
               {events.length === 0 && (
@@ -335,7 +352,7 @@ export default function WorkerPage() {
             </div>
 
             {/* Result Card when completed */}
-            {events.some((e) => e.type === "WORK_COMPLETED") && (
+            {events.some((e) => e.type === "WORK_COMPLETED") && !resolution && (
               <ResultCard
                 event={events.find((e) => e.type === "WORK_COMPLETED")}
                 artifactsCount={artifacts.length}
@@ -441,7 +458,7 @@ export default function WorkerPage() {
                   value={intervention}
                   onChange={(e) => setIntervention(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && sendIntervention()}
-                  placeholder="e.g. Skip table formatting, focus on Heading 1..."
+                  placeholder="e.g. Focus on unit tests first..."
                   className="flex-1 rounded-xl border border-zinc-700/80 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 outline-none focus:border-purple-500 transition"
                 />
                 <VoiceInput
@@ -512,11 +529,86 @@ function ContractCard({ state, sessionId }) {
             Filesystem Scope
           </p>
           <p className="mt-1 truncate font-mono text-xs text-zinc-300" title={state?.fs_scope}>
-            {state?.fs_scope || "—"}
+            {state?.fs_scope || "D:/workspace"}
           </p>
         </div>
 
+        <div className="rounded-xl border border-zinc-800/50 bg-zinc-950/60 p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+            Worker Driver
+          </p>
+          <p className="mt-1 truncate font-mono text-xs text-purple-300">
+            {state?.worker_type || "antigravity_worker"}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
+// ── Jarvis Executive Review Card (Quality Guardian) ─────────────────────
+function JarvisExecutiveReviewCard({ evaluation }) {
+  const verdict = evaluation?.verdict || "RESOLVED";
+  const isResolved = verdict === "RESOLVED";
+  const isCancelled = verdict === "CANCELLED";
+
+  const badgeStyle = isResolved
+    ? "border-emerald-500/40 bg-emerald-950/70 text-emerald-300"
+    : isCancelled
+    ? "border-amber-500/40 bg-amber-950/70 text-amber-300"
+    : "border-red-500/40 bg-red-950/70 text-red-300";
+
+  return (
+    <div className="rounded-2xl border border-purple-800/50 bg-gradient-to-br from-purple-950/40 via-zinc-900/90 to-zinc-950/90 p-5 shadow-2xl backdrop-blur-md">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-900/70 text-sm font-bold text-purple-200 border border-purple-700/50 shadow-inner">
+            🧠
+          </span>
+          <div>
+            <h3 className="text-sm font-semibold text-purple-100">
+              Jarvis Executive Quality Review
+            </h3>
+            <p className="text-xs text-purple-300/70">
+              Supervisor post-execution evaluation & verification
+            </p>
+          </div>
+        </div>
+
+        <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${badgeStyle}`}>
+          <span>{isResolved ? "✓" : isCancelled ? "⏸" : "✗"}</span>
+          <span>{verdict}</span>
+        </span>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-zinc-800/80 bg-zinc-950/80 p-4">
+        <h4 className="text-sm font-medium text-zinc-100">
+          {evaluation?.headline || "Execution completed"}
+        </h4>
+        {evaluation?.summary && (
+          <p className="mt-2 text-xs leading-relaxed text-zinc-300 whitespace-pre-wrap">
+            {evaluation.summary}
+          </p>
+        )}
+
+        <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-zinc-800/70 pt-3 text-xs text-zinc-400">
+          <div className="flex items-center gap-1.5">
+            <span className="text-emerald-400 font-bold">✓</span>
+            <span>Completed Steps: <strong className="text-zinc-200">{evaluation?.steps_completed ?? 0}</strong></span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-purple-400 font-bold">🧠</span>
+            <span>Recorded in <strong className="text-zinc-200 font-mono text-[11px]">JARVIS_MEMORY.md</strong></span>
+          </div>
+
+          {evaluation?.errors?.length > 0 && (
+            <div className="flex items-center gap-1.5 text-red-400">
+              <span>✗</span>
+              <span>Errors: {evaluation.errors.length}</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -536,10 +628,10 @@ function ArtifactsPanel({ artifacts, sessionId }) {
             📦
           </span>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-purple-300">
-            Generated Artifacts ({artifacts.length})
+            Generated Deliverables & Artifacts ({artifacts.length})
           </h3>
         </div>
-        <span className="text-xs text-purple-400/80">Available for direct download</span>
+        <span className="text-xs text-purple-400/80">Direct download available</span>
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -570,7 +662,7 @@ function ArtifactsPanel({ artifacts, sessionId }) {
 }
 
 // ── Step Bubble Component ───────────────────────────────────────────────
-function StepBubble({ event }) {
+function StepBubble({ event, stepIndex }) {
   const [showDetails, setShowDetails] = useState(false);
 
   if (event.type === "PARENT_INTERVENTION") {
@@ -591,21 +683,9 @@ function StepBubble({ event }) {
   const running = event.type === "STEP_STARTED";
   const outputData = event.data?.output || event.data?.result;
 
-  const isMilestone =
-    event.data?.step?.startsWith("milestone_") ||
-    outputData?.milestone ||
-    outputData?.phase;
-
-  const phaseName =
-    outputData?.phase ||
-    (event.data?.step?.startsWith("milestone_")
-      ? event.data.step.replace("milestone_", "")
-      : "");
-
-  const milestoneTitle =
-    outputData?.milestone ||
-    event.data?.step?.replace("milestone_", "Milestone: ") ||
-    "Execution Step";
+  const stepName =
+    event.data?.step ||
+    (typeof outputData === "object" && outputData?.tool ? outputData.tool : `Action #${stepIndex}`);
 
   const previewText = outputData?.output_preview || (typeof outputData === "string" ? outputData : null);
 
@@ -638,24 +718,14 @@ function StepBubble({ event }) {
               {ok ? "✓ Completed" : failed ? "✗ Failed" : running ? "● Running" : event.type}
             </span>
 
-            {isMilestone && (
-              <span className="rounded bg-purple-950/80 border border-purple-800/50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-purple-300">
-                {outputData?.milestone_index && outputData?.total_milestones
-                  ? `Phase ${outputData.milestone_index}/${outputData.total_milestones}`
-                  : phaseName ? `Phase: ${phaseName}` : "Milestone"}
-              </span>
-            )}
-
-            {outputData?.opencode_session && (
-              <span className="rounded bg-zinc-900 px-2 py-0.5 font-mono text-[10px] text-zinc-400 border border-zinc-800">
-                session: {outputData.opencode_session}
-              </span>
-            )}
+            <span className="rounded bg-zinc-900 px-2 py-0.5 font-mono text-[10px] text-zinc-400 border border-zinc-800">
+              Step {stepIndex}
+            </span>
           </div>
         </div>
 
         <h4 className="mt-2 text-sm font-semibold text-zinc-100">
-          {milestoneTitle}
+          {stepName}
         </h4>
 
         {failed && event.data?.error && (
@@ -664,19 +734,18 @@ function StepBubble({ event }) {
           </div>
         )}
 
-        {/* Milestone Output Preview / Text */}
+        {/* Output Preview / Text */}
         {previewText && (
           <div className="mt-2.5 rounded-xl border border-zinc-800/70 bg-zinc-950/80 p-3 text-xs text-zinc-300 font-mono whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">
             {previewText}
           </div>
         )}
 
-
-        {/* Structured Output */}
+        {/* Structured Output Viewer */}
         {outputData && typeof outputData === "object" && (
           <div className="mt-2.5">
             <ToolOutputViewer
-              tool={event.data?.step?.replace(/^milestone_/, "") || ""}
+              tool={event.data?.step || ""}
               data={outputData}
             />
           </div>
@@ -705,7 +774,6 @@ function StepBubble({ event }) {
     </div>
   );
 }
-
 
 // ── Result Card Component ───────────────────────────────────────────────
 function ResultCard({ event, artifactsCount }) {

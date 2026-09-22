@@ -192,3 +192,65 @@ def build_prompt(milestone: Milestone, fs_scope: str, intervention: str | None =
     )
 
     return "\n\n".join(parts)
+
+
+def build_master_task_prompt(
+    objective: str,
+    fs_scope: str,
+    requirements: List[str] | None = None,
+    constraints: List[str] | None = None,
+    success_criteria: List[str] | None = None,
+    intervention: str | None = None,
+) -> str:
+    """Build the master task specification prompt for fully autonomous worker execution."""
+    reqs = list(requirements or [])
+    cons = list(constraints or [])
+    crit = list(success_criteria or [])
+
+    reqs_text = "\n".join(f"- {r}" for r in reqs) if reqs else "- Follow standard software engineering best practices"
+    cons_text = "\n".join(f"- {c}" for c in cons) if cons else f"- Stay strictly within workspace boundary: {fs_scope}"
+    crit_text = "\n".join(f"- [ ] {s}" for s in crit) if crit else "- [ ] Objective fully achieved\n- [ ] Unit tests pass\n- [ ] Dataflow verification complete"
+
+    parts: List[str] = []
+
+    if intervention:
+        parts.append(
+            "# ⚠️ PRIORITY MANAGER INTERVENTION (MANDATORY OVERRIDE)\n"
+            f"The user/manager has intervened with the following priority instruction:\n"
+            f"> \"{intervention}\"\n\n"
+            "CRITICAL DIRECTIVE: You MUST satisfy this intervention directive before concluding."
+        )
+
+    parts.append(
+        f"# 🎯 MASTER TASK SPECIFICATION\n\n"
+        f"## 1. Primary Objective\n{objective}\n\n"
+        f"## 2. Workspace Scope & Boundaries\n"
+        f"- Target Root: `{fs_scope}`\n"
+        f"- Boundary: All file modifications and created assets must reside strictly inside `{fs_scope}`.\n\n"
+        f"## 3. Requirements & Constraints\n"
+        f"### Requirements:\n{reqs_text}\n\n"
+        f"### Constraints:\n{cons_text}\n\n"
+        f"## 4. Mandatory Engineering Execution Protocol\n"
+        f"As an autonomous engineer, execute your work in the following structured manner:\n"
+        f"1. **Exploration**: Inspect existing code, dependencies, and environment in `{fs_scope}`.\n"
+        f"2. **Implementation**: Author clean, resilient, modular code with proper error handling.\n"
+        f"3. **Mandatory Testing Protocol**:\n"
+        f"   - **Unit Testing**: Create and run test suites covering all isolated functions, classes, and components.\n"
+        f"   - **Dataflow & Pipeline Testing**: Verify end-to-end data pipelines, inputs/outputs, and contract boundaries.\n"
+        f"   - **Edge Case Validation**: Ensure graceful handling of empty inputs, missing data, and invalid states.\n"
+        f"4. **Self-Correction**: Execute the test commands, inspect failures, and resolve any bugs in-place.\n\n"
+        f"## 5. Finishing Criteria Checklist\n{crit_text}\n\n"
+        f"## 6. Mandatory Final Summary Format\n"
+        f"When concluding your execution, emit the following summary block:\n"
+        f"```yaml\n"
+        f"STATUS: RESOLVED  # [RESOLVED | PARTIALLY_RESOLVED | BLOCKED]\n"
+        f"FILES_MODIFIED: []\n"
+        f"FILES_CREATED: []\n"
+        f"UNIT_TESTS: {{ total: 0, passed: 0, failed: 0 }}\n"
+        f"DATAFLOW_TESTS: {{ status: PASSED, details: '...' }}\n"
+        f"SUMMARY: 'Detailed explanation of what was achieved and verified.'\n"
+        f"```"
+    )
+
+    return "\n\n".join(parts)
+

@@ -108,6 +108,15 @@ async def run_prompt(request: PromptRequest) -> Dict[str, Any]:
             "memories_learned": await _learn_from_turn(request.prompt, f"Agent replied: {message}"),
         }
 
+    if analysis["type"] == "clarify":
+        message = analysis["message"]
+        chat_memory.add(session_id, "assistant", f"[clarify] {message}")
+        return {
+            "mode": "clarify",
+            "message": message,
+            "context": analysis.get("context", {}),
+        }
+
     # analysis["type"] == "plan"
     plan_id = analysis["plan_id"]
     _plan_cache[plan_id] = analysis["steps"]
@@ -221,6 +230,8 @@ async def _fork_task(params: Dict[str, Any], prompt: str) -> Dict[str, Any]:
             fs_scope=fs_scope,
             allowed_tools=allowed,
             max_steps=int(params.get("max_steps", 20)),
+            master_prompt=params.get("master_prompt"),
+            model=params.get("model"),
         )
     except Exception as exc:
         return {"success": False, "data": None, "error": {"code": "INVALID_CONTRACT", "message": str(exc)}}

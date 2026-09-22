@@ -38,7 +38,7 @@ class WorkerSession:
         """
         # Write task.json
         task_path = self.path / "task.json"
-        task_path.write_text(self.contract.model_dump_json())
+        task_path.write_text(self.contract.model_dump_json(), encoding="utf-8")
 
         # Write state.json (initial state)
         state_path = self.path / "state.json"
@@ -52,7 +52,8 @@ class WorkerSession:
                     "progress_percent": 0,
                 },
                 indent=2,
-            )
+            ),
+            encoding="utf-8",
         )
 
         # Initialise empty artefacts & logs dirs
@@ -60,10 +61,10 @@ class WorkerSession:
         (self.path / "logs").mkdir(parents=True, exist_ok=True)
 
         # Empty events.jsonl
-        (self.path / "events.jsonl").write_text("")
+        (self.path / "events.jsonl").write_text("", encoding="utf-8")
 
         # Empty result.json (will be written on completion)
-        (self.path / "result.json").write_text("{}")
+        (self.path / "result.json").write_text("{}", encoding="utf-8")
 
         return self
 
@@ -71,11 +72,11 @@ class WorkerSession:
     # Read/write helpers
     # -----------------------------------------------------------------
     def read_task(self) -> "TaskContract":
-        data = json.loads((self.path / "task.json").read_text())
+        data = json.loads((self.path / "task.json").read_text(encoding="utf-8"))
         return TaskContract.model_validate(data)
 
     def write_task(self, contract: "TaskContract") -> None:
-        (self.path / "task.json").write_text(contract.model_dump_json())
+        (self.path / "task.json").write_text(contract.model_dump_json(), encoding="utf-8")
 
     def read_state(self) -> dict:
         state_path = self.path / "state.json"
@@ -88,7 +89,7 @@ class WorkerSession:
                 "progress_percent": 0,
             }
         try:
-            return json.loads(state_path.read_text())
+            return json.loads(state_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             return {
                 "current_step": None,
@@ -99,7 +100,7 @@ class WorkerSession:
             }
 
     def write_state(self, state: dict) -> None:
-        (self.path / "state.json").write_text(json.dumps(state, indent=2))
+        (self.path / "state.json").write_text(json.dumps(state, indent=2), encoding="utf-8")
 
     def append_event(self, event_type: str, data: dict) -> None:
         """Append a single JSON line to events.jsonl."""
@@ -109,12 +110,12 @@ class WorkerSession:
 
     def read_result(self) -> dict:
         try:
-            return json.loads((self.path / "result.json").read_text())
+            return json.loads((self.path / "result.json").read_text(encoding="utf-8"))
         except Exception:
             return {}
 
     def write_result(self, result: dict) -> None:
-        (self.path / "result.json").write_text(json.dumps(result, indent=2))
+        (self.path / "result.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
 
     @property
     def completed(self) -> list:
