@@ -98,19 +98,37 @@ class JarvisBrainManager:
         return ""
 
     def append_scratchpad(self, note: str) -> bool:
-        """Append an entry to the scratchpad section in JARVIS_MEMORY.md."""
+        """Append an entry to the scratchpad section in JARVIS_MEMORY.md.
+
+        Deduplicates identical lines and caps the scratchpad at 50 entries so
+        the file never grows unbounded (old bug wrote the same line 50+ times).
+        """
         try:
             content = self.read_memory()
             timestamp = time.strftime("%Y-%m-%d %H:%M")
-            entry = f"- [{timestamp}] {note.strip()}\n"
+            new_line = f"- [{timestamp}] {note.strip()}"
 
-            if "## 📝 Scratchpad & Temporary Notes" in content:
-                content = content.replace(
-                    "## 📝 Scratchpad & Temporary Notes\n",
-                    f"## 📝 Scratchpad & Temporary Notes\n{entry}",
-                )
+            SECTION = "## 📝 Scratchpad & Temporary Notes"
+            MAX_ENTRIES = 50
+
+            if SECTION in content:
+                # Split at the FIRST occurrence only to avoid duplicate-section bugs
+                pre, _, rest = content.partition(SECTION)
+                # rest starts right after the header — collect existing entries
+                rest_lines = rest.lstrip("\n").splitlines()
+                # Filter to only bullet lines; drop any extra section headers
+                existing = [l for l in rest_lines if l.startswith("- ")]
+                # Deduplicate: skip if same note (ignoring timestamp) already recorded
+                note_body = note.strip()
+                if any(note_body in l for l in existing):
+                    return True  # already known
+                # Prepend new entry and enforce cap
+                entries = [new_line] + existing
+                entries = entries[:MAX_ENTRIES]
+                new_section = SECTION + "\n" + "\n".join(entries) + "\n"
+                content = pre + new_section
             else:
-                content += f"\n\n## 📝 Scratchpad & Temporary Notes\n{entry}"
+                content = content.rstrip() + f"\n\n{SECTION}\n{new_line}\n"
 
             self.memory_path.write_text(content, encoding="utf-8")
             return True
@@ -216,6 +234,13 @@ class JarvisBrainManager:
 
         memory_text = self.read_memory()
         memory_block = f"## Living Memory & Context:\n{memory_text}\n\n" if memory_text else ""
+
+        # Wire in long-term SQLite facts extracted from previous turns
+        ltm_block = ""
+        if memories:
+            ltm_facts = "\n".join(f"- {m}" for m in memories)
+            ltm_block = f"## Long-Term Learned Facts:\n{ltm_facts}\n\n"
+
         tools = self._tools_block()
 
         return (
@@ -228,6 +253,7 @@ class JarvisBrainManager:
             "5. NO PERMISSION ASKING: Never ask 'Would you like me to do that?'. Always return the structured JSON `plan` so the UI presents confirmation buttons directly.\n"
             "6. JSON OUTPUT ONLY: Output must strictly be a single valid JSON object without extra markdown explanations.\n\n"
             f"{memory_block}"
+            f"{ltm_block}"
             f"{history_block}"
             f"### AVAILABLE TOOLS & SCHEMAS:\n"
             f"{tools}\n\n"
@@ -453,10 +479,57 @@ class JarvisBrainManager:
         return report
 
     async def extract_memories(self, prompt: str, outcome: str, max_facts: int = 3) -> List[str]:
-        """Extract durable facts to record in memory."""
-        if "succeeded" in outcome.lower() or "executed" in outcome.lower():
-            self.append_scratchpad(f"Task completed: {prompt} -> {outcome[:120]}")
-        return []
+        """Extract durable facts from a turn via the agy daemon and persist them.
+
+        Sends a lightweight extraction prompt to the persistent agy session.  The
+        model returns a JSON list of facts (or an empty list if nothing is worth
+        remembering).  Facts are written to both JARVIS_MEMORY.md scratchpad and
+        returned for storage in the SQLite LongTermMemory table.
+        """
+        if not prompt or not outcome:
+            return []
+
+        extraction_prompt = (
+            "You are a memory extractor for an AI assistant called Jarvis.\n"
+            "Given the following conversation turn, extract at most "
+            f"{max_facts} durable facts worth remembering long-term about the "
+            "user's preferences, patterns, constraints, or system state.\n"
+            "Rules:\n"
+            "- Only extract facts that will genuinely help Jarvis in FUTURE turns.\n"
+            "- Skip trivial one-off requests (e.g. 'create a test file').\n"
+            "- Prefer user preferences, corrections, and system configuration facts.\n"
+            "- Return ONLY a JSON array of strings, e.g. [\"fact1\", \"fact2\"] or [] if nothing worthy.\n\n"
+            f"User prompt: {prompt[:300]}\n"
+            f"Outcome: {outcome[:300]}"
+        )
+
+        facts: List[str] = []
+        try:
+            daemon = get_persistent_agy_daemon()
+            res = await daemon.send_turn(extraction_prompt, timeout=20)
+            if res.output_text:
+                raw = res.output_text.strip()
+                # Strip markdown fences if present
+                if "```" in raw:
+                    raw = raw.split("```")[1].strip()
+                    if raw.startswith("json"):
+                        raw = raw[4:].strip()
+                # Parse JSON array
+                start = raw.find("[")
+                end = raw.rfind("]")
+                if start != -1 and end != -1:
+                    import json as _json
+                    parsed = _json.loads(raw[start:end + 1])
+                    if isinstance(parsed, list):
+                        facts = [str(f).strip() for f in parsed if f and str(f).strip()]
+        except Exception as exc:
+            logger.warning("Memory extraction via agy failed: %s", exc)
+
+        # Persist extracted facts to JARVIS_MEMORY.md scratchpad
+        for fact in facts:
+            self.append_scratchpad(fact)
+
+        return facts
 
 
 # Global singleton instance

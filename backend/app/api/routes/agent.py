@@ -42,6 +42,11 @@ _plan_cache: Dict[str, List[Dict[str, Any]]] = {}
 chat_memory = ChatMemory(max_messages=20)
 long_term_memory = LongTermMemory(limit=100)
 
+# Memory extraction runs every N conversational turns to avoid the ~20s agy
+# overhead on every message. Plan confirmations always extract regardless.
+_turn_counter: int = 0
+MEMORY_EXTRACTION_INTERVAL: int = 5  # change to 10 if you prefer less frequent
+
 
 class PromptRequest(BaseModel):
     prompt: str
@@ -79,6 +84,7 @@ async def run_prompt(request: PromptRequest) -> Dict[str, Any]:
             f"Plan of {outcome['total_steps']} steps executed, "
             f"{outcome['completed']} succeeded. Tools used: "
             + ", ".join(r["tool"] for r in outcome["results"]),
+            force=True,  # always extract after plan execution — highest signal
         )
         return outcome
 
@@ -87,8 +93,16 @@ async def run_prompt(request: PromptRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=400, detail="confirm=true requires a plan_id.")
 
     adapter = _get_adapter()
-    history = chat_memory.history(session_id)
     memories = long_term_memory.all()
+
+    # JarvisBrainManager uses agy --conversation which carries its own multi-turn
+    # context natively — injecting ChatMemory history on top doubles token cost for
+    # no benefit.  Only fetch + pass history for the Groq fallback adapter path.
+    from app.modules.antigravity.brain import JarvisBrainManager
+    if isinstance(adapter, JarvisBrainManager):
+        history = []  # agy session is the short-term memory
+    else:
+        history = chat_memory.history(session_id)
 
     try:
         analysis = await adapter.analyze_prompt(request.prompt, history=history, memories=memories)
@@ -134,8 +148,20 @@ async def run_prompt(request: PromptRequest) -> Dict[str, Any]:
     }
 
 
-async def _learn_from_turn(prompt: str, outcome: str) -> List[str]:
-    """Extract durable facts from a turn and store them (best-effort)."""
+async def _learn_from_turn(prompt: str, outcome: str, force: bool = False) -> List[str]:
+    """Extract durable facts from a turn and store them (best-effort).
+
+    Extraction is throttled to every MEMORY_EXTRACTION_INTERVAL conversational
+    turns to avoid paying the ~20s agy overhead on every message.  Pass
+    ``force=True`` to bypass the counter (used after plan confirmations, which
+    carry the most signal).
+    """
+    global _turn_counter
+    _turn_counter += 1
+
+    if not force and (_turn_counter % MEMORY_EXTRACTION_INTERVAL != 0):
+        return []  # skip this turn
+
     try:
         facts = await _get_adapter().extract_memories(prompt, outcome)
     except Exception as exc:

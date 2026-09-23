@@ -2,7 +2,7 @@
 # Chrome must be CLOSED before running this script.
 $ErrorActionPreference = "Stop"
 $src = "$env:LOCALAPPDATA\Google\Chrome\User Data"
-$dst = "D:\Ai automation backend\backend\whatsapp_service\chrome_profile_copy"
+$dst = "$PSScriptRoot\chrome_profile_copy"
 
 $chrome = Get-Process -Name "chrome" -ErrorAction SilentlyContinue
 if ($chrome) {

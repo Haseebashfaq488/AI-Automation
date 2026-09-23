@@ -81,9 +81,29 @@ function phoneDigits(to) {
   return null;
 }
 
+async function handleTakeoverIfPresent() {
+  if (!page) return false;
+  try {
+    return await page.evaluate(() => {
+      const buttons = Array.from(document.querySelectorAll('button, [role="button"], div[role="button"]'));
+      const useHereBtn = buttons.find(b => b.innerText && b.innerText.toLowerCase().includes("use here"));
+      if (useHereBtn) {
+        useHereBtn.click();
+        return true;
+      }
+      return false;
+    });
+  } catch (_) { return false; }
+}
+
 async function isLoggedIn() {
   if (!page) return false;
   try {
+    // Handle 'Use Here' button if another tab temporarily claimed focus
+    const tookOver = await handleTakeoverIfPresent();
+    if (tookOver) {
+      await sleep(2000);
+    }
     return await page.evaluate(() => {
       const pane = document.querySelector("#pane-side");
       return !!pane && pane.innerText.trim().length > 0;
@@ -94,6 +114,11 @@ async function isLoggedIn() {
 async function refreshState() {
   if (!page) { state = "disconnected"; return state; }
   if (await isLoggedIn()) { state = "ready"; return state; }
+  // check for takeover again
+  if (await handleTakeoverIfPresent()) {
+    await sleep(2000);
+    if (await isLoggedIn()) { state = "ready"; return state; }
+  }
   // check for QR on the page
   const hasQr = await page.evaluate(() => {
     return document.body.innerText.includes("Link with QR code")

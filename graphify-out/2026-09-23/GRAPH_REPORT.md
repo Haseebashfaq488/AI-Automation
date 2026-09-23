@@ -1,12 +1,12 @@
 # Graph Report - AI-Automation  (2026-09-23)
 
 ## Corpus Check
-- 189 files · ~80,249 words
+- 189 files · ~80,159 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 10 file(s) not represented in the graph (top: (none) 5, .bat 2, .example 1)
 
 ## Summary
-- 1705 nodes · 3010 edges · 154 communities (106 shown, 32 thin omitted)
+- 1704 nodes · 3005 edges · 155 communities (107 shown, 32 thin omitted)
 - Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 187 edges (avg confidence: 0.92)
 - Token cost: 0 input · 0 output
 
@@ -118,7 +118,7 @@
 - .execute
 - events.py
 - setup_gmail_oauth.py
-- Session: Fork UX — agent `fork` tool, manual fork form, chat persistence (2026-09-12)
+- Chat.js
 - compilerOptions
 - next.config.mjs
 - Globe Icon
@@ -142,12 +142,13 @@
 - Session: Worker / Orchestrator Architecture — Steps 0–1 (2026-09-12)
 - FakeAdapter
 - Session: Optimizing the WhatsApp DOM Feature (2026-09-11)
-- devDependencies
+- 1. Module skeleton
 - Window Icon
 - Worker Statuses
 - jarvis-backend
 - TestAntigravityConfig
 - _agent_factory_for
+- Session: Gmail Tools, OAuth & Agent Email Routing (2026-09-12)
 - antigravity_worker/__init__.py
 - clear_all_workers
 - .model_dump_json
@@ -190,7 +191,7 @@
 - **Jarvis Manager / OpenCode Worker Orchestration** — jarvis___opencode_cli_worker_architecture_jarvis_supervisor, jarvis___opencode_cli_worker_architecture_opencode_sessions, jarvis___opencode_cli_worker_architecture_milestone_decomposition, backend_implementation_log_opencode_worker_session [INFERRED 0.85]
 - **Tool/Skill/Pipeline Module Architecture** — backend_adding_modules_basetool, backend_adding_modules_toolregistry, backend_adding_modules_executionengine, phases_roadmap_phase_2_tool_skill_pipeline_distinction [INFERRED 0.85]
 
-## Communities (154 total, 32 thin omitted)
+## Communities (155 total, 32 thin omitted)
 
 ### Community 0 - "resolve_path"
 Cohesion: 0.07
@@ -209,8 +210,8 @@ Cohesion: 0.12
 Nodes (14): _get_creds(), _load_token_path(), Any, Credentials, Path, Return a path to a ``token.json`` if one exists next to the tool or at the…, Any, Async HTTP client for the local WhatsApp sidecar (whatsapp_service). (+6 more)
 
 ### Community 4 - "server.js"
-Cohesion: 0.08
-Nodes (29): dependencies, express, qrcode-terminal, venom-bot, description, main, name, scripts (+21 more)
+Cohesion: 0.07
+Nodes (28): dependencies, express, qrcode-terminal, venom-bot, description, main, name, scripts (+20 more)
 
 ### Community 5 - "workers.py"
 Cohesion: 0.17
@@ -249,12 +250,12 @@ Cohesion: 0.08
 Nodes (23): Agent note (important), AGENTS.md — Jarvis AI Automation Backend, Architecture, Backend Conventions, DOM driver internals (`server.js`) — current WhatsApp Web realities, Gmail Module, Gotchas, Groq planning adapter (opencode) (+15 more)
 
 ### Community 14 - "frontend_routing/package.json"
-Cohesion: 0.11
-Nodes (18): dependencies, next, react, react-dom, name, private, scripts, build (+10 more)
+Cohesion: 0.08
+Nodes (23): dependencies, next, react, react-dom, devDependencies, eslint, eslint-config-next, tailwindcss (+15 more)
 
 ### Community 15 - "Adding New Modules to the Jarvis Backend"
-Cohesion: 0.09
-Nodes (22): 1. Module skeleton, 2. Register the new components, 2b. Make the tool available to the AGENT (essential!), 3.1 Tools endpoint, 3.2 Pipelines endpoint, 3. Expose the module via the API, 4. Optional: Add helper imports, 5. Quick checklist (+14 more)
+Cohesion: 0.11
+Nodes (17): 2. Register the new components, 2b. Make the tool available to the AGENT (essential!), 3.1 Tools endpoint, 3.2 Pipelines endpoint, 3. Expose the module via the API, 4. Optional: Add helper imports, 5. Quick checklist, 6. Conventions to keep in sync (+9 more)
 
 ### Community 16 - "WorkerSession"
 Cohesion: 0.11
@@ -377,16 +378,16 @@ Cohesion: 0.14
 Nodes (13): lifespan(), FastAPI, setup_logging(), Jarvis Central Brain Manager powered by Antigravity CLI (`agy.exe`). Features:…, Synthesize a complete Master Task Specification prompt for autonomous workers., get_persistent_agy_daemon(), Return the global PersistentAgyDaemon instance., build_master_task_prompt() (+5 more)
 
 ### Community 47 - "Jarvis Backend Implementation Log"
-Cohesion: 0.18
-Nodes (11): Addendum: attachments + agent robustness (same day), Jarvis Backend Implementation Log, Key Components Built, Session: Gmail Tools, OAuth & Agent Email Routing (2026-09-12), Session: Jarvis + OpenCode CLI Worker Architecture & Word Worker Removal (2026-09-15), State, Summary, Tested & fixed end-to-end (all ✅) (+3 more)
+Cohesion: 0.17
+Nodes (12): Agent can fork, Frontend, Jarvis Backend Implementation Log, Key Components Built, Session: Fork UX — agent `fork` tool, manual fork form, chat persistence (2026-09-12), Session: Jarvis + OpenCode CLI Worker Architecture & Word Worker Removal (2026-09-15), Summary, Verified end-to-end flows (+4 more)
 
 ### Community 48 - "app/page.js"
-Cohesion: 0.17
-Nodes (9): BotMessage(), UserBubble(), generateId(), Home(), callAgent(), confirmPlan(), sendPrompt(), loadStoredMessages() (+1 more)
+Cohesion: 0.27
+Nodes (7): generateId(), Home(), callAgent(), confirmPlan(), sendPrompt(), loadStoredMessages(), SUGGESTIONS
 
 ### Community 49 - "[id]/page.js"
-Cohesion: 0.15
-Nodes (6): ToolOutputViewer(), ArtifactsPanel(), EVENT_STYLE, formatBytes(), STATUS_STYLE, WorkerPage()
+Cohesion: 0.17
+Nodes (5): ArtifactsPanel(), EVENT_STYLE, formatBytes(), STATUS_STYLE, WorkerPage()
 
 ### Community 50 - "🧠 JARVIS LIVING MEMORY & SYSTEM CONTEXT"
 Cohesion: 0.29
@@ -568,9 +569,9 @@ Nodes (4): 7. Tool vs Skill vs Pipeline, Pipeline, Skill, Tool
 Cohesion: 0.67
 Nodes (3): event_generator(), get, stream_events()
 
-### Community 102 - "Session: Fork UX — agent `fork` tool, manual fork form, chat persistence (2026-09-12)"
-Cohesion: 0.33
-Nodes (6): Agent can fork, Frontend, Session: Fork UX — agent `fork` tool, manual fork form, chat persistence (2026-09-12), Verified live (temp uvicorn :8002, real OpenRouter key in `.env`), Worker LLM fix (found by live testing), Worker sessions survive restarts
+### Community 102 - "Chat.js"
+Cohesion: 0.29
+Nodes (3): BotMessage(), UserBubble(), ToolOutputViewer()
 
 ### Community 105 - "Globe Icon"
 Cohesion: 0.67
@@ -604,13 +605,17 @@ Nodes (6): Bug fixes along the way, Not yet done (next sessions), Session: Worke
 Cohesion: 0.33
 Nodes (6): Context, Known limitations, Optimization plan (accepted next steps, not yet implemented), Root causes found & fixed (live debugging against real WhatsApp Web), Session: Optimizing the WhatsApp DOM Feature (2026-09-11), Verified live (through backend `:8000`, all ✅)
 
-### Community 139 - "devDependencies"
+### Community 139 - "1. Module skeleton"
 Cohesion: 0.40
-Nodes (5): devDependencies, eslint, eslint-config-next, tailwindcss, @tailwindcss/postcss
+Nodes (5): 1. Module skeleton, Helper example (`helpers/validation.py`), Minimal pipeline example (`pipelines/list_recent_emails_pipeline.py`), Minimal skill example (`skills/list_recent_emails.py`), Minimal tool example (`tools/send_email_tool.py`)
 
 ### Community 147 - "_agent_factory_for"
 Cohesion: 0.40
 Nodes (5): _agent_factory_for(), factory(), launch_worker(), Create + start a worker engine and register it for polling/SSE. Shared by the…, Return an agent factory for the worker type, or None (placeholder loop).
+
+### Community 148 - "Session: Gmail Tools, OAuth & Agent Email Routing (2026-09-12)"
+Cohesion: 0.40
+Nodes (5): Addendum: attachments + agent robustness (same day), Session: Gmail Tools, OAuth & Agent Email Routing (2026-09-12), State, Tested & fixed end-to-end (all ✅), Verified live via backend (:8000)
 
 ### Community 150 - "clear_all_workers"
 Cohesion: 0.67
