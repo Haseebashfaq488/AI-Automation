@@ -6,16 +6,20 @@ Node.js **WhatsApp sidecar** that automates WhatsApp Web via a custom Puppeteer
 DOM driver (no whatsapp-web.js / venom — both abandoned and incompatible with
 current WhatsApp Web builds).
 
-## Architecture
+## Architecture & Repositories
 
 ```
-Frontend (Next.js)      :3000   frontend_routing/
-Backend  (FastAPI)      :8000   backend/
+Frontend (Next.js 16)   :3000   AI-Automation Frontend/   (Repo: Haseebashfaq488/Ai-Automation-Frontend)
+Backend  (FastAPI)      :8000   backend/                  (Repo: Haseebashfaq488/AI-Automation)
 WhatsApp sidecar (Node) :4097   backend/whatsapp_service/server.js
         │
         ▼
 Headless Chrome ──► live WhatsApp Web session (logged in via copied profile)
 ```
+
+> **Note on Repositories**: 
+> - Root repository (`Haseebashfaq488/AI-Automation`) houses the full workspace, FastAPI backend engine, Antigravity brain, and worker daemons.
+> - Frontend repository (`Haseebashfaq488/Ai-Automation-Frontend`) is the standalone Next.js 16 web interface deployed to Vercel.
 
 - Backend tools/skills/pipelines → `app/modules/whatsapp/helpers/client.py`
   (singleton `get_client()`, tests monkeypatch with `FakeWhatsAppClient`)
@@ -33,7 +37,7 @@ npm start                              # node server.js on :4097
 # 2. Backend (from backend)
 uvicorn app.main:app --port 8000       # or however it's normally started
 
-# 3. Frontend (from frontend_routing)
+# 3. Frontend (from AI-Automation Frontend)
 npm run dev                            # :3000
 ```
 

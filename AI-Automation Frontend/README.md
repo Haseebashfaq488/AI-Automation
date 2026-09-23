@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Jarvis AI Automation — Frontend
 
-## Getting Started
+Next.js 16 frontend control plane for the **Jarvis AI Assistant & Autonomous Worker Fleet**.
 
-First, run the development server:
+🔗 **Connected Repository**: `https://github.com/Haseebashfaq488/Ai-Automation-Frontend`  
+🔗 **Backend Engine Repository**: `https://github.com/Haseebashfaq488/AI-Automation`
+
+---
+
+## ✨ Features
+
+- 🌌 **Jarvis Assistant Hub**: Multi-turn chat interface with Antigravity living memory, task resolution cards, and quick suggestion prompts.
+- ⚡ **Remote Power Controls**: One-click **Boot Up** (Wake-on-LAN webhook caller) and **Shut Down** (safe countdown, force shutdown, workstation lock).
+- 🤖 **Autonomous Worker Fleet Dashboard**: Fork coding and automation tasks, search & monitor active sessions in real time.
+- 📟 **Real-time Live Worker Console**: Server-Sent Events (SSE) streaming console, step-by-step trace inspection, user intervention, and artifact downloads.
+- 🎙️ **Voice Control**: Browser speech recognition with auto-silence detection and voice command streaming.
+- 📡 **Real-time Event Stream**: Live global activity feed listening to the backend event bus.
+
+---
+
+## 🚀 Getting Started
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure Environment
+
+Create `.env.local`:
+
+```env
+NEXT_PUBLIC_API_URL="https://upstairs-earring-craftwork.ngrok-free.dev"
+NEXT_PUBLIC_WAKE_URL="https://uncurrent-unspuriously-samual.ngrok-free.dev/wake?token=mysecret123"
+```
+
+### 3. Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### 4. Build for Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 📖 Architecture & Agent Guide
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See [FRONTEND_ARCHITECTURE.md](./FRONTEND_ARCHITECTURE.md) for detailed documentation on pages, components, and backend API contracts.
