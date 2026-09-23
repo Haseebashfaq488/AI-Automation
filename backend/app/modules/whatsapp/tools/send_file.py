@@ -25,7 +25,18 @@ class SendFileTool(BaseTool):
 
     async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
         to = resolve_recipient(params["to"])
-        path = resolve_path(params["path"])
+        raw_path = str(params.get("path", "")).strip()
+
+        # Fallback if path parameter was left empty or as an unresolved placeholder
+        if not raw_path or raw_path in ("{worker.artifact}", "{worker.artifact_path}", "None"):
+            workspace_dir = Path("D:/workspace")
+            if workspace_dir.is_dir():
+                ws_files = [f for f in workspace_dir.iterdir() if f.is_file() and not f.name.startswith(".")]
+                if ws_files:
+                    ws_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+                    raw_path = str(ws_files[0])
+
+        path = resolve_path(raw_path)
         caption = params.get("caption")
         ensure_exists(path)
         ensure_is_file(path)
@@ -39,3 +50,4 @@ class SendFileTool(BaseTool):
             "filename": path.name,
             "messageId": result.get("messageId"),
         }
+

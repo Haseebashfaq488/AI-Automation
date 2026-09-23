@@ -307,4 +307,23 @@ Implements the parent‑worker plan from `DESIGN_AND_PLAN_FOR_THE_NEXT_BIGGER_MO
 
 ---
 
+### Module 14 – Google Drive Integration & Unified Tooling
+1. **Authentication & Client Management**:
+   - `setup_drive_oauth.py`: OAuth 2.0 flow using Desktop Client credentials from `mcp_config.json` or `drive_client_secret.json`. Requests drive readonly, file, and metadata scopes and stores tokens to `drive_token.json`.
+   - `app/modules/drive/helpers/drive_client.py`: Singleton credentials loader with automatic token expiration refresh (`google.auth.transport.requests.Request`), Google Docs export MIME conversion, and mock mode support (`DRIVE_MOCK=1`).
+2. **Tools & Skills**:
+   - `ListDriveFilesTool` (`list_drive_files`): Query files and folders with size formatting, metadata, and webViewLinks.
+   - `ReadDriveFileTool` (`read_drive_file`): Read text or download files by file ID, supporting Google Docs automatic export and local file saving.
+   - `UploadDriveFileTool` (`upload_drive_file`): Multipart file upload to Google Drive folders.
+   - `SearchDriveSkill` (`search_drive`): Smart search by keyword across names, full text, and specific mime types.
+3. **Registry & LLM Planner Integration**:
+   - Registered in `app/registry/__init__.py`.
+   - Added to `OpenCodeAdapter._KNOWN_TOOLS` in `app/modules/opencode/adapter.py` with parameter schema and updated system prompt.
+4. **Frontend Presenter**:
+   - `AI-Automation Frontend/app/components/ToolOutputViewer.js`: Added `DriveFilesView` rendering rich file cards with type icons, formatted size badges, direct Google Drive links (`webViewLink`), and ID copy buttons.
+5. **Automated Verification**:
+   - Unit tests in `tests/unit/test_drive_tools.py` covering mock mode, parameter validation, missing credentials handling, and file downloads.
+
+---
+
 *This log lives at `backend/IMPLEMENTATION_LOG.md` and should be updated after each module.*

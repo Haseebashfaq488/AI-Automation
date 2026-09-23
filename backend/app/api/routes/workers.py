@@ -523,6 +523,11 @@ async def worker_stream(session_id: str, request: Request):
 
     if is_completed:
         async def finished_generator():
+            events_file = session_dir / "events.jsonl"
+            if events_file.is_file():
+                for line in events_file.read_text(encoding="utf-8").strip().splitlines():
+                    if line:
+                        yield f"data: {line}\n\n"
             yield f"data: {json.dumps({'event': 'result', 'result': result_data or {}})}\n\n"
 
         return StreamingResponse(

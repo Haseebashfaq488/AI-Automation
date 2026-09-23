@@ -61,7 +61,7 @@ def get_auto_approve() -> bool:
 
 def get_milestone_timeout() -> int:
     """Maximum seconds to wait for a single milestone execution."""
-    return int(os.getenv("ANTIGRAVITY_TIMEOUT", "300"))
+    return int(os.getenv("ANTIGRAVITY_TIMEOUT", "1800"))
 
 
 def get_visible_console() -> bool:

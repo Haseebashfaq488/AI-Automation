@@ -53,6 +53,10 @@ class OpenCodeAdapter:
         "unread_digest": {"to": "optional — chat to send the digest to; omit to just return it"},
         "send_email": {"to": "recipient email address", "subject": "optional email subject (omit for no subject)", "body": "email body text", "attachments": "optional list of absolute file paths to attach to the email"},
         "list_recent_emails": {"query": "optional search query (e.g. from:user subject:hello); omit to list recent inbox mail", "max_results": "optional maximum number of emails to return"},
+        "list_drive_files": {"page_size": "optional maximum number of files (default 15)", "folder_id": "optional folder id", "query": "optional Drive query filter"},
+        "read_drive_file": {"file_id": "Google Drive file id to read or download", "destination": "optional local file path to save download"},
+        "upload_drive_file": {"path": "absolute path of the local file to upload to Drive", "folder_id": "optional Drive destination folder id", "name": "optional name for the file in Drive"},
+        "search_drive": {"query": "search keyword or fullText query for Google Drive", "file_type": "optional file type filter (document, spreadsheet, pdf, image, folder)", "max_results": "optional maximum results"},
         "fork": {
             "objective": "Concise high-level description of the primary coding/automation task",
             "requirements": "(optional) List of explicit technical requirements or libraries the worker must fulfill",
@@ -60,6 +64,8 @@ class OpenCodeAdapter:
             "success_criteria": "(optional) List of measurable pass/fail completion conditions",
             "fs_scope": "(optional) Target project root directory path (defaults to 'D:/AI-Automation')",
         },
+        "shutdown_system": {"delay_seconds": "(optional) seconds before shutdown (default 10)", "force": "(optional) boolean force close", "message": "(optional) comment"},
+        "cancel_shutdown": {},
     }
 
     def __init__(
@@ -104,13 +110,14 @@ class OpenCodeAdapter:
         tools = self._tools_block()
         return (
             "You are Jarvis, an executive AI assistant and orchestrator. You manage WhatsApp, "
-            "Gmail, and autonomous development workers (Antigravity). "
+            "Gmail, Google Drive, local files, and autonomous development workers (Antigravity). "
             "Analyze the user's request and decide what to do.\n\n"
             f"Available tools and their required params:\n{tools}\n\n"
             "RULES:\n"
             "1. If the prompt is NOT an actionable operation (greeting, question, "
             "conversation), return a direct conversational response.\n"
-            "2. If the prompt IS an actionable operation (WhatsApp or email), "
+            "   - If the user asks what tools, features, or capabilities you have, provide a complete, well-structured summary of all 5 integrated modules: (1) Autonomous Worker Delegation ('fork'), (2) Google Drive ('list_drive_files', 'read_drive_file', 'upload_drive_file', 'search_drive'), (3) WhatsApp ('send_message', 'send_file', 'list_chats', 'get_messages', etc.), (4) Gmail ('send_email', 'list_recent_emails'), and (5) Local File Management ('list_directory', 'read_file', 'write_file', 'search_files', 'organize_downloads', 'archive', 'extract', etc.).\n"
+            "2. If the prompt IS an actionable operation (WhatsApp, email, Google Drive, files), "
             "plan the exact steps needed.\n"
             "2b. If the user asks for a coding, development, testing, refactoring, building, or multi-step engineering task (or explicitly says 'fork', 'delegate', 'spawn worker'):\n"
             "   - Plan a single step with the 'fork' tool.\n"
@@ -346,6 +353,7 @@ class OpenCodeAdapter:
         # Fallback: every documented param is required except known optionals
         optional = {"target_dir", "recursive", "dry_run", "destination", "case_sensitive",
                     "max_results", "permanent", "extension", "start_index",
+                    "page_size", "folder_id", "query", "order_by", "file_type", "max_bytes", "name",
                     # fork pseudo-tool: everything falls back to context if omitted
                     "objective", "fs_scope", "allowed_tools", "worker_type", "max_steps",
                     "requirements", "constraints", "success_criteria"}

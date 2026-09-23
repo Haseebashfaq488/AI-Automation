@@ -63,9 +63,16 @@ from app.modules.gmail.skills.list_recent_emails import ListRecentEmailsSkill
 registry.register(SendEmailTool())
 registry.register(ListRecentEmailsSkill())
 
+# Google Drive tools & skills
+from app.modules.drive.tools.list_drive_files import ListDriveFilesTool
+from app.modules.drive.tools.read_drive_file import ReadDriveFileTool
+from app.modules.drive.tools.upload_drive_file import UploadDriveFileTool
+from app.modules.drive.skills.search_drive import SearchDriveSkill
 
-
-
+registry.register(ListDriveFilesTool())
+registry.register(ReadDriveFileTool())
+registry.register(UploadDriveFileTool())
+registry.register(SearchDriveSkill())
 # WhatsApp tools & skills
 registry.register(SendMessageTool())
 registry.register(SendFileTool())
@@ -80,3 +87,14 @@ registry.register(DownloadMediaTool())
 registry.register(GetStatusTool())
 registry.register(SendReportSkill())
 registry.register(UnreadDigestSkill())
+
+# Autonomous Worker Fork Tool
+from app.workers.tools.fork_tool import ForkTool
+registry.register(ForkTool())
+
+# System Power Management Tools
+from app.modules.system.tools.shutdown_tool import ShutdownTool
+from app.modules.system.tools.cancel_shutdown_tool import CancelShutdownTool
+registry.register(ShutdownTool())
+registry.register(CancelShutdownTool())
+

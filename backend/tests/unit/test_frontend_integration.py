@@ -54,6 +54,7 @@ async def test_frontend_backend_integration_flow():
         res = await client.post(f"/workers/{session_id}/cancel")
         assert res.status_code == 200
         assert res.json()["status"] == "cancellation requested"
+        await asyncio.sleep(0.05)
 
         # 8. Chat history clear (Frontend 'New Chat' button)
         res = await client.delete("/agent/history?session_id=default")

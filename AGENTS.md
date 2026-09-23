@@ -91,6 +91,14 @@ Health checks: `GET :8000/health`, `GET :4097/status`, `GET :3000`.
 - Gmail tests monkeypatch `_load_token_path → None`; they must stay independent
   of whether a real `token.json` exists.
 
+## Google Drive Module
+- `app/modules/drive/`:
+  - Tools: `list_drive_files` (list & filter files with pagination/size/type), `read_drive_file` (read Google Docs/Sheets/plain-text or download files), `upload_drive_file` (upload local files to Drive folders).
+  - Skill: `search_drive` (full-text and keyword search across Drive with `file_type` filters).
+- OAuth token lives at **`backend/drive_token.json`** (scopes: `drive.readonly`, `drive.file`, `drive.metadata.readonly`). The client helper auto-refreshes tokens and falls back to `token.json` if unified.
+- Re-auth: `python setup_drive_oauth.py` (fixed port `8080`, saves to `backend/drive_token.json`).
+- `DRIVE_MOCK=1` env var makes all Drive tools/skills return structured mock data.
+
 ### Agent note (important)
 - The Groq planning prompt in `app/modules/opencode/adapter.py` is
   **general-purpose** (files + WhatsApp + email). Do NOT narrow it back to
