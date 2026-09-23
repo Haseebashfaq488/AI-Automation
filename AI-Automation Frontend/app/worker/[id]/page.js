@@ -144,14 +144,38 @@ export default function WorkerPage() {
       try {
         const ev = JSON.parse(msg.data);
 
-        if (ev.event === "step_update") {
-          const delta = ev.step_update?.text_delta;
+        // 1. Step update events from agy
+        if (ev.event === "step_update" || ev.step_update) {
+          const su = ev.step_update || {};
+          const delta = su.text_delta;
           if (delta) {
             setLiveStreamText((prev) => prev + delta);
+          } else if (su.step_type === "tool" && su.state === "ACTIVE") {
+            const toolName = su.tool_name || su.tool_info?.name || "tool";
+            const params = su.tool_info?.parameters ? JSON.stringify(su.tool_info.parameters) : "";
+            setLiveStreamText((prev) => prev + `\n\n⚙️ [Running Tool: ${toolName}] ${params}\n`);
+          } else if (su.step_type === "tool" && su.state === "DONE") {
+            const output = su.tool_info?.output;
+            if (output && typeof output === "string") {
+              const preview = output.length > 500 ? output.slice(0, 500) + "... [truncated]" : output;
+              setLiveStreamText((prev) => prev + `\n📋 Output:\n${preview}\n`);
+            }
           }
-        } else if (ev.event === "result") {
+        } 
+        // 2. OpenCode / Generic stream delta
+        else if (ev.content || ev.text || ev.part?.text) {
+          const chunk = ev.content || ev.text || ev.part?.text;
+          setLiveStreamText((prev) => prev + chunk);
+        }
+        // 3. Engine high-level lifecycle events
+        else if (ev.type === "STEP_STARTED") {
+          const stepName = ev.data?.step || ev.step || "Executing Step";
+          setLiveStreamText((prev) => prev + `\n\n▶ ${stepName}...\n`);
+        }
+        // 4. Final Result event
+        else if (ev.event === "result") {
           const resp = ev.result?.response;
-          if (resp) {
+          if (resp && typeof resp === "string") {
             setLiveStreamText((prev) => (prev ? prev : resp));
           }
           setStreamActive(false);
