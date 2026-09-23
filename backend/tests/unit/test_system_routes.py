@@ -37,3 +37,27 @@ def test_restart_endpoint():
         data = res.json()
         assert data["status"] == "restart_scheduled"
         assert data["delay_seconds"] == 20
+
+
+@pytest.mark.asyncio
+async def test_shutdown_tool_execution():
+    from app.modules.system.tools.shutdown_tool import ShutdownTool
+    tool = ShutdownTool()
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0)
+        res = await tool.execute({"delay_seconds": 10, "message": "Test"})
+        assert res["status"] == "shutdown_scheduled"
+        assert res["delay_seconds"] == 10
+        mock_run.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_cancel_shutdown_tool_execution():
+    from app.modules.system.tools.cancel_shutdown_tool import CancelShutdownTool
+    tool = CancelShutdownTool()
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0)
+        res = await tool.execute({})
+        assert res["status"] == "shutdown_cancelled"
+        mock_run.assert_called_once()
+

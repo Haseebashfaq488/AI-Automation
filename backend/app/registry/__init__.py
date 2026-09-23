@@ -92,3 +92,9 @@ registry.register(UnreadDigestSkill())
 from app.workers.tools.fork_tool import ForkTool
 registry.register(ForkTool())
 
+# System Power Management Tools
+from app.modules.system.tools.shutdown_tool import ShutdownTool
+from app.modules.system.tools.cancel_shutdown_tool import CancelShutdownTool
+registry.register(ShutdownTool())
+registry.register(CancelShutdownTool())
+

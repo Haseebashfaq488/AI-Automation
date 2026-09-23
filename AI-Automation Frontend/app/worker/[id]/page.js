@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import VoiceInput from "../../components/VoiceInput";
 import ToolOutputViewer from "../../components/ToolOutputViewer";
+import PowerControls from "../../components/PowerControls";
 
 import { API_URL, apiFetch } from "../../lib/api";
 
@@ -380,6 +381,8 @@ export default function WorkerPage() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <PowerControls />
+
           {terminalMsg && (
             <span className="text-xs text-emerald-400 font-medium animate-fade-in hidden sm:inline">
               {terminalMsg}

@@ -64,6 +64,8 @@ class OpenCodeAdapter:
             "success_criteria": "(optional) List of measurable pass/fail completion conditions",
             "fs_scope": "(optional) Target project root directory path (defaults to 'D:/AI-Automation')",
         },
+        "shutdown_system": {"delay_seconds": "(optional) seconds before shutdown (default 10)", "force": "(optional) boolean force close", "message": "(optional) comment"},
+        "cancel_shutdown": {},
     }
 
     def __init__(

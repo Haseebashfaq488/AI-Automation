@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { API_URL, apiFetch } from "../lib/api";
+import { apiFetch } from "../lib/api";
 
-const WAKE_URL = "https://uncurrent-unspuriously-samual.ngrok-free.dev/wake?token=mysecret123";
+const WAKE_URL =
+  process.env.NEXT_PUBLIC_WAKE_URL ||
+  "https://uncurrent-unspuriously-samual.ngrok-free.dev/wake?token=mysecret123";
 
 export default function PowerControls() {
   const [wakeStatus, setWakeStatus] = useState("idle"); // "idle" | "sending" | "success" | "error"
@@ -21,18 +23,28 @@ export default function PowerControls() {
     setStatusMessage("Sending wake signal...");
 
     try {
-      // Send request to the ngrok wake URL
-      // Use no-cors as a safe fallback in case the webhook server lacks CORS headers
-      await fetch(WAKE_URL, {
-        method: "GET",
-        mode: "no-cors",
-        headers: {
-          "ngrok-skip-browser-warning": "true",
-        },
-      });
+      // Build URL with ngrok skip warning query parameter
+      const url = new URL(WAKE_URL);
+      url.searchParams.set("ngrok-skip-browser-warning", "true");
+
+      try {
+        // Standard GET request with ngrok skip header
+        await fetch(url.toString(), {
+          method: "GET",
+          headers: {
+            "ngrok-skip-browser-warning": "true",
+          },
+        });
+      } catch (corsErr) {
+        // Fallback to no-cors mode if the target webhook lacks CORS headers
+        await fetch(url.toString(), {
+          method: "GET",
+          mode: "no-cors",
+        });
+      }
 
       setWakeStatus("success");
-      setStatusMessage("Wake packet delivered to PC!");
+      setStatusMessage("Wake packet sent!");
       setTimeout(() => {
         setWakeStatus("idle");
         setStatusMessage("");
@@ -40,7 +52,7 @@ export default function PowerControls() {
     } catch (err) {
       console.error("Wake signal failed:", err);
       setWakeStatus("error");
-      setStatusMessage("Failed to send wake packet");
+      setStatusMessage("Failed to send wake signal");
       setTimeout(() => {
         setWakeStatus("idle");
         setStatusMessage("");
@@ -48,19 +60,26 @@ export default function PowerControls() {
     }
   }
 
-  // ── 2. Boot Down (System Shutdown via Backend) ────────────────────────
-  async function handleShutdownConfirm(delaySeconds = 10) {
+  // ── 2. Shut Down (System Shutdown via Backend) ────────────────────────
+  async function handleShutdownConfirm(delaySeconds = 10, force = false) {
     setActionBusy(true);
     try {
       const res = await apiFetch("/system/shutdown", {
         method: "POST",
         body: JSON.stringify({
           delay_seconds: delaySeconds,
+          force: force,
           message: "Remote shutdown initiated from Jarvis Control Plane",
         }),
       });
 
       if (res.ok) {
+        if (delaySeconds === 0) {
+          setShowShutdownModal(false);
+          alert("System shutdown command sent. The host PC is powering off.");
+          return;
+        }
+
         setShutdownScheduled(true);
         setShowShutdownModal(false);
         setCountdown(delaySeconds);
@@ -127,7 +146,7 @@ export default function PowerControls() {
       <button
         onClick={handleBootUp}
         disabled={wakeStatus === "sending"}
-        title="Send Wake-on-LAN trigger packet via ngrok endpoint"
+        title="Send Wake-on-LAN trigger packet via webhook URL"
         className={`inline-flex items-center gap-1 sm:gap-1.5 rounded-xl border px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold shadow-sm transition active:scale-95 ${
           wakeStatus === "sending"
             ? "border-emerald-600 bg-emerald-950/80 text-emerald-300 animate-pulse"
@@ -149,11 +168,11 @@ export default function PowerControls() {
             : "Boot Up"}
         </span>
         <span className="sm:hidden">
-          {wakeStatus === "sending" ? "..." : wakeStatus === "success" ? "Sent" : "Boot"}
+          {wakeStatus === "sending" ? "..." : wakeStatus === "success" ? "Sent" : "Boot Up"}
         </span>
       </button>
 
-      {/* ── Boot Down / Shutdown Button or Active Countdown ── */}
+      {/* ── Shut Down Button or Active Countdown ── */}
       {shutdownScheduled ? (
         <div className="flex items-center gap-1.5 rounded-xl border border-red-500/80 bg-red-950/80 px-2.5 py-1 text-xs font-semibold text-red-200 animate-pulse shadow-md shadow-red-950/50">
           <span className="text-sm">⏱️</span>
@@ -169,12 +188,12 @@ export default function PowerControls() {
       ) : (
         <button
           onClick={() => setShowShutdownModal(true)}
-          title="Shutdown or lock PC remotely"
+          title="Shut down host PC remotely"
           className="inline-flex items-center gap-1 sm:gap-1.5 rounded-xl border border-rose-800/60 bg-rose-950/30 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold text-rose-300 shadow-sm transition hover:border-rose-600 hover:bg-rose-900/40 hover:text-rose-100 hover:shadow-[0_0_10px_rgba(244,63,94,0.25)] active:scale-95"
         >
           <span className="text-sm">🛑</span>
-          <span className="hidden sm:inline">Boot Down</span>
-          <span className="sm:hidden">Down</span>
+          <span className="hidden sm:inline">Shut Down</span>
+          <span className="sm:hidden">Shutdown</span>
         </button>
       )}
 
@@ -199,23 +218,42 @@ export default function PowerControls() {
 
             <div className="py-4 space-y-3">
               <p className="text-sm text-zinc-300 leading-relaxed">
-                Select a power action to execute on the host machine:
+                Choose an action to execute on the host machine:
               </p>
 
+              {/* Graceful 10s Countdown Shutdown */}
               <div className="rounded-xl border border-rose-900/40 bg-rose-950/20 p-3.5 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-rose-200">System Shutdown</span>
+                  <span className="text-sm font-semibold text-rose-200">Safe Shutdown</span>
                   <span className="text-[11px] font-medium text-rose-400">10s countdown</span>
                 </div>
                 <p className="text-xs text-zinc-400">
-                  Gracefully closes all applications and powers off the PC. You will have a 10-second window to abort.
+                  Gracefully closes all applications and powers off the PC. Includes a 10-second cancel window.
                 </p>
                 <button
-                  onClick={() => handleShutdownConfirm(10)}
+                  onClick={() => handleShutdownConfirm(10, false)}
                   disabled={actionBusy}
                   className="w-full rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-rose-950/50 hover:bg-rose-500 transition disabled:opacity-50"
                 >
-                  {actionBusy ? "Initiating..." : "🛑 Initiate System Shutdown"}
+                  {actionBusy ? "Initiating..." : "🛑 Safe Shutdown (10s)"}
+                </button>
+              </div>
+
+              {/* Immediate Shutdown */}
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-zinc-200">Immediate Force Shutdown</span>
+                  <span className="text-[11px] font-medium text-zinc-400">Instant</span>
+                </div>
+                <p className="text-xs text-zinc-400">
+                  Immediately powers off the computer without waiting.
+                </p>
+                <button
+                  onClick={() => handleShutdownConfirm(0, true)}
+                  disabled={actionBusy}
+                  className="w-full rounded-xl border border-rose-800/80 bg-rose-950/40 px-3 py-2 text-xs font-semibold text-rose-300 hover:bg-rose-900/60 transition disabled:opacity-50"
+                >
+                  ⚡ Force Shut Down Now
                 </button>
               </div>
 
