@@ -184,6 +184,7 @@ async def _execute_plan(steps: List[Dict[str, Any]], prompt: str = "") -> Dict[s
         if tool_name == "fork":
             # Pseudo-tool: not in the registry — fork a background worker.
             result = await _fork_task(params, prompt)
+            session_id = result.get("data", {}).get("session_id") if result.get("data") else None
             results.append({
                 "index": i,
                 "tool": tool_name,
@@ -192,6 +193,30 @@ async def _execute_plan(steps: List[Dict[str, Any]], prompt: str = "") -> Dict[s
                 "data": result["data"],
                 "error": result.get("error"),
             })
+
+            # If there are subsequent dependent steps, chain them as a sequential reactive pipeline
+            if result["success"] and session_id and (i + 1 < len(steps)):
+                from app.core.events.orchestrator import get_orchestrator
+                orch = get_orchestrator()
+                next_step = steps[i + 1]
+                remaining_downstream = steps[i + 2:] if (i + 2 < len(steps)) else []
+                hook = orch.register_hook(
+                    target_session_id=session_id,
+                    action_tool=next_step["tool"],
+                    action_params=next_step.get("params", {}),
+                    description=next_step.get("description", ""),
+                    downstream_steps=remaining_downstream,
+                )
+                for pending_step in steps[i + 1:]:
+                    results.append({
+                        "index": len(results),
+                        "tool": pending_step["tool"],
+                        "description": f"[Chained] {pending_step.get('description', pending_step['tool'])}",
+                        "success": True,
+                        "data": {"status": "chained", "hook_id": hook.id, "target_session": session_id},
+                    })
+                # Break because remaining pipeline is now handled asynchronously by the event orchestrator
+                break
             continue
 
         try:

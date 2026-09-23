@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { UserBubble, BotMessage } from "./components/Chat";
 import VoiceInput from "./components/VoiceInput";
+import ActivityFeed from "./components/ActivityFeed";
+import TaskChainTracker from "./components/TaskChainTracker";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const CHAT_STORAGE_KEY = "jarvis_chat_messages";
@@ -41,6 +43,7 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [backendOnline, setBackendOnline] = useState(null);
   const [confirmedPlanIds, setConfirmedPlanIds] = useState(new Set());
+  const [showFeed, setShowFeed] = useState(false);
   const endRef = useRef(null);
 
   // Load stored messages after mount to prevent hydration mismatch
@@ -174,6 +177,22 @@ export default function Home() {
     }
   }
 
+  // Extract the active plan and ensure planExecution belongs only to this active plan
+  const activePlanMessage = [...messages].reverse().find(
+    (m) => m.role === "bot" && (m.data?.mode === "plan" || (m.data?.steps && m.data.steps.length > 0))
+  );
+  const activePlan = activePlanMessage?.data || null;
+
+  const matchingExecutionMessage = activePlan
+    ? [...messages].reverse().find(
+        (m) =>
+          m.role === "bot" &&
+          m.data?.mode === "execution" &&
+          messages.indexOf(m) > messages.indexOf(activePlanMessage)
+      )
+    : null;
+  const planExecution = matchingExecutionMessage?.data || null;
+
   return (
     <div className="flex h-screen flex-col bg-zinc-950 text-zinc-100 selection:bg-purple-500/30 selection:text-purple-200">
       <header className="flex items-center justify-between border-b border-zinc-800/80 bg-zinc-900/50 px-6 py-3.5 backdrop-blur-md">
@@ -204,6 +223,17 @@ export default function Home() {
 
         <div className="flex items-center gap-2.5">
           <button
+            onClick={() => setShowFeed((prev) => !prev)}
+            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-xs font-semibold shadow-sm transition ${
+              showFeed
+                ? "border-purple-500 bg-purple-950/80 text-purple-200 shadow-purple-950/50"
+                : "border-zinc-800 bg-zinc-900/80 text-zinc-300 hover:border-purple-700/60 hover:text-white"
+            }`}
+          >
+            <span>📡</span>
+            <span>Activity Feed</span>
+          </button>
+          <button
             onClick={openOpenCodeTerminal}
             disabled={launchingTerminal}
             className="inline-flex items-center gap-1.5 rounded-xl border border-sky-700/60 bg-sky-950/60 px-3.5 py-1.5 text-xs font-semibold text-sky-300 shadow-sm transition hover:border-sky-500 hover:bg-sky-900/60 hover:text-white disabled:opacity-40"
@@ -229,45 +259,52 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Main Workspace Layout (Left: Task Chain Stepper | Right/Center: Chat) */}
+      <div className="flex flex-1 overflow-hidden">
+        <TaskChainTracker
+          activePlan={activePlan}
+          planExecution={planExecution}
+        />
 
-      <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="mx-auto flex max-w-2xl flex-col gap-4">
-          {messages.length === 0 ? (
-            <div className="my-auto flex flex-col items-center justify-center pt-16 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-purple-800/40 bg-purple-950/30 text-purple-300 shadow-inner">
-                ⚡
-              </div>
-              <h2 className="mt-4 text-base font-semibold text-white">How can Jarvis assist you today?</h2>
-              <p className="mt-1 text-xs text-zinc-400 max-w-sm">
-                Ask anything, run file automation, send emails, or delegate complex tasks to specialized background workers.
-              </p>
+        <div className="flex-1 overflow-y-auto px-4 py-6">
+          <div className="mx-auto flex max-w-2xl flex-col gap-4">
+            {messages.length === 0 ? (
+              <div className="my-auto flex flex-col items-center justify-center pt-16 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-purple-800/40 bg-purple-950/30 text-purple-300 shadow-inner">
+                  ⚡
+                </div>
+                <h2 className="mt-4 text-base font-semibold text-white">How can Jarvis assist you today?</h2>
+                <p className="mt-1 text-xs text-zinc-400 max-w-sm">
+                  Ask anything, run file automation, send emails, or delegate complex tasks to specialized background workers.
+                </p>
 
-              <div className="mt-6 flex flex-wrap justify-center gap-2 max-w-lg">
-                {SUGGESTIONS.map((s) => (
-                  <button
-                    key={s.label}
-                    onClick={() => sendPrompt(s.prompt)}
-                    className="rounded-xl border border-zinc-800/80 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-300 transition hover:border-purple-700/60 hover:bg-zinc-800/80 hover:text-white"
-                  >
-                    {s.label}
-                  </button>
-                ))}
+                <div className="mt-6 flex flex-wrap justify-center gap-2 max-w-lg">
+                  {SUGGESTIONS.map((s) => (
+                    <button
+                      key={s.label}
+                      onClick={() => sendPrompt(s.prompt)}
+                      className="rounded-xl border border-zinc-800/80 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-300 transition hover:border-purple-700/60 hover:bg-zinc-800/80 hover:text-white"
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ) : (
-            messages.map((msg) =>
-              msg.role === "user" ? (
-                <UserBubble key={msg.id} content={msg.content || msg.prompt} />
-              ) : (
-                <BotMessage
-                  key={msg.id}
-                  msg={msg}
-                  onConfirm={(prompt, planId) => confirmPlan(prompt, planId)}
-                />
+            ) : (
+              messages.map((msg) =>
+                msg.role === "user" ? (
+                  <UserBubble key={msg.id} content={msg.content || msg.prompt} />
+                ) : (
+                  <BotMessage
+                    key={msg.id}
+                    msg={msg}
+                    onConfirm={(prompt, planId) => confirmPlan(prompt, planId)}
+                  />
+                )
               )
-            )
-          )}
-          <div ref={endRef} />
+            )}
+            <div ref={endRef} />
+          </div>
         </div>
       </div>
 
@@ -299,6 +336,9 @@ export default function Home() {
           </button>
         </div>
       </footer>
+
+      {/* Real-time Activity Feed Drawer */}
+      <ActivityFeed isOpen={showFeed} onClose={() => setShowFeed(false)} />
     </div>
   );
 }

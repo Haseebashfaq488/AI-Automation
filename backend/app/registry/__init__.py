@@ -80,3 +80,8 @@ registry.register(DownloadMediaTool())
 registry.register(GetStatusTool())
 registry.register(SendReportSkill())
 registry.register(UnreadDigestSkill())
+
+# Autonomous Worker Fork Tool
+from app.workers.tools.fork_tool import ForkTool
+registry.register(ForkTool())
+

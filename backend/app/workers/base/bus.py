@@ -78,6 +78,50 @@ def emit(session_id: str, event_type: str, data: dict) -> None:
             # Never let a bad callback break the worker loop
             print(f"[worker bus] callback error: {exc}")
 
+    # Forward to global event bus for real-time frontend streaming & orchestrator triggers
+    try:
+        from app.core.events.bus import get_event_bus
+        from app.core.events.schema import EventType, JarvisEvent
+
+        gbus = get_event_bus()
+        evt_type_map = {
+            "WORK_STARTED": EventType.WORKER_STARTED,
+            "STEP_STARTED": EventType.WORKER_STEP_STARTED,
+            "STEP_COMPLETED": EventType.WORKER_STEP_COMPLETED,
+            "VALIDATION_FAILED": EventType.WORKER_VALIDATION_FAILED,
+            "RECOVERY_STARTED": EventType.WORKER_RECOVERY_STARTED,
+            "RECOVERY_COMPLETED": EventType.WORKER_RECOVERY_COMPLETED,
+            "WORK_COMPLETED": EventType.WORKER_COMPLETED if data.get("success", False) else EventType.WORKER_FAILED,
+        }
+        ge_type = evt_type_map.get(event_type)
+        if ge_type:
+            title = f"Worker {session_id[:8]}: {event_type.replace('_', ' ').title()}"
+            if event_type == "STEP_STARTED":
+                title = f"Worker Step: {data.get('step', 'unknown')}"
+                summary = f"Executing step '{data.get('step')}' (index {data.get('index', 0)})"
+            elif event_type == "STEP_COMPLETED":
+                title = f"Step Completed: {data.get('step', 'unknown')}"
+                summary = f"Step '{data.get('step')}' finished."
+            elif event_type == "WORK_COMPLETED":
+                success = data.get("success", False)
+                title = f"Worker Completed [{session_id[:8]}]" if success else f"Worker Failed [{session_id[:8]}]"
+                summary = f"Worker finished with {len(data.get('tools_used', []))} steps. Success: {success}"
+            else:
+                summary = f"Worker event {event_type} on session {session_id}"
+
+            gbus.publish(
+                JarvisEvent(
+                    event_type=ge_type,
+                    source=f"worker:{session_id}",
+                    title=title,
+                    summary=summary,
+                    data={"session_id": session_id, **data},
+                    metadata={"session_id": session_id},
+                )
+            )
+    except Exception:
+        pass
+
 
 # ------------------------------------------------------------------
 # Helper: auto‑register from the WorkerEngine so the SSE handler can

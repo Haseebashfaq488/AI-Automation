@@ -40,7 +40,11 @@ def resolve_recipient(value: str) -> str:
     value = (value or "").strip()
     if not value:
         raise ValueError("Recipient (to/chat) must not be empty")
+    lowered = value.lower()
+    if lowered in ("me", "myself", "haseeb", "self", "haseeb hamza", "owner"):
+        return to_chat_id("923098956995")
     digits = normalize_phone(value)
     if digits and (digits == value or value.startswith("+")) and "@" not in value:
         return to_chat_id(digits)
     return value
+
