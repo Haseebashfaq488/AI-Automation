@@ -13,17 +13,22 @@ from app.registry import registry
 router = APIRouter(prefix="/agent", tags=["agent"])
 logger = logging.getLogger("jarvis.agent")
 
-# Adapter is created lazily so the app boots even when GROQ_API_KEY is missing.
-_adapter: Optional[OpenCodeAdapter] = None
+# Adapter is created lazily so the app boots smoothly.
+_adapter: Optional[Any] = None
 
 
-def _get_adapter() -> OpenCodeAdapter:
+def _get_adapter() -> Any:
     global _adapter
     if _adapter is None:
-        try:
-            _adapter = OpenCodeAdapter(registry=registry)
-        except RuntimeError as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        from app.workers.antigravity_worker.agent import config as agy_config
+        if agy_config.get_agy_binary():
+            from app.modules.antigravity.brain import get_brain_manager
+            _adapter = get_brain_manager(registry=registry)
+        else:
+            try:
+                _adapter = OpenCodeAdapter(registry=registry)
+            except RuntimeError as exc:
+                raise HTTPException(status_code=503, detail=str(exc)) from exc
     return _adapter
 
 
@@ -36,6 +41,11 @@ _plan_cache: Dict[str, List[Dict[str, Any]]] = {}
 # Module-level instances so tests can swap them (e.g. in-memory DB).
 chat_memory = ChatMemory(max_messages=20)
 long_term_memory = LongTermMemory(limit=100)
+
+# Memory extraction runs every N conversational turns to avoid the ~20s agy
+# overhead on every message. Plan confirmations always extract regardless.
+_turn_counter: int = 0
+MEMORY_EXTRACTION_INTERVAL: int = 5  # change to 10 if you prefer less frequent
 
 
 class PromptRequest(BaseModel):
@@ -74,6 +84,7 @@ async def run_prompt(request: PromptRequest) -> Dict[str, Any]:
             f"Plan of {outcome['total_steps']} steps executed, "
             f"{outcome['completed']} succeeded. Tools used: "
             + ", ".join(r["tool"] for r in outcome["results"]),
+            force=True,  # always extract after plan execution — highest signal
         )
         return outcome
 
@@ -82,8 +93,16 @@ async def run_prompt(request: PromptRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=400, detail="confirm=true requires a plan_id.")
 
     adapter = _get_adapter()
-    history = chat_memory.history(session_id)
     memories = long_term_memory.all()
+
+    # JarvisBrainManager uses agy --conversation which carries its own multi-turn
+    # context natively — injecting ChatMemory history on top doubles token cost for
+    # no benefit.  Only fetch + pass history for the Groq fallback adapter path.
+    from app.modules.antigravity.brain import JarvisBrainManager
+    if isinstance(adapter, JarvisBrainManager):
+        history = []  # agy session is the short-term memory
+    else:
+        history = chat_memory.history(session_id)
 
     try:
         analysis = await adapter.analyze_prompt(request.prompt, history=history, memories=memories)
@@ -103,6 +122,15 @@ async def run_prompt(request: PromptRequest) -> Dict[str, Any]:
             "memories_learned": await _learn_from_turn(request.prompt, f"Agent replied: {message}"),
         }
 
+    if analysis["type"] == "clarify":
+        message = analysis["message"]
+        chat_memory.add(session_id, "assistant", f"[clarify] {message}")
+        return {
+            "mode": "clarify",
+            "message": message,
+            "context": analysis.get("context", {}),
+        }
+
     # analysis["type"] == "plan"
     plan_id = analysis["plan_id"]
     _plan_cache[plan_id] = analysis["steps"]
@@ -120,8 +148,20 @@ async def run_prompt(request: PromptRequest) -> Dict[str, Any]:
     }
 
 
-async def _learn_from_turn(prompt: str, outcome: str) -> List[str]:
-    """Extract durable facts from a turn and store them (best-effort)."""
+async def _learn_from_turn(prompt: str, outcome: str, force: bool = False) -> List[str]:
+    """Extract durable facts from a turn and store them (best-effort).
+
+    Extraction is throttled to every MEMORY_EXTRACTION_INTERVAL conversational
+    turns to avoid paying the ~20s agy overhead on every message.  Pass
+    ``force=True`` to bypass the counter (used after plan confirmations, which
+    carry the most signal).
+    """
+    global _turn_counter
+    _turn_counter += 1
+
+    if not force and (_turn_counter % MEMORY_EXTRACTION_INTERVAL != 0):
+        return []  # skip this turn
+
     try:
         facts = await _get_adapter().extract_memories(prompt, outcome)
     except Exception as exc:
@@ -194,47 +234,81 @@ _DEFAULT_FORK_TOOLS = [
 
 
 async def _fork_task(params: Dict[str, Any], prompt: str) -> Dict[str, Any]:
-    """Fork a background worker session via the workers module.
-
-    `fork` is a pseudo-tool: the LLM plans it like any other tool, but it is
-    executed here against the worker engine store instead of the tool registry.
-    """
+    """Fork a background worker session via the workers module and record a tracked Task in SQLite."""
     import os
     from app.api.routes import workers as workers_routes
     from app.workers.base.contract import TaskContract
 
     objective = (params.get("objective") or "").strip() or prompt.strip() or "Forked task"
-    fs_scope = params.get("fs_scope") or os.path.abspath(os.sep)
+    fs_scope = params.get("fs_scope") or "D:/AI-Automation"
     allowed = params.get("allowed_tools") or list(_DEFAULT_FORK_TOOLS)
+
+    reqs = params.get("requirements") or []
+    if isinstance(reqs, str):
+        reqs = [reqs.strip()]
+    cons = params.get("constraints") or []
+    if isinstance(cons, str):
+        cons = [cons.strip()]
+    crit = params.get("success_criteria") or []
+    if isinstance(crit, str):
+        crit = [crit.strip()]
+
+    # 1. Create a tracked Task record in SQLite database
+    db_task_id = None
+    try:
+        from app.modules.database.db import SessionLocal
+        from app.modules.database.repository import Repository
+        with SessionLocal() as db:
+            repo = Repository(db)
+            db_task = repo.create_task(name=objective, status="running")
+            db_task_id = db_task.id
+    except Exception as exc:
+        logger.warning("Could not persist Task to database: %s", exc)
 
     try:
         contract = TaskContract(
             objective=objective,
-            requirements=params.get("requirements", []),
-            constraints=params.get("constraints", []),
-            success_criteria=params.get("success_criteria", []),
+            requirements=reqs,
+            constraints=cons,
+            success_criteria=crit,
             fs_scope=fs_scope,
             allowed_tools=allowed,
             max_steps=int(params.get("max_steps", 20)),
+            master_prompt=params.get("master_prompt"),
+            model=params.get("model"),
         )
     except Exception as exc:
+        if db_task_id:
+            try:
+                with SessionLocal() as db:
+                    Repository(db).update_task_status(db_task_id, "failed")
+            except Exception:
+                pass
         return {"success": False, "data": None, "error": {"code": "INVALID_CONTRACT", "message": str(exc)}}
 
     try:
         state = await workers_routes.launch_worker(
-            contract, worker_type=params.get("worker_type", "opencode_worker")
+            contract, worker_type=params.get("worker_type", "antigravity_worker")
         )
     except Exception as exc:
+        if db_task_id:
+            try:
+                with SessionLocal() as db:
+                    Repository(db).update_task_status(db_task_id, "failed")
+            except Exception:
+                pass
         return {"success": False, "data": None, "error": {"code": "FORK_FAILED", "message": str(exc)}}
 
     session_id = state["session_id"]
     return {
         "success": True,
         "data": {
+            "task_id": db_task_id,
             "session_id": session_id,
             "status": state.get("status"),
             "worker_url": f"/worker/{session_id}",
-            "message": f"Worker {session_id} forked — open /worker/{session_id} to watch it live.",
+            "stream_url": f"/workers/{session_id}/stream",
+            "message": f"Task #{db_task_id or session_id} forked — open /workers/{session_id}/stream to watch live.",
         },
     }
 

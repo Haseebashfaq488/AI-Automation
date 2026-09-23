@@ -43,6 +43,26 @@ class TaskContract(BaseModel):
         default=None,
         description="Hard timeout after which the worker is interrupted.",
     )
+    model: Optional[str] = Field(
+        default=None,
+        description="Optional LLM model override (e.g. gemini-2.5-flash, openai/gpt-oss-120b).",
+    )
+    task_id: Optional[str] = Field(
+        default=None,
+        description="Unique identifier for the task instance.",
+    )
+    master_prompt: Optional[str] = Field(
+        default=None,
+        description="Full synthesized task specification prompt for autonomous execution.",
+    )
+    testing_spec: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Explicit testing guidelines (unit, dataflow, verification criteria).",
+    )
+    supervisor_enabled: bool = Field(
+        default=True,
+        description="Whether active stream guardian supervision is enabled for this worker.",
+    )
 
     @field_validator("fs_scope")
     @classmethod

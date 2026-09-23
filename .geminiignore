@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.git/
+__pycache__/
+chrome_profile_copy/
+*.log
+*.db
+.pytest_cache/
+*.pyc
+.system_generated/

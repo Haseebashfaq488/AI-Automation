@@ -45,3 +45,17 @@ class Memory(Base):
 
     def __repr__(self) -> str:
         return f"<Memory id={self.id} content={self.content[:40]!r}>"
+
+
+class ChatMessage(Base):
+    """Persisted per-session chat history so conversations survive backend restarts."""
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String, nullable=False, index=True)
+    role = Column(String, nullable=False)       # "user" | "assistant"
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+
+    def __repr__(self) -> str:
+        return f"<ChatMessage id={self.id} session={self.session_id} role={self.role}>"

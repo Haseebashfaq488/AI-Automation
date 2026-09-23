@@ -26,7 +26,8 @@ def _default_scope() -> str:
 
 class ForkRequest(BaseModel):
     objective: str
-    worker_type: str = "opencode_worker"
+    worker_type: str = "antigravity_worker"
+    model: Optional[str] = None
     requirements: List[str] = []
     constraints: List[str] = []
     success_criteria: List[str] = []
@@ -94,6 +95,39 @@ async def open_terminal(payload: Optional[OpenTerminalRequest] = None):
         raise HTTPException(status_code=500, detail=f"Failed to launch OpenCode terminal: {exc}")
 
 
+@router.post("/open-agy-terminal")
+async def open_agy_terminal(payload: Optional[OpenTerminalRequest] = None):
+    """Directly launch a visible, interactive Antigravity CLI (`agy`) window on the user's desktop."""
+    import subprocess
+    import sys
+    from app.workers.antigravity_worker.agent.config import get_agy_binary
+
+    target_dir = payload.directory if payload and payload.directory else "D:/AI-Automation"
+    if not os.path.exists(target_dir):
+        target_dir = "D:/AI-Automation"
+
+    binary = get_agy_binary() or os.path.expandvars(r"%LOCALAPPDATA%\agy\bin\agy.exe")
+
+    try:
+        if sys.platform == "win32":
+            subprocess.Popen(
+                f'start "Antigravity CLI (agy)" /max powershell.exe -NoExit '
+                f'-Command "Set-Location -LiteralPath \'{target_dir}\'; & \'{binary}\'"',
+                shell=True,
+            )
+        else:
+            subprocess.Popen([binary], cwd=target_dir)
+
+        return {
+            "status": "launched",
+            "message": f"Antigravity CLI (agy) window launched in {target_dir}",
+            "directory": target_dir,
+            "binary": binary,
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to launch Antigravity CLI terminal: {exc}")
+
+
 @router.post("/open-desktop")
 async def open_desktop():
     """Launch the OpenCode Desktop GUI application on Windows if installed."""
@@ -133,6 +167,35 @@ async def list_workers():
     return {"workers": workers}
 
 
+@router.delete("")
+@router.delete("/")
+@router.post("/clear")
+async def clear_all_workers():
+    """Purge all on-disk worker sessions and clear the in-memory engine cache."""
+    import shutil
+    from app.workers.base.session import WorkerSession
+
+    for eng in list(_engines.values()):
+        try:
+            eng.cancel()
+        except Exception:
+            pass
+    _engines.clear()
+
+    root = WorkerSession.SESSIONS_ROOT
+    purged_count = 0
+    if root.is_dir():
+        for child in list(root.iterdir()):
+            if child.is_dir():
+                try:
+                    shutil.rmtree(child)
+                    purged_count += 1
+                except Exception:
+                    pass
+
+    return {"status": "cleared", "purged_sessions_count": purged_count}
+
+
 
 @router.post("/fork")
 async def fork_worker(payload: ForkRequest):
@@ -146,6 +209,7 @@ async def fork_worker(payload: ForkRequest):
             fs_scope=payload.fs_scope,
             allowed_tools=payload.allowed_tools,
             max_steps=payload.max_steps,
+            model=payload.model,
         )
     except Exception as exc:
         raise HTTPException(status_code=422, detail=f"Invalid contract: {exc}")
@@ -153,7 +217,7 @@ async def fork_worker(payload: ForkRequest):
     return await launch_worker(contract, worker_type=payload.worker_type)
 
 
-async def launch_worker(contract: TaskContract, worker_type: str = "opencode_worker") -> Dict:
+async def launch_worker(contract: TaskContract, worker_type: str = "antigravity_worker") -> Dict:
     """Create + start a worker engine and register it for polling/SSE.
 
     Shared by the /fork route and the agent's `fork` tool so both produce
@@ -220,7 +284,60 @@ def _agent_factory_for(worker_type: str):
             )
 
         return factory
+
+    if worker_type in ("antigravity_worker", "antigravity", "agy"):
+        from app.workers.antigravity_worker.agent.worker_agent import AntigravityWorkerAgent
+
+        def factory(contract: TaskContract):
+            return AntigravityWorkerAgent(
+                objective=contract.objective,
+                allowed_tools=contract.allowed_tools,
+                fs_scope=contract.fs_scope,
+                requirements=contract.requirements,
+                constraints=contract.constraints,
+                success_criteria=contract.success_criteria,
+                model=contract.model,
+                master_prompt=contract.master_prompt,
+                worker_session_id=contract.task_id,
+            )
+
+        return factory
+
     return None
+
+
+@router.get("/{session_id}/supervisor-status")
+async def get_worker_supervisor_status(session_id: str):
+    """Retrieve active stream guardian supervision metrics and violations."""
+    eng = _engines.get(session_id)
+    if eng:
+        return {"session_id": session_id, **eng.get_guardian_status()}
+    return {"session_id": session_id, "status": "guardian_inactive_or_completed"}
+
+
+@router.get("/{session_id}/resolution")
+async def get_worker_resolution(session_id: str):
+    """Retrieve Jarvis's post-execution evaluation and completion verdict."""
+    from app.modules.antigravity.brain import get_brain_manager
+    from app.workers.base.session import WorkerSession
+
+    eng = _engines.get(session_id)
+    result_data = eng.get_result() if eng else None
+    
+    if not result_data:
+        session = WorkerSession(session_id)
+        if (session.path / "result.json").is_file():
+            result_data = session.read_result()
+
+    if not result_data:
+        raise HTTPException(status_code=404, detail="Worker result not yet available")
+
+    # Evaluate resolution via brain manager
+    brain = get_brain_manager()
+    session = WorkerSession(session_id)
+    task_contract = session.read_task()
+    evaluation = brain.evaluate_worker_completion(session_id, task_contract, result_data)
+    return {"session_id": session_id, "evaluation": evaluation}
 
 
 @router.get("/{session_id}")
@@ -365,6 +482,87 @@ async def worker_events(session_id: str, request: Request):
 
     return StreamingResponse(
         event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+@router.get("/{session_id}/stream")
+async def worker_stream(session_id: str, request: Request):
+    """Real-time SSE stream of raw Antigravity CLI events (step_update deltas, tool calls, and result)."""
+    from app.workers.base.session import WorkerSession
+
+    eng = _engines.get(session_id)
+    session_dir = (
+        eng._session.path if eng and eng._session else WorkerSession.SESSIONS_ROOT / session_id
+    )
+
+    if not eng and not (session_dir / "task.json").is_file():
+        raise HTTPException(status_code=404, detail="Worker session not found")
+
+    # If the session is already completed before connection, return final result
+    is_completed = False
+    result_data = None
+    if eng:
+        state = eng.get_state()
+        if state.get("status") in ("completed", "cancelled"):
+            is_completed = True
+            result_data = eng.get_result()
+    else:
+        result_file = session_dir / "result.json"
+        if result_file.is_file():
+            is_completed = True
+            try:
+                result_data = json.loads(result_file.read_text(encoding="utf-8"))
+            except Exception:
+                result_data = {}
+
+    if is_completed:
+        async def finished_generator():
+            yield f"data: {json.dumps({'event': 'result', 'result': result_data or {}})}\n\n"
+
+        return StreamingResponse(
+            finished_generator(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+                "Connection": "keep-alive",
+            },
+        )
+
+    queue = bus_mod.subscribe(session_id)
+
+    async def stream_generator():
+        try:
+            while not await request.is_disconnected():
+                try:
+                    event = await asyncio.wait_for(queue.get(), timeout=1.0)
+                    yield f"data: {json.dumps(event)}\n\n"
+
+                    # If this is the terminal result event, finish streaming cleanly
+                    if isinstance(event, dict):
+                        if event.get("event") == "result" or event.get("type") == "WORK_COMPLETED":
+                            break
+                except asyncio.TimeoutError:
+                    # Check if engine finished while waiting
+                    if eng:
+                        cur_status = eng.get_state().get("status")
+                        if cur_status in ("completed", "cancelled") and queue.empty():
+                            final_res = eng.get_result()
+                            yield f"data: {json.dumps({'event': 'result', 'result': final_res or {}})}\n\n"
+                            break
+                    # SSE comment keep-alive heartbeat every 30s
+                    yield ": keep-alive\n\n"
+        finally:
+            bus_mod.unsubscribe(session_id, queue)
+
+    return StreamingResponse(
+        stream_generator(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

@@ -13,11 +13,13 @@ from app.workers.base.session import WorkerSession
 @pytest.fixture(autouse=True)
 def isolated_sessions(tmp_path, monkeypatch):
     monkeypatch.setattr(WorkerSession, "SESSIONS_ROOT", tmp_path / "sessions")
-    # Deterministic placeholder mode — hide the opencode binary so the
-    # OpenCodeWorkerAgent reports available=False and the engine falls
-    # back to its deterministic placeholder loop.
+    # Deterministic placeholder mode — hide binaries so agents report
+    # available=False and the engine falls back to deterministic loop.
     monkeypatch.setattr(
         "app.workers.opencode_worker.agent.config.get_opencode_binary", lambda: None
+    )
+    monkeypatch.setattr(
+        "app.workers.antigravity_worker.agent.config.get_agy_binary", lambda: None
     )
     workers_routes._engines.clear()
     yield

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { UserBubble, BotMessage } from "./components/Chat";
+import VoiceInput from "./components/VoiceInput";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const CHAT_STORAGE_KEY = "jarvis_chat_messages";
@@ -34,12 +35,19 @@ const SUGGESTIONS = [
 ];
 
 export default function Home() {
-  const [messages, setMessages] = useState(loadStoredMessages);
+  const [messages, setMessages] = useState([]);
+  const [mounted, setMounted] = useState(false);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [backendOnline, setBackendOnline] = useState(null);
   const [confirmedPlanIds, setConfirmedPlanIds] = useState(new Set());
   const endRef = useRef(null);
+
+  // Load stored messages after mount to prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+    setMessages(loadStoredMessages());
+  }, []);
 
   // Check backend health
   useEffect(() => {
@@ -58,12 +66,13 @@ export default function Home() {
 
   // Keep chat across reloads
   useEffect(() => {
+    if (!mounted) return;
     try {
       window.sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
     } catch {
       // storage full
     }
-  }, [messages]);
+  }, [messages, mounted]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -142,7 +151,7 @@ export default function Home() {
     setConfirmedPlanIds(new Set());
     try {
       window.sessionStorage.removeItem(CHAT_STORAGE_KEY);
-      await fetch(`${API_URL}/agent/history?session_id=default`, { method: "DELETE" });
+      // Persistent brain memory is preserved in JARVIS_MEMORY.md across visual chat resets
     } catch {
       // best effort
     }
@@ -156,7 +165,7 @@ export default function Home() {
       await fetch(`${API_URL}/workers/open-terminal`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ directory: "D:/Ai automation backend" }),
+        body: JSON.stringify({ directory: "D:/workspace" }),
       });
     } catch {
       /* ignore */
@@ -185,8 +194,11 @@ export default function Home() {
                 }`}
                 title={backendOnline ? "Backend online" : "Backend offline"}
               />
+              <span className="rounded-full border border-sky-800/50 bg-sky-950/60 px-2 py-0.5 text-[10px] font-medium text-sky-300">
+                🌌 Antigravity Brain
+              </span>
             </div>
-            <p className="text-xs text-zinc-400">Agent & Worker Orchestrator</p>
+            <p className="text-xs text-zinc-400">Living Memory & Agent Orchestrator</p>
           </div>
         </div>
 
@@ -197,14 +209,15 @@ export default function Home() {
             className="inline-flex items-center gap-1.5 rounded-xl border border-sky-700/60 bg-sky-950/60 px-3.5 py-1.5 text-xs font-semibold text-sky-300 shadow-sm transition hover:border-sky-500 hover:bg-sky-900/60 hover:text-white disabled:opacity-40"
           >
             <span>💻</span>
-            <span>{launchingTerminal ? "Opening..." : "Open OpenCode CLI"}</span>
+            <span>{launchingTerminal ? "Opening..." : "Open Terminal"}</span>
           </button>
           <button
             onClick={newChat}
             disabled={busy}
+            title="Clear current screen (brain memory is retained)"
             className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white disabled:opacity-40"
           >
-            New Chat
+            ✨ New Chat
           </button>
           <Link
             href="/workers"
@@ -259,19 +272,28 @@ export default function Home() {
       </div>
 
       <footer className="border-t border-zinc-800/80 bg-zinc-900/40 p-4 backdrop-blur-md">
-        <div className="mx-auto flex max-w-2xl gap-2.5">
+        <div className="mx-auto flex max-w-2xl items-center gap-2.5">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendPrompt(input)}
-            placeholder='Type a prompt, or e.g. "fork the task: normalize headings"...'
+            placeholder='Ask Jarvis, type a command, or click 🎙️ / Alt+V...'
             disabled={busy}
             className="flex-1 rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 outline-none transition focus:border-purple-600/70 focus:ring-1 focus:ring-purple-600/50 disabled:opacity-50"
+          />
+          <VoiceInput
+            disabled={busy}
+            onTranscriptInsert={(text) => {
+              setInput((prev) => (prev ? `${prev} ${text}` : text));
+            }}
+            onAutoSend={(text) => {
+              sendPrompt(text);
+            }}
           />
           <button
             onClick={() => sendPrompt(input)}
             disabled={busy || !input.trim()}
-            className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-5 text-sm font-medium text-white shadow-md shadow-purple-950/40 transition hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40"
+            className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-md shadow-purple-950/40 transition hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40"
           >
             Send
           </button>

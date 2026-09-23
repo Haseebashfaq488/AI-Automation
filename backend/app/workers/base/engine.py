@@ -9,6 +9,7 @@ from app.workers.base.bus import EventBus
 from app.workers.base.contract import TaskContract
 from app.workers.base.scoped_registry import ScopedToolRegistry
 from app.workers.base.session import WorkerSession
+from app.workers.base.guardian import ActiveStreamGuardian
 
 logger = logging.getLogger("jarvis.worker.engine")
 
@@ -42,6 +43,7 @@ class WorkerEngine:
         self._session: Optional[WorkerSession] = None
         self._contract: Optional[TaskContract] = None
         self._agent_factory = agent_factory
+        self._guardian: Optional[ActiveStreamGuardian] = None
         self._loop_task: Optional[asyncio.Task] = None
         self._cancelled = False
         self._interventions: List[str] = []
@@ -54,10 +56,18 @@ class WorkerEngine:
 
     def fork(self, contract: TaskContract) -> WorkerSession:
         """Create the on‑disk worker session from a contract."""
+        contract.task_id = contract.task_id or self._session_id
         self._contract = contract
         self._session = WorkerSession(self._session_id, contract)
         self._session.fork()
+        self._guardian = ActiveStreamGuardian(contract, self._session_id)
         return self._session
+
+    def get_guardian_status(self) -> Dict[str, Any]:
+        """Return real-time supervision status from the stream guardian."""
+        if self._guardian:
+            return self._guardian.get_status()
+        return {}
 
     # ------------------------------------------------------------------
     # State / result accessors (used by REST polling)
@@ -99,8 +109,6 @@ class WorkerEngine:
         if self._session is None:
             return {}
         result = self._session.read_result()
-        # If the loop was cancelled before it could run (race at fork time)
-        # no result.json is written — synthesize one from engine state.
         if not result and self._cancelled:
             state = self._session.read_state()
             return {
@@ -132,6 +140,7 @@ class WorkerEngine:
         """Fork the session and start the worker loop as a background task."""
         self.fork(contract)
         self._loop_task = asyncio.create_task(self._worker_loop())
+        await asyncio.sleep(0)
         return self.get_state()
 
     async def _worker_loop(self) -> Dict[str, Any]:
@@ -139,12 +148,24 @@ class WorkerEngine:
         contract = self._contract
 
         agent = self._agent_factory(contract) if self._agent_factory else None
+        if agent is not None:
+            if hasattr(agent, "worker_session_id") and not getattr(agent, "worker_session_id", None):
+                agent.worker_session_id = self._session_id
+            binary_check = None
+            try:
+                from app.workers.antigravity_worker.agent import config as agy_config
+                binary_check = agy_config.get_agy_binary()
+            except Exception:
+                pass
+            if binary_check is None:
+                agent.available = False
+
         if agent is not None and getattr(agent, "available", False):
             return await self._agent_loop(agent, contract)
         return await self._placeholder_loop(contract)
 
     # ==================================================================
-    # LLM‑driven loop (Step 1+)
+    # LLM‑driven loop (Direct Task Execution & Streaming)
     # ==================================================================
     async def _agent_loop(self, agent: Any, contract: TaskContract) -> Dict[str, Any]:
         ev = EventBus(self._session_id)
@@ -187,6 +208,22 @@ class WorkerEngine:
                 step_index += 1
                 tool_name = decision["tool"]
                 params = decision.get("params", {})
+                step_name = params.get("step") or tool_name
+
+                # Update live state
+                self._session.write_state({
+                    "status": "running",
+                    "current_step": step_name,
+                    "completed": completed,
+                    "remaining": [contract.objective] if not completed else [],
+                    "errors": [e["message"] for e in errors],
+                    "progress_percent": int(step_index / max(max_steps, 1) * 100),
+                })
+                ev.step_started(step_name, step_index - 1)
+                self._session.append_event(
+                    "STEP_STARTED", {"step": step_name, "index": step_index - 1, "tool": tool_name}
+                )
+
                 ok, out_data, err_msg = await self._execute_step(
                     ev, engine, tool_name, params, step_index - 1, completed, errors, total=max_steps
                 )
@@ -225,7 +262,7 @@ class WorkerEngine:
         return result_data
 
     # ==================================================================
-    # Deterministic placeholder loop (Step 0 — no LLM key needed)
+    # Deterministic placeholder loop (No LLM key needed)
     # ==================================================================
     async def _placeholder_loop(self, contract: TaskContract) -> Dict[str, Any]:
         ev = EventBus(self._session_id)
@@ -251,6 +288,7 @@ class WorkerEngine:
                 await self._execute_step(
                     ev, engine, tool_name, params, idx, completed, errors, total=total
                 )
+                await asyncio.sleep(0)
         except asyncio.CancelledError:
             self._cancelled = True
 
@@ -281,23 +319,19 @@ class WorkerEngine:
         errors: List[Dict[str, str]],
         total: int,
     ) -> tuple[bool, Any, Optional[str]]:
-        """Run one tool step: update state, emit events, record outcome.
+        """Run one tool step: update state, emit events, record outcome."""
+        step_label = params.get("step") or tool_name
 
-        Returns (ok, output_data, error_message). Mutates ``completed`` / ``errors`` in place.
-        """
-        ev.step_started(tool_name, idx)
         self._session.write_state({
-            "current_step": tool_name,
+            "current_step": step_label,
             "completed": completed,
             "remaining": [],
             "errors": [e["message"] for e in errors],
             "progress_percent": int(len(completed) / max(total, 1) * 100),
         })
 
-        # Internal milestone step (already executed by OpenCode worker agent)
-        if tool_name == "opencode_milestone":
-            phase = params.get("phase", "milestone")
-            step_label = f"milestone_{phase}"
+        # Direct autonomous task execution or intervention (executed by CLI driver)
+        if tool_name in ("task_execution", "apply_intervention", "opencode_milestone"):
             error_msg = params.get("error")
             if error_msg:
                 errors.append({"tool": step_label, "message": error_msg})
@@ -319,25 +353,34 @@ class WorkerEngine:
             result = await engine.run(tool_name, params)
         except Exception as exc:
             message = str(exc)
-            errors.append({"tool": tool_name, "message": message})
-            ev.step_completed(tool_name, idx, output={}, errors=[message])
-            self._session.append_event("STEP_FAILED", {"step": tool_name, "index": idx, "error": message})
+            errors.append({"tool": step_label, "message": message})
+            ev.step_completed(step_label, idx, output={}, errors=[message])
+            self._session.append_event("STEP_FAILED", {"step": step_label, "index": idx, "error": message})
             return False, None, message
 
         if result.success:
-            completed.append(tool_name)
+            completed.append(step_label)
             output_data = result.data or {}
-            ev.step_completed(tool_name, idx, output=output_data)
+            ev.step_completed(step_label, idx, output=output_data)
             self._session.append_event(
-                "STEP_COMPLETED", {"step": tool_name, "index": idx, "output": output_data}
+                "STEP_COMPLETED", {"step": step_label, "index": idx, "output": output_data}
             )
             return True, output_data, None
 
+        # Inspect events via guardian
+        if self._guardian:
+            guardian_intervention = self._guardian.inspect_event(
+                "STEP_COMPLETED" if result.success else "STEP_FAILED",
+                {"tool": tool_name, "params": params, "output": result.data if result.success else None, "error": str(result.error) if not result.success else None, "success": result.success}
+            )
+            if guardian_intervention:
+                self.intervene(guardian_intervention)
+
         message = (result.error or {}).get("message", "unknown error")
-        errors.append({"tool": tool_name, "message": message})
-        ev.step_completed(tool_name, idx, output={}, errors=[message])
+        errors.append({"tool": step_label, "message": message})
+        ev.step_completed(step_label, idx, output={}, errors=[message])
         self._session.append_event(
-            "STEP_FAILED", {"step": tool_name, "index": idx, "error": message}
+            "STEP_FAILED", {"step": step_label, "index": idx, "error": message}
         )
         return False, None, message
 
@@ -367,78 +410,16 @@ class WorkerEngine:
         self._session.append_event("WORK_COMPLETED", result_data)
         ev.work_completed(result_data)
 
-    # ==================================================================
-    # Step‑0 placeholder parameter map — replaced by LLM decisions when
-    # the agent is available
-    # ==================================================================
-    @staticmethod
-    def _placeholder_params(tool_name: str) -> Dict[str, Any]:
-        base = str(WorkerSession.SESSIONS_ROOT)
-        table: Dict[str, Dict[str, Any]] = {
-            "list_directory": {"path": base},
-            "exists": {"path": base},
-            "read_file": {"path": str(WorkerSession.SESSIONS_ROOT.parent / "README.md")},
-            "create_file": {"path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "worker_created.txt")},
-            "write_file": {"path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "worker_output.txt"), "content": "worker output"},
-            "create_folder": {"path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "newfolder")},
-            "touch": {"path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "touched.txt")},
-            "append_file": {"path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "worker_output.txt"), "content": "\nappended"},
-            "metadata": {"path": base},
-            "search_files": {"path": base, "pattern": "*.json"},
-            "search_content": {"path": base, "query": "objective"},
-            "copy": {
-                "source": str(WorkerSession.SESSIONS_ROOT / "task.json"),
-                "destination": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "task_copy.json"),
-            },
-            "move": {
-                "source": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "worker_created.txt"),
-                "destination": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "worker_moved.txt"),
-            },
-            "rename": {
-                "source": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "worker_moved.txt"),
-                "destination": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "worker_renamed.txt"),
-            },
-            "archive": {
-                "source": str(WorkerSession.SESSIONS_ROOT / "artifacts"),
-                "destination": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "artifacts.zip"),
-            },
-            "extract": {
-                "path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "artifacts.zip"),
-                "destination": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "extracted"),
-            },
-            "bulk_rename": {"path": str(WorkerSession.SESSIONS_ROOT / "artifacts"), "pattern": "file_##"},
-            "delete_file": {"path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "worker_renamed.txt")},
-            "delete_folder": {"path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "extracted")},
-            "organize_downloads": {
-                "source_dir": str(WorkerSession.SESSIONS_ROOT / "artifacts"),
-                "target_dir": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "organized"),
-            },
-            # Document worker tools — placeholder runs them against a fixture
-            "create_docx": {
-                "path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "created.docx"),
-                "title": "New Document",
-                "initial_text": "Sample text",
-                "overwrite": True,
-            },
-            "add_heading": {
-                "path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "sample.docx"),
-                "text": "New Heading",
-                "level": 1,
-            },
-            "add_paragraph": {
-                "path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "sample.docx"),
-                "text": "Appended paragraph text",
-            },
-            "add_table": {
-                "path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "sample.docx"),
-                "headers": ["Col 1", "Col 2"],
-                "rows": [["A", "B"]],
-            },
-            "inspect_docx": {"path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "sample.docx")},
-            "read_docx": {"path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "sample.docx")},
-            "normalize_headings": {"path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "sample.docx")},
-            "fix_spacing": {"path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "sample.docx")},
-            "format_tables": {"path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "sample.docx")},
-            "backup_docx": {"path": str(WorkerSession.SESSIONS_ROOT / "artifacts" / "sample.docx")},
-        }
-        return table.get(tool_name, {})
+    def _placeholder_params(self, tool_name: str) -> Dict[str, Any]:
+        scope = self._contract.fs_scope if self._contract else "."
+        import os
+        sample_path = os.path.join(scope, "worker_test_file.txt")
+        if tool_name in ("create_file", "touch"):
+            return {"path": sample_path, "content": "placeholder content"}
+        if tool_name == "write_file":
+            return {"path": sample_path, "content": "updated content"}
+        if tool_name in ("exists", "metadata", "read_file"):
+            return {"path": sample_path}
+        if tool_name == "list_directory":
+            return {"path": scope}
+        return {}

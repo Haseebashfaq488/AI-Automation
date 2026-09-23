@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import ToolOutputViewer from "./ToolOutputViewer";
 
 // Shared chat UI components used by the parent chat (page.js) and the
 // worker pages. Extracted so both views keep the same visual language.
@@ -40,7 +41,7 @@ export function BotMessage({ msg, onConfirm }) {
     );
   }
 
-  if (msg.data?.mode === "response") {
+  if (msg.data?.mode === "response" || msg.data?.mode === "clarify") {
     return (
       <div className="flex justify-start">
         <div className="max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-bl-md bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100">
@@ -56,6 +57,16 @@ export function BotMessage({ msg, onConfirm }) {
 
   if (msg.data?.mode === "plan") {
     return <PlanCard data={msg.data} prompt={msg.prompt} onConfirm={onConfirm} />;
+  }
+
+  if (msg.data?.message) {
+    return (
+      <div className="flex justify-start">
+        <div className="max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-bl-md bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100">
+          {msg.data.message}
+        </div>
+      </div>
+    );
   }
 
   return null;
@@ -202,26 +213,38 @@ export function ExecutionCard({ data }) {
             )}
 
             {r.success && r.data?.worker_url ? (
-              <div className="mt-3 flex items-center justify-between rounded-xl border border-purple-800/50 bg-purple-950/40 p-3">
-                <div>
-                  <p className="text-xs font-semibold text-purple-200">
-                    ⚡ Worker session created
-                  </p>
-                  <p className="mt-0.5 font-mono text-[11px] text-purple-400">
-                    {r.data.session_id}
-                  </p>
+              <div className="mt-3 flex items-center justify-between rounded-xl border border-purple-800/50 bg-gradient-to-r from-purple-950/60 to-indigo-950/40 p-3 shadow-md">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-900/80 text-xs text-purple-300 border border-purple-700/50">
+                    ⚡
+                  </span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-semibold text-purple-200">
+                        Worker Session Active
+                      </p>
+                      <span className="flex items-center gap-1 rounded-full bg-sky-950/80 border border-sky-600/40 px-2 py-0.5 text-[10px] text-sky-300 font-medium">
+                        <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-ping" />
+                        <span>Live Stream</span>
+                      </span>
+                    </div>
+                    <p className="mt-0.5 font-mono text-[11px] text-purple-300/80">
+                      {r.data.session_id}
+                    </p>
+                  </div>
                 </div>
                 <Link
                   href={r.data.worker_url}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-purple-500"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md transition hover:from-purple-500 hover:to-indigo-500"
                 >
-                  Open live view →
+                  <span>Watch Stream</span>
+                  <span>→</span>
                 </Link>
               </div>
             ) : r.success && r.data ? (
-              <pre className="mt-2 max-h-48 overflow-x-auto rounded-lg border border-zinc-800/50 bg-zinc-950/80 p-2 font-mono text-[11px] text-zinc-400">
-                {JSON.stringify(r.data, null, 2)}
-              </pre>
+              <div className="mt-2">
+                <ToolOutputViewer tool={r.tool} data={r.data} />
+              </div>
             ) : null}
           </div>
         ))}
