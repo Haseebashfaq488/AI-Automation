@@ -623,7 +623,7 @@ export default function VoiceInput({
 
       {/* Floating Active Voice Dock when Listening */}
       {isListening && (
-        <div className="absolute bottom-14 right-0 z-50 w-80 sm:w-96 rounded-2xl border border-purple-500/40 bg-zinc-900/95 p-4 shadow-2xl shadow-purple-950/60 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="fixed inset-x-3 bottom-20 z-50 sm:absolute sm:inset-auto sm:bottom-14 sm:right-0 sm:w-96 rounded-2xl border border-purple-500/40 bg-zinc-900/95 p-4 shadow-2xl shadow-purple-950/60 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
           {/* Header with Visualizer and Status */}
           <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2.5">
             <div className="flex items-center gap-2">
@@ -744,7 +744,7 @@ export default function VoiceInput({
 
       {/* Error / Alert Banner */}
       {errorMessage && (
-        <div className="absolute bottom-14 right-0 z-50 w-80 rounded-2xl border border-red-800/80 bg-red-950/95 p-3.5 shadow-2xl text-xs text-red-200 backdrop-blur-xl animate-in fade-in duration-150">
+        <div className="fixed inset-x-3 bottom-20 z-50 sm:absolute sm:inset-auto sm:bottom-14 sm:right-0 sm:w-80 rounded-2xl border border-red-800/80 bg-red-950/95 p-3.5 shadow-2xl text-xs text-red-200 backdrop-blur-xl animate-in fade-in duration-150">
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-1.5 font-semibold text-red-300">
               <span>⚠️</span>
@@ -769,7 +769,7 @@ export default function VoiceInput({
 
       {/* Hotkey helper tooltip */}
       {hotkeyNotice && (
-        <div className="absolute bottom-12 right-0 z-50 rounded-lg border border-purple-800 bg-zinc-950 px-2.5 py-1 text-[11px] text-purple-300 shadow-lg">
+        <div className="fixed inset-x-4 bottom-20 z-50 sm:absolute sm:inset-auto sm:bottom-12 sm:right-0 text-center sm:text-left rounded-lg border border-purple-800 bg-zinc-950 px-2.5 py-1 text-[11px] text-purple-300 shadow-lg">
           🎙️ Voice Recognition active (Alt+V to stop)
         </div>
       )}

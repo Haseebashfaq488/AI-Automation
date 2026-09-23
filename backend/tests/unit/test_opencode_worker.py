@@ -62,9 +62,9 @@ class TestConfig:
         monkeypatch.setenv("OPENCODE_AUTO", "0")
         assert get_auto_approve() is False
 
-    def test_get_milestone_timeout_defaults_to_300(self, monkeypatch):
+    def test_get_milestone_timeout_defaults_to_1800(self, monkeypatch):
         monkeypatch.delenv("OPENCODE_MILESTONE_TIMEOUT", raising=False)
-        assert get_milestone_timeout() == 300
+        assert get_milestone_timeout() == 1800
 
 
 # ── Direct Task Execution & Decision Loop ────────────────────────────────

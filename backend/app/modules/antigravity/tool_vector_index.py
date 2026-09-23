@@ -132,6 +132,37 @@ TOOL_CORPUS: Dict[str, List[str]] = {
         "fetch unread emails",
     ],
 
+    # ── Google Drive ───────────────────────────────────────────────────────────
+    "list_drive_files": [
+        "list files in my google drive",
+        "show files from google drive",
+        "what files do i have in drive",
+        "list drive files",
+        "show drive contents",
+        "get google drive documents",
+        "list 10 files from drive",
+    ],
+    "read_drive_file": [
+        "read my google doc",
+        "download file from drive",
+        "get drive file content",
+        "read the drive document",
+        "fetch file from google drive",
+    ],
+    "upload_drive_file": [
+        "upload this file to google drive",
+        "save file to drive",
+        "upload document to my drive folder",
+        "backup file to google drive",
+    ],
+    "search_drive": [
+        "search google drive for roadmap",
+        "find invoice on drive",
+        "search drive files for reports",
+        "look for pdf files in drive",
+        "search drive for presentation",
+    ],
+
     # ── File System / Directory ────────────────────────────────────────────────
     "list_directory": [
         "list files in Downloads",

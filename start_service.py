@@ -173,9 +173,9 @@ def is_whatsapp_running() -> bool:
 
 
 def start_backend():
-    log("Starting FastAPI Backend server (uvicorn app.main:app)...")
+    log("Starting FastAPI Backend server (uvicorn app.main:app --reload)...")
     proc = sp.Popen(
-        [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", str(BACKEND_PORT)],
+        [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", str(BACKEND_PORT), "--reload"],
         cwd=str(BACKEND_DIR),
     )
     _processes.append(proc)

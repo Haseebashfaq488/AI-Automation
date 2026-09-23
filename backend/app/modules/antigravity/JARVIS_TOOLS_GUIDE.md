@@ -59,7 +59,19 @@ Jarvis acts as an **Executive AI Orchestrator** and **Communication Manager**. J
 
 ---
 
-### 3. ⚡ Autonomous Antigravity Worker Delegation (`fork`)
+### 3. 📂 Google Drive Module Tools & Skills
+*Managed via Google Drive OAuth (`backend/drive_token.json`).*
+
+| Tool Name | Purpose / When to Use | Parameters |
+| :--- | :--- | :--- |
+| `list_drive_files` | List files and folders from Drive with metadata, sizes, and direct links. | `page_size` (int, default 15), `folder_id` (str, optional), `query` (str, optional), `order_by` (str, default `"modifiedTime desc"`) |
+| `read_drive_file` | Read text content of Google Docs/Sheets or download files locally. | `file_id` (str, required), `destination` (str, optional local path), `max_bytes` (int, default 1048576) |
+| `upload_drive_file` | Upload a local file into a specific Drive folder. | `path` (str, required local path), `folder_id` (str, optional), `name` (str, optional file name) |
+| `search_drive` | **Skill**: Search Drive files by name, full-text content, and file type filters. | `query` (str, required), `file_type` (str, optional filter), `max_results` (int, default 10) |
+
+---
+
+### 4. ⚡ Autonomous Antigravity Worker Delegation (`fork`)
 Spawns an autonomous background worker powered by Google Antigravity to execute multi-step technical objectives in an isolated filesystem scope.
 
 | Tool Name | Purpose / When to Use | Parameters |

@@ -339,45 +339,46 @@ export default function WorkersPage() {
 
   return (
     <div className="flex h-screen flex-col bg-zinc-950 text-zinc-100">
-      <header className="flex items-center justify-between border-b border-zinc-800/80 bg-zinc-900/50 px-6 py-3.5 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 shadow-md shadow-purple-950/40">
-            <span className="text-sm font-bold text-white">⚡</span>
+      <header className="flex flex-wrap items-center justify-between gap-2.5 border-b border-zinc-800/80 bg-zinc-900/50 px-3.5 py-2.5 sm:px-6 sm:py-3.5 backdrop-blur-md">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 shadow-md shadow-purple-950/40 shrink-0">
+            <span className="text-xs sm:text-sm font-bold text-white">⚡</span>
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-semibold text-white tracking-tight">Worker Sessions</h1>
+              <h1 className="text-sm sm:text-base font-semibold text-white tracking-tight">Worker Sessions</h1>
               {runningCount > 0 && (
-                <span className="flex items-center gap-1.5 rounded-full border border-sky-800/60 bg-sky-950/60 px-2 py-0.5 text-[11px] font-medium text-sky-300">
+                <span className="flex items-center gap-1.5 rounded-full border border-sky-800/60 bg-sky-950/60 px-2 py-0.5 text-[10px] sm:text-[11px] font-medium text-sky-300">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-400" />
                   {runningCount} active
                 </span>
               )}
             </div>
-            <p className="text-xs text-zinc-400">
+            <p className="hidden xs:block text-[11px] sm:text-xs text-zinc-400">
               Real-time monitoring and management of delegated tasks
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => openOpenCodeTerminal()}
             disabled={launchingTerminal}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-sky-700/60 bg-sky-950/60 px-3.5 py-1.5 text-xs font-semibold text-sky-300 shadow-sm transition hover:border-sky-500 hover:bg-sky-900/60 hover:text-white disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-sky-700/60 bg-sky-950/60 px-3 py-1.5 text-xs font-semibold text-sky-300 shadow-sm transition hover:border-sky-500 hover:bg-sky-900/60 hover:text-white disabled:opacity-40"
           >
             <span>💻</span>
-            <span>{launchingTerminal ? "Opening..." : "Open OpenCode CLI"}</span>
+            <span className="hidden sm:inline">{launchingTerminal ? "Opening..." : "Open OpenCode CLI"}</span>
+            <span className="sm:hidden">CLI</span>
           </button>
           <Link
             href="/"
-            className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white"
+            className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white"
           >
-            ← Parent Chat
+            ← Chat
           </Link>
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-3.5 sm:px-6 py-4 sm:py-6">
         <div className="mx-auto max-w-4xl">
           {terminalMsg && (
             <div className="mb-6 flex items-center justify-between rounded-xl border border-sky-800/60 bg-sky-950/60 p-3.5 text-xs font-medium text-sky-200 shadow-lg backdrop-blur-md">
@@ -401,9 +402,9 @@ export default function WorkersPage() {
           )}
 
           {/* Direct Launch OpenCode Hero Card */}
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-sky-800/50 bg-gradient-to-r from-sky-950/30 to-indigo-950/20 p-4 shadow-xl backdrop-blur-md">
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-sky-800/50 bg-gradient-to-r from-sky-950/30 to-indigo-950/20 p-4 shadow-xl backdrop-blur-md">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-900/60 border border-sky-700/50 text-sky-300 text-lg shadow-inner">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-900/60 border border-sky-700/50 text-sky-300 text-lg shadow-inner shrink-0">
                 💻
               </div>
               <div>
@@ -414,24 +415,23 @@ export default function WorkersPage() {
             <button
               onClick={() => openOpenCodeTerminal()}
               disabled={launchingTerminal}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-sky-950/40 transition hover:from-sky-500 hover:to-indigo-500 disabled:opacity-40"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-sky-950/40 transition hover:from-sky-500 hover:to-indigo-500 disabled:opacity-40 w-full sm:w-auto"
             >
               <span>▶</span>
-              <span>{launchingTerminal ? "Opening Terminal..." : "Launch OpenCode on Desktop"}</span>
+              <span>{launchingTerminal ? "Opening..." : "Launch OpenCode on Desktop"}</span>
             </button>
           </div>
 
           <ForkForm />
 
-
           {/* List Controls */}
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/60 p-1">
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/60 p-1 overflow-x-auto scrollbar-none max-w-full">
               {["all", "running", "completed", "cancelled"].map((st) => (
                 <button
                   key={st}
                   onClick={() => setFilterStatus(st)}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-medium capitalize transition ${
+                  className={`rounded-lg px-2.5 py-1 text-xs font-medium capitalize transition shrink-0 ${
                     filterStatus === st
                       ? "bg-purple-950/80 text-purple-200 border border-purple-800/50 shadow-sm"
                       : "text-zinc-400 hover:text-white"
@@ -442,20 +442,20 @@ export default function WorkersPage() {
               ))}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search workers..."
-                className="rounded-xl border border-zinc-800 bg-zinc-900/70 px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 outline-none focus:border-purple-600/60"
+                className="flex-1 sm:w-48 rounded-xl border border-zinc-800 bg-zinc-900/70 px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 outline-none focus:border-purple-600/60"
               />
               <button
                 onClick={clearAllWorkers}
                 disabled={clearing || workers.length === 0}
-                className="inline-flex items-center gap-1 rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-red-900/50 hover:bg-red-950/30 hover:text-red-300 disabled:opacity-30"
+                className="inline-flex items-center gap-1 rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-red-900/50 hover:bg-red-950/30 hover:text-red-300 disabled:opacity-30 shrink-0"
               >
                 <span>🗑️</span>
-                <span>{clearing ? "Clearing..." : "Clear History"}</span>
+                <span className="hidden xs:inline">{clearing ? "Clearing..." : "Clear History"}</span>
               </button>
             </div>
           </div>
@@ -473,15 +473,15 @@ export default function WorkersPage() {
               <Link
                 key={w.session_id}
                 href={`/worker/${w.session_id}`}
-                className="group block rounded-2xl border border-zinc-800/80 bg-zinc-900/70 p-4 shadow-md transition hover:border-purple-800/50 hover:bg-zinc-900/95"
+                className="group block rounded-2xl border border-zinc-800/80 bg-zinc-900/70 p-3.5 sm:p-4 shadow-md transition hover:border-purple-800/50 hover:bg-zinc-900/95"
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="rounded-md border border-purple-900/60 bg-purple-950/50 px-2 py-0.5 font-mono text-[11px] font-semibold text-purple-300">
                         {w.session_id}
                       </span>
-                      <h3 className="truncate text-sm font-semibold text-white group-hover:text-purple-200 transition">
+                      <h3 className="truncate text-xs sm:text-sm font-semibold text-white group-hover:text-purple-200 transition">
                         {w.objective || "Untitled Worker Task"}
                       </h3>
                     </div>
@@ -489,15 +489,14 @@ export default function WorkersPage() {
                     <p className="mt-1.5 text-xs text-zinc-400">
                       {w.completed?.length ?? 0} completed · {w.errors?.length ?? 0} errors
                       {w.current_step ? (
-                        <span className="text-sky-400 font-medium"> · active step: {w.current_step}</span>
+                        <span className="text-sky-400 font-medium"> · active: {w.current_step}</span>
                       ) : ""}
                     </p>
-
                   </div>
 
-                  <div className="flex shrink-0 flex-col items-end gap-2.5">
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 sm:gap-2.5 pt-2 sm:pt-0 border-t border-zinc-800/50 sm:border-0">
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${
+                      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold uppercase tracking-wider ${
                         STATUS_STYLE[w.status] || STATUS_STYLE.idle
                       }`}
                     >
@@ -508,13 +507,13 @@ export default function WorkersPage() {
                     </span>
 
                     <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-zinc-800">
+                      <div className="h-1.5 w-20 sm:w-24 overflow-hidden rounded-full bg-zinc-800">
                         <div
                           className="h-full rounded-full bg-gradient-to-r from-purple-500 to-sky-400 transition-all duration-300"
                           style={{ width: `${w.progress_percent ?? 0}%` }}
                         />
                       </div>
-                      <span className="font-mono text-[11px] text-zinc-400">
+                      <span className="font-mono text-[10px] sm:text-[11px] text-zinc-400">
                         {w.progress_percent ?? 0}%
                       </span>
                     </div>

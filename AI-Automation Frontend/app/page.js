@@ -44,6 +44,7 @@ export default function Home() {
   const [backendOnline, setBackendOnline] = useState(null);
   const [confirmedPlanIds, setConfirmedPlanIds] = useState(new Set());
   const [showFeed, setShowFeed] = useState(false);
+  const [showChainMobile, setShowChainMobile] = useState(false);
   const endRef = useRef(null);
 
   // Load stored messages after mount to prevent hydration mismatch
@@ -198,14 +199,14 @@ export default function Home() {
 
   return (
     <div className="flex h-screen flex-col bg-zinc-950 text-zinc-100 selection:bg-purple-500/30 selection:text-purple-200">
-      <header className="flex items-center justify-between border-b border-zinc-800/80 bg-zinc-900/50 px-6 py-3.5 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 shadow-md shadow-purple-950/40">
-            <span className="text-sm font-bold tracking-wider text-white">J</span>
+      <header className="flex flex-wrap items-center justify-between gap-2.5 border-b border-zinc-800/80 bg-zinc-900/50 px-3.5 py-2.5 sm:px-6 sm:py-3.5 backdrop-blur-md">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 shadow-md shadow-purple-950/40 shrink-0">
+            <span className="text-xs sm:text-sm font-bold tracking-wider text-white">J</span>
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-semibold text-white tracking-tight">Jarvis Assistant</h1>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h1 className="text-sm sm:text-base font-semibold text-white tracking-tight">Jarvis Assistant</h1>
               <span
                 className={`flex h-2 w-2 rounded-full ${
                   backendOnline === null
@@ -216,67 +217,81 @@ export default function Home() {
                 }`}
                 title={backendOnline ? "Backend online" : "Backend offline"}
               />
-              <span className="rounded-full border border-sky-800/50 bg-sky-950/60 px-2 py-0.5 text-[10px] font-medium text-sky-300">
+              <span className="hidden sm:inline-block rounded-full border border-sky-800/50 bg-sky-950/60 px-2 py-0.5 text-[10px] font-medium text-sky-300">
                 🌌 Antigravity Brain
               </span>
             </div>
-            <p className="text-xs text-zinc-400">Living Memory & Agent Orchestrator</p>
+            <p className="hidden xs:block text-[11px] sm:text-xs text-zinc-400">Living Memory & Agent Orchestrator</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap">
+          {activePlan && (
+            <button
+              onClick={() => setShowChainMobile((prev) => !prev)}
+              className="lg:hidden inline-flex items-center gap-1 rounded-xl border border-purple-500/50 bg-purple-950/70 px-2.5 py-1 text-xs font-semibold text-purple-300 shadow-sm"
+            >
+              <span>🔗</span>
+              <span>Chain</span>
+            </button>
+          )}
           <button
             onClick={() => setShowFeed((prev) => !prev)}
-            className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-xs font-semibold shadow-sm transition ${
+            className={`inline-flex items-center gap-1 sm:gap-1.5 rounded-xl border px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs font-semibold shadow-sm transition ${
               showFeed
                 ? "border-purple-500 bg-purple-950/80 text-purple-200 shadow-purple-950/50"
                 : "border-zinc-800 bg-zinc-900/80 text-zinc-300 hover:border-purple-700/60 hover:text-white"
             }`}
           >
             <span>📡</span>
-            <span>Activity Feed</span>
+            <span className="hidden sm:inline">Activity Feed</span>
+            <span className="sm:hidden">Feed</span>
           </button>
           <button
             onClick={openOpenCodeTerminal}
             disabled={launchingTerminal}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-sky-700/60 bg-sky-950/60 px-3.5 py-1.5 text-xs font-semibold text-sky-300 shadow-sm transition hover:border-sky-500 hover:bg-sky-900/60 hover:text-white disabled:opacity-40"
+            className="inline-flex items-center gap-1 sm:gap-1.5 rounded-xl border border-sky-700/60 bg-sky-950/60 px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs font-semibold text-sky-300 shadow-sm transition hover:border-sky-500 hover:bg-sky-900/60 hover:text-white disabled:opacity-40"
           >
             <span>💻</span>
-            <span>{launchingTerminal ? "Opening..." : "Open Terminal"}</span>
+            <span className="hidden sm:inline">{launchingTerminal ? "Opening..." : "Open Terminal"}</span>
+            <span className="sm:hidden">CLI</span>
           </button>
           <button
             onClick={newChat}
             disabled={busy}
             title="Clear current screen (brain memory is retained)"
-            className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white disabled:opacity-40"
+            className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white disabled:opacity-40"
           >
-            ✨ New Chat
+            <span className="hidden sm:inline">✨ New Chat</span>
+            <span className="sm:hidden">✨ New</span>
           </button>
           <Link
             href="/workers"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-purple-800/60 bg-purple-950/40 px-3.5 py-1.5 text-xs font-medium text-purple-300 shadow-sm transition hover:border-purple-600 hover:bg-purple-900/50 hover:text-white"
+            className="inline-flex items-center gap-1 sm:gap-1.5 rounded-xl border border-purple-800/60 bg-purple-950/40 px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs font-medium text-purple-300 shadow-sm transition hover:border-purple-600 hover:bg-purple-900/50 hover:text-white"
           >
             <span>⚡ Workers</span>
-            <span>→</span>
+            <span className="hidden sm:inline">→</span>
           </Link>
         </div>
       </header>
 
       {/* Main Workspace Layout (Left: Task Chain Stepper | Right/Center: Chat) */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         <TaskChainTracker
           activePlan={activePlan}
           planExecution={planExecution}
+          isOpenMobile={showChainMobile}
+          onCloseMobile={() => setShowChainMobile(false)}
         />
 
-        <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-6">
           <div className="mx-auto flex max-w-2xl flex-col gap-4">
             {messages.length === 0 ? (
-              <div className="my-auto flex flex-col items-center justify-center pt-16 text-center">
+              <div className="my-auto flex flex-col items-center justify-center pt-8 sm:pt-16 text-center px-2">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-purple-800/40 bg-purple-950/30 text-purple-300 shadow-inner">
                   ⚡
                 </div>
-                <h2 className="mt-4 text-base font-semibold text-white">How can Jarvis assist you today?</h2>
+                <h2 className="mt-4 text-sm sm:text-base font-semibold text-white">How can Jarvis assist you today?</h2>
                 <p className="mt-1 text-xs text-zinc-400 max-w-sm">
                   Ask anything, run file automation, send emails, or delegate complex tasks to specialized background workers.
                 </p>
@@ -311,15 +326,15 @@ export default function Home() {
         </div>
       </div>
 
-      <footer className="border-t border-zinc-800/80 bg-zinc-900/40 p-4 backdrop-blur-md">
-        <div className="mx-auto flex max-w-2xl items-center gap-2.5">
+      <footer className="border-t border-zinc-800/80 bg-zinc-900/40 p-2.5 sm:p-4 backdrop-blur-md">
+        <div className="mx-auto flex max-w-2xl items-center gap-2 sm:gap-2.5">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendPrompt(input)}
-            placeholder='Ask Jarvis, type a command, or click 🎙️ / Alt+V...'
+            placeholder='Ask Jarvis or click 🎙️ / Alt+V...'
             disabled={busy}
-            className="flex-1 rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 outline-none transition focus:border-purple-600/70 focus:ring-1 focus:ring-purple-600/50 disabled:opacity-50"
+            className="flex-1 rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 sm:px-4 py-2 sm:py-2.5 text-base sm:text-sm text-zinc-100 placeholder-zinc-500 outline-none transition focus:border-purple-600/70 focus:ring-1 focus:ring-purple-600/50 disabled:opacity-50"
           />
           <VoiceInput
             disabled={busy}
@@ -333,7 +348,7 @@ export default function Home() {
           <button
             onClick={() => sendPrompt(input)}
             disabled={busy || !input.trim()}
-            className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-md shadow-purple-950/40 transition hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40"
+            className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-3.5 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-white shadow-md shadow-purple-950/40 transition hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40 shrink-0"
           >
             Send
           </button>

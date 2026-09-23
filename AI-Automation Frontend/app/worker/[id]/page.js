@@ -296,11 +296,13 @@ export default function WorkerPage() {
     setTimeout(() => setCopiedId(false), 2000);
   }, [sessionId]);
 
+  const displayText = liveStreamText || formatEventsToTerminal(events, state);
+
   const copyLiveStream = useCallback(() => {
-    navigator.clipboard.writeText(liveStreamText);
+    navigator.clipboard.writeText(displayText);
     setCopiedStream(true);
     setTimeout(() => setCopiedStream(false), 2000);
-  }, [liveStreamText]);
+  }, [displayText]);
 
   if (notFound) {
     return (
@@ -330,34 +332,32 @@ export default function WorkerPage() {
   return (
     <div className="flex h-screen flex-col bg-zinc-950 text-white selection:bg-purple-500/30">
       {/* ── Top Bar ── */}
-      <header className="flex shrink-0 items-center justify-between border-b border-zinc-800/80 bg-zinc-900/40 px-6 py-3.5 backdrop-blur-md">
-        <div className="flex items-center gap-4">
+      <header className="flex shrink-0 flex-wrap items-center justify-between gap-2.5 border-b border-zinc-800/80 bg-zinc-900/40 px-3.5 py-2.5 sm:px-6 sm:py-3.5 backdrop-blur-md">
+        <div className="flex items-center gap-2.5 sm:gap-4">
           <Link
             href="/workers"
-            className="group flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-700 hover:text-white"
+            className="group flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/80 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-700 hover:text-white"
           >
             <span className="transition-transform group-hover:-translate-x-0.5">←</span>
             <span>Workers</span>
           </Link>
 
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono text-zinc-400">session /</span>
-              <h1 className="font-mono text-sm font-semibold text-zinc-100">{sessionId}</h1>
-            </div>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="text-xs font-mono text-zinc-400">session /</span>
+            <h1 className="font-mono text-xs sm:text-sm font-semibold text-zinc-100 truncate max-w-[130px] sm:max-w-none">{sessionId}</h1>
             <button
               onClick={copySessionId}
               title="Copy Session ID"
-              className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-0.5 text-[11px] font-mono text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200"
+              className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-0.5 text-[10px] sm:text-[11px] font-mono text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200"
             >
               {copiedId ? "✓ Copied" : "Copy"}
             </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           {terminalMsg && (
-            <span className="text-xs text-emerald-400 font-medium animate-fade-in">
+            <span className="text-xs text-emerald-400 font-medium animate-fade-in hidden sm:inline">
               {terminalMsg}
             </span>
           )}
@@ -365,14 +365,15 @@ export default function WorkerPage() {
           <button
             onClick={openDesktopTerminal}
             disabled={launchingTerminal}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-sky-700/60 bg-sky-950/60 px-3 py-1.5 text-xs font-semibold text-sky-300 shadow-sm transition hover:border-sky-500 hover:bg-sky-900/60 hover:text-white disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-sky-700/60 bg-sky-950/60 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-sky-300 shadow-sm transition hover:border-sky-500 hover:bg-sky-900/60 hover:text-white disabled:opacity-40"
           >
             <span>💻</span>
-            <span>{launchingTerminal ? "Opening..." : "Launch CLI"}</span>
+            <span className="hidden sm:inline">{launchingTerminal ? "Opening..." : "Launch CLI"}</span>
+            <span className="sm:hidden">CLI</span>
           </button>
 
           {/* Real-time Streaming Pulse Indicator */}
-          <div className="flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/90 px-3 py-1 text-xs">
+          <div className="hidden sm:flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/90 px-3 py-1 text-xs">
             {streamActive ? (
               <span className="flex items-center gap-1.5 text-sky-400 font-medium">
                 <span className="h-2 w-2 animate-ping rounded-full bg-sky-400" />
@@ -387,71 +388,73 @@ export default function WorkerPage() {
           </div>
 
           <span
-            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${
-              STATUS_STYLE[state?.status] || STATUS_STYLE.idle
+            className={`inline-flex items-center gap-1 rounded-full border px-2.5 sm:px-3 py-0.5 sm:py-1 text-xs font-medium ${
+              STATUS_STYLE[state?.status === "completed" || state?.progress_percent === 100 ? "completed" : state?.status] || STATUS_STYLE.idle
             }`}
           >
-            {state?.status === "running" && (
+            {state?.status === "running" && (state?.progress_percent ?? 0) < 100 && (
               <span className="h-2 w-2 animate-pulse rounded-full bg-sky-400" />
             )}
-            {state?.status === "completed" && (
+            {(state?.status === "completed" || state?.progress_percent === 100) && (
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
             )}
             {state?.status === "cancelled" && (
               <span className="h-2 w-2 rounded-full bg-amber-400" />
             )}
-            {state?.status || "connecting…"}
+            {state?.status === "completed" || state?.progress_percent === 100
+              ? "completed"
+              : (state?.status || "connecting…")}
           </span>
 
-          {state?.status === "running" && (
+          {state?.status === "running" && (state?.progress_percent ?? 0) < 100 && (
             <button
               onClick={cancelWorker}
               disabled={cancelling}
-              className="rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-1.5 text-xs font-medium text-red-300 transition hover:bg-red-900/60 disabled:opacity-50"
+              className="rounded-lg border border-red-900/60 bg-red-950/40 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-red-300 transition hover:bg-red-900/60 disabled:opacity-50"
             >
-              {cancelling ? "Cancelling…" : "Cancel Worker"}
+              {cancelling ? "Cancelling…" : "Cancel"}
             </button>
           )}
         </div>
       </header>
 
       {/* ── Main Two-Column View ── */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-y-auto lg:overflow-hidden flex-col lg:flex-row">
         {/* Left Column: Live Streaming Terminal & Trace Views */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 scrollbar-thin">
+        <div className="flex-1 w-full lg:overflow-y-auto px-3.5 sm:px-6 py-4 sm:py-6 scrollbar-thin">
           <div className="mx-auto flex max-w-4xl flex-col gap-5">
             {/* Task Contract Card */}
             <ContractCard state={state} sessionId={sessionId} />
 
             {/* Navigation Tabs */}
-            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-800/80 pb-2 gap-2">
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1 sm:pb-0 flex-nowrap">
                 <button
                   onClick={() => setActiveTab("terminal")}
-                  className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                  className={`inline-flex items-center gap-2 rounded-xl px-3.5 sm:px-4 py-2 text-xs font-semibold shrink-0 transition ${
                     activeTab === "terminal"
                       ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-900/30"
                       : "bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-zinc-800"
                   }`}
                 >
                   <span className="h-2 w-2 rounded-full bg-sky-400 animate-pulse" />
-                  <span>⚡ Live Output & Thoughts</span>
-                  {liveStreamText && (
+                  <span>⚡ Live Output</span>
+                  {displayText && (
                     <span className="ml-1 rounded bg-black/40 px-1.5 py-0.5 text-[10px] font-mono">
-                      {liveStreamText.length} chars
+                      {displayText.length} chars
                     </span>
                   )}
                 </button>
 
                 <button
                   onClick={() => setActiveTab("trace")}
-                  className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                  className={`inline-flex items-center gap-2 rounded-xl px-3.5 sm:px-4 py-2 text-xs font-semibold shrink-0 transition ${
                     activeTab === "trace"
                       ? "bg-zinc-800 text-white shadow-md border border-zinc-700"
                       : "bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-zinc-800"
                   }`}
                 >
-                  <span>📋 Execution Trace</span>
+                  <span>📋 Trace</span>
                   <span className="ml-1 rounded bg-black/40 px-1.5 py-0.5 text-[10px] font-mono">
                     {events.filter((e) => e.type.startsWith("STEP_")).length}
                   </span>
@@ -460,7 +463,7 @@ export default function WorkerPage() {
                 {artifacts.length > 0 && (
                   <button
                     onClick={() => setActiveTab("artifacts")}
-                    className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                    className={`inline-flex items-center gap-2 rounded-xl px-3.5 sm:px-4 py-2 text-xs font-semibold shrink-0 transition ${
                       activeTab === "artifacts"
                         ? "bg-purple-950/80 text-purple-200 border border-purple-700"
                         : "bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-zinc-800"
@@ -476,7 +479,7 @@ export default function WorkerPage() {
                 {resolution && (
                   <button
                     onClick={() => setActiveTab("review")}
-                    className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                    className={`inline-flex items-center gap-2 rounded-xl px-3.5 sm:px-4 py-2 text-xs font-semibold shrink-0 transition ${
                       activeTab === "review"
                         ? "bg-purple-900 text-white shadow-md"
                         : "bg-zinc-900/80 text-purple-300 hover:bg-zinc-800 border border-purple-900/40"
@@ -488,7 +491,7 @@ export default function WorkerPage() {
               </div>
 
               {activeTab === "terminal" && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
                   <button
                     onClick={() => setAutoScrollStream(!autoScrollStream)}
                     className={`rounded-lg border px-2.5 py-1 text-[11px] transition ${
@@ -501,7 +504,7 @@ export default function WorkerPage() {
                   </button>
                   <button
                     onClick={copyLiveStream}
-                    disabled={!liveStreamText}
+                    disabled={!displayText}
                     className="rounded-lg border border-zinc-800 bg-zinc-900/90 px-2.5 py-1 text-[11px] font-mono text-zinc-300 transition hover:bg-zinc-800 disabled:opacity-40"
                   >
                     {copiedStream ? "✓ Copied" : "Copy Output"}
@@ -513,6 +516,7 @@ export default function WorkerPage() {
             {/* TAB CONTENT 1: Real-Time Live Terminal */}
             {activeTab === "terminal" && (
               <LiveWorkerTerminal
+                displayText={displayText}
                 liveStreamText={liveStreamText}
                 streamActive={streamActive}
                 streamStatus={streamStatus}
@@ -578,7 +582,7 @@ export default function WorkerPage() {
         </div>
 
         {/* Right Sidebar: Live State & Intervention */}
-        <aside className="flex w-84 shrink-0 flex-col border-l border-zinc-800/80 bg-zinc-900/30">
+        <aside className="flex w-full lg:w-84 shrink-0 flex-col border-t lg:border-t-0 lg:border-l border-zinc-800/80 bg-zinc-900/30">
           {/* Progress & Current Step */}
           <div className="border-b border-zinc-800/80 p-4">
             <div className="flex items-center justify-between">
@@ -586,18 +590,22 @@ export default function WorkerPage() {
                 Active Step
               </p>
               <span className="font-mono text-xs font-semibold text-sky-400">
-                {state?.progress_percent ?? 0}%
+                {state?.status === "completed" ? 100 : (state?.progress_percent ?? 0)}%
               </span>
             </div>
 
             <div className="mt-2.5 flex items-start gap-2">
-              {state?.status === "running" ? (
+              {state?.status === "running" && (state?.progress_percent ?? 0) < 100 ? (
                 <span className="mt-1 h-2 w-2 shrink-0 animate-pulse rounded-full bg-sky-400" />
+              ) : state?.status === "completed" || (state?.progress_percent ?? 0) === 100 ? (
+                <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
               ) : (
                 <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-zinc-600" />
               )}
               <p className="text-sm font-medium text-zinc-200">
-                {nowDoing || (state?.status === "completed" ? "All steps finished" : "Waiting…")}
+                {state?.status === "completed" || (state?.progress_percent ?? 0) === 100
+                  ? "All steps finished"
+                  : (nowDoing || (state?.status === "running" ? "Executing..." : "Waiting…"))}
               </p>
             </div>
 
@@ -605,7 +613,7 @@ export default function WorkerPage() {
             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-800/80">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-sky-500 to-purple-500 transition-all duration-500"
-                style={{ width: `${state?.progress_percent ?? 0}%` }}
+                style={{ width: `${state?.status === "completed" ? 100 : (state?.progress_percent ?? 0)}%` }}
               />
             </div>
           </div>
@@ -635,7 +643,7 @@ export default function WorkerPage() {
           </div>
 
           {/* Raw SSE Event Stream */}
-          <div className="flex flex-1 flex-col overflow-hidden p-4">
+          <div className="flex flex-col h-64 lg:h-auto lg:flex-1 overflow-hidden p-4">
             <div className="flex items-center justify-between pb-2">
               <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
                 Live Event Bus
@@ -684,9 +692,8 @@ export default function WorkerPage() {
                   onAutoSend={async (text) => {
                     setIntervention(text);
                     try {
-                      await fetch(`${API_URL}/workers/${sessionId}/intervene`, {
+                      await apiFetch(`/workers/${sessionId}/intervene`, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ message: text }),
                       });
                       setIntervention("");
@@ -711,36 +718,87 @@ export default function WorkerPage() {
   );
 }
 
+// ── Format structured events and states into a live terminal log ──────────
+function formatEventsToTerminal(events, state) {
+  if (!events || !events.length) {
+    if (state?.objective) {
+      return `[Antigravity Stream Console]\nSession ID: ${state.session_id || ""}\nObjective: ${state.objective}\nWorkspace Scope: ${state.fs_scope || "D:/AI-Automation"}\nStatus: ${state.status || "initializing"}...\n`;
+    }
+    return "";
+  }
+  const lines = [];
+  lines.push(`[Antigravity Stream Console]`);
+  if (state?.objective) {
+    lines.push(`Objective: ${state.objective}`);
+  }
+  if (state?.fs_scope) {
+    lines.push(`Workspace: ${state.fs_scope}`);
+  }
+  lines.push(`Driver: ${state?.worker_type || "antigravity_worker"} | Model: ${state?.model || "default"} | Status: ${state?.status || "running"}`);
+  lines.push("─".repeat(60));
+
+  events.forEach((ev, i) => {
+    const type = ev.type || ev.event || "EVENT";
+    if (type === "WORK_STARTED") {
+      lines.push(`[SYSTEM] ● Session started. Initialized autonomous loop.`);
+    } else if (type === "STEP_STARTED") {
+      lines.push(`\n[STEP #${(ev.data?.index ?? i) + 1}] ▶ ${ev.data?.step || ev.step || "Executing action..."}`);
+    } else if (type === "STEP_COMPLETED") {
+      const preview = ev.data?.output?.output_preview || (typeof ev.data?.output === "string" ? ev.data.output : null);
+      lines.push(`[STEP #${(ev.data?.index ?? i) + 1}] ✓ Completed.`);
+      if (preview) {
+        lines.push(`   Output: ${preview}`);
+      }
+    } else if (type === "STEP_FAILED") {
+      lines.push(`[STEP #${(ev.data?.index ?? i) + 1}] ✗ FAILED: ${ev.data?.error || ev.error || "Execution error"}`);
+    } else if (type === "PARENT_INTERVENTION") {
+      lines.push(`\n[PARENT INTERVENTION] ⚡ Directive: ${ev.data?.message || ""}`);
+    } else if (type === "WORK_COMPLETED") {
+      lines.push(`\n[FINAL] ■ WORK_COMPLETED: ${ev.data?.summary || (ev.data?.success ? "All steps finished successfully." : "Session finalized.")}`);
+      if (ev.data?.artifacts?.length) {
+        lines.push(`   Artifacts: ${ev.data.artifacts.join(", ")}`);
+      }
+    } else if (ev.data?.step || ev.data?.result) {
+      lines.push(`[${type}] ${ev.data.step || JSON.stringify(ev.data.result)}`);
+    }
+  });
+
+  return lines.join("\n");
+}
+
 // ── Live Worker Terminal Component ──────────────────────────────────────
-function LiveWorkerTerminal({ liveStreamText, streamActive, streamStatus, streamEndRef, state }) {
+function LiveWorkerTerminal({ displayText, liveStreamText, streamActive, streamStatus, streamEndRef, state }) {
+  const content = liveStreamText || displayText;
+  const isFinished = state?.status === "completed" || state?.status === "cancelled" || (!streamActive && Boolean(content));
+
   return (
     <div className="flex flex-col rounded-2xl border border-zinc-800/90 bg-zinc-950 shadow-2xl overflow-hidden">
       {/* Terminal Title Bar */}
-      <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-900/90 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-full bg-red-500/80" />
-            <span className="h-3 w-3 rounded-full bg-yellow-500/80" />
-            <span className="h-3 w-3 rounded-full bg-emerald-500/80" />
+      <div className="flex flex-wrap items-center justify-between border-b border-zinc-800 bg-zinc-900/90 px-3.5 sm:px-4 py-2.5 sm:py-3 gap-2">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-red-500/80" />
+            <span className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-yellow-500/80" />
+            <span className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-emerald-500/80" />
           </div>
-          <div className="flex items-center gap-2 border-l border-zinc-800 pl-3">
-            <span className="font-mono text-xs font-semibold text-zinc-200">
-              Antigravity Stream Console
+          <div className="flex items-center gap-1.5 sm:gap-2 border-l border-zinc-800 pl-2.5 sm:pl-3 min-w-0">
+            <span className="font-mono text-xs font-semibold text-zinc-200 truncate">
+              Antigravity Stream
             </span>
-            <span className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400">
-              {state?.model || "default model"}
+            <span className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400 shrink-0">
+              {state?.model || "default"}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          {streamActive ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/40 bg-sky-950/70 px-2.5 py-0.5 text-[11px] font-semibold text-sky-300">
-              <span className="h-2 w-2 animate-ping rounded-full bg-sky-400" />
+        <div className="flex items-center gap-2 shrink-0">
+          {streamActive && !isFinished ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/40 bg-sky-950/70 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-semibold text-sky-300">
+              <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 animate-ping rounded-full bg-sky-400" />
               <span>STREAMING</span>
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-2.5 py-0.5 text-[11px] text-zinc-400">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-2.5 py-0.5 text-[10px] sm:text-[11px] text-zinc-400">
               <span>FINISHED</span>
             </span>
           )}
@@ -748,19 +806,19 @@ function LiveWorkerTerminal({ liveStreamText, streamActive, streamStatus, stream
       </div>
 
       {/* Terminal Output Area */}
-      <div className="p-4 font-mono text-xs leading-relaxed text-zinc-200 max-h-[560px] min-h-[320px] overflow-y-auto whitespace-pre-wrap selection:bg-purple-500/40">
-        {liveStreamText ? (
+      <div className="p-3.5 sm:p-4 font-mono text-xs leading-relaxed text-zinc-200 max-h-[560px] min-h-[260px] sm:min-h-[320px] overflow-y-auto whitespace-pre-wrap selection:bg-purple-500/40 break-words">
+        {content ? (
           <>
-            <span>{liveStreamText}</span>
-            {streamActive && (
+            <span>{content}</span>
+            {streamActive && !isFinished && (
               <span className="inline-block h-4 w-2 animate-pulse bg-sky-400 align-middle ml-0.5" />
             )}
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-center text-zinc-600">
+          <div className="flex flex-col items-center justify-center py-16 text-center text-zinc-600 px-4">
             <div className="mb-2 h-5 w-5 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
             <p className="text-xs">Connecting to Antigravity CLI live stream…</p>
-            <p className="mt-1 text-[11px] text-zinc-600">
+            <p className="mt-1 text-[11px] text-zinc-600 max-w-sm">
               Streaming real-time step updates, thinking deltas, and tool executions.
             </p>
           </div>
@@ -769,11 +827,11 @@ function LiveWorkerTerminal({ liveStreamText, streamActive, streamStatus, stream
       </div>
 
       {/* Terminal Footer */}
-      <div className="flex items-center justify-between border-t border-zinc-800/80 bg-zinc-900/40 px-4 py-2 text-[11px] text-zinc-500">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between border-t border-zinc-800/80 bg-zinc-900/40 px-3.5 sm:px-4 py-2 text-[10px] sm:text-[11px] text-zinc-500 gap-2">
+        <div className="flex items-center gap-2 sm:gap-3">
           <span>Mode: <strong className="text-zinc-400">stream-json</strong></span>
           <span>•</span>
-          <span>Buffer: <strong className="text-zinc-400">{liveStreamText.length} chars</strong></span>
+          <span>Buffer: <strong className="text-zinc-400">{content.length} chars</strong></span>
         </div>
         <div className="flex items-center gap-2">
           <span>Worker: <strong className="text-purple-400">{state?.worker_type || "antigravity"}</strong></span>

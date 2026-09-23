@@ -3,7 +3,10 @@
 .env.local
 *.env
 token.json
+*token*.json
+drive_token.json
 client_secret.json
+drive_client_secret.json
 tokens/
 
 # WhatsApp sidecar & profile data

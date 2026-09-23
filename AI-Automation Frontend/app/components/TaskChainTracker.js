@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-import { API_URL } from "../lib/api";
+import { API_URL, apiFetch } from "../lib/api";
 
-export default function TaskChainTracker({ activePlan, planExecution, onClose }) {
+export default function TaskChainTracker({ activePlan, planExecution, isOpenMobile = false, onCloseMobile }) {
   const [pipelineSteps, setPipelineSteps] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [completedCount, setCompletedCount] = useState(0);
@@ -56,9 +56,14 @@ export default function TaskChainTracker({ activePlan, planExecution, onClose })
             stepStatus = "waiting";
             stepResult = null;
           } else if (isRunningWorker) {
-            // A worker was spawned and is actively running in the background!
-            stepStatus = "running";
-            stepResult = null;
+            // If already marked completed, keep it completed
+            if (step.status === "completed") {
+              stepStatus = "completed";
+              stepResult = step.result || exec.data;
+            } else {
+              stepStatus = "running";
+              stepResult = null;
+            }
           }
 
           return {
@@ -73,6 +78,53 @@ export default function TaskChainTracker({ activePlan, planExecution, onClose })
       })
     );
   }, [planExecution]);
+
+  // Periodic status poll for running workers to ensure completion is detected immediately
+  useEffect(() => {
+    const runningWorkerSteps = pipelineSteps.filter(
+      (s) => (s.status === "running" || s.status === "executing") && s.sessionId
+    );
+    if (!runningWorkerSteps.length) return;
+
+    let isMounted = true;
+
+    async function checkWorkerStatus() {
+      for (const step of runningWorkerSteps) {
+        if (!step.sessionId) continue;
+        try {
+          const res = await apiFetch(`/workers/${step.sessionId}`);
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (data && (data.status === "completed" || data.status === "cancelled" || data.progress_percent === 100)) {
+            if (!isMounted) return;
+            setPipelineSteps((prev) =>
+              prev.map((s) => {
+                if (s.sessionId === step.sessionId || s.index === step.index) {
+                  return {
+                    ...s,
+                    status: data.status === "cancelled" ? "failed" : "completed",
+                    currentSubStep: null,
+                    result: data.status === "completed" ? "Worker completed successfully" : s.result,
+                  };
+                }
+                return s;
+              })
+            );
+          }
+        } catch {
+          // ignore network hiccups
+        }
+      }
+    }
+
+    checkWorkerStatus();
+    const interval = setInterval(checkWorkerStatus, 2500);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [pipelineSteps]);
 
   // Listen to live SSE stream to update worker & chained hook completion in real time
   useEffect(() => {
@@ -114,7 +166,7 @@ export default function TaskChainTracker({ activePlan, planExecution, onClose })
           });
         }
 
-        if (type === "WORKER_COMPLETED") {
+        if (type === "WORKER_COMPLETED" || type.includes("WORKER_COMPLETED")) {
           setPipelineSteps((prev) => {
             let targetIdx = prev.findIndex(
               (s) => s.sessionId && evtSessionId && s.sessionId === evtSessionId
@@ -123,6 +175,9 @@ export default function TaskChainTracker({ activePlan, planExecution, onClose })
               targetIdx = prev.findIndex(
                 (s) => (s.tool === "fork" || s.tool?.includes("worker")) && s.status !== "completed" && s.status !== "failed"
               );
+            }
+            if (targetIdx === -1) {
+              targetIdx = prev.findIndex((s) => s.status !== "completed" && s.status !== "failed");
             }
             if (targetIdx === -1) return prev;
 
@@ -138,9 +193,6 @@ export default function TaskChainTracker({ activePlan, planExecution, onClose })
                   currentSubStep: null,
                   result: artifactText,
                 };
-              }
-              if (idx === targetIdx + 1 && step.status === "waiting") {
-                return { ...step, status: step.tool === "fork" ? "running" : "executing" };
               }
               return step;
             });
@@ -270,8 +322,8 @@ export default function TaskChainTracker({ activePlan, planExecution, onClose })
     return "⚡";
   };
 
-  return (
-    <aside className="w-full lg:w-80 flex flex-col border-r border-zinc-800/80 bg-zinc-950/80 p-4 backdrop-blur-md overflow-y-auto">
+  const content = (
+    <div className="flex h-full flex-col p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-800/60">
         <div className="flex items-center gap-2">
@@ -283,9 +335,20 @@ export default function TaskChainTracker({ activePlan, planExecution, onClose })
             <p className="text-[10px] text-zinc-400">Sequential Execution Order</p>
           </div>
         </div>
-        <span className="text-[11px] font-mono text-purple-400 bg-purple-950/60 border border-purple-800/50 px-2 py-0.5 rounded-full">
-          {doneSteps}/{totalSteps} Done
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-mono text-purple-400 bg-purple-950/60 border border-purple-800/50 px-2 py-0.5 rounded-full">
+            {doneSteps}/{totalSteps} Done
+          </span>
+          {onCloseMobile && (
+            <button
+              onClick={onCloseMobile}
+              className="lg:hidden rounded-lg p-1 text-zinc-400 hover:bg-zinc-800 hover:text-white transition"
+              aria-label="Close task chain"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Overall Progress Bar */}
@@ -299,7 +362,7 @@ export default function TaskChainTracker({ activePlan, planExecution, onClose })
       </div>
 
       {/* Ordered Step Cards */}
-      <div className="space-y-3 flex-1">
+      <div className="space-y-3 flex-1 overflow-y-auto pr-0.5 scrollbar-thin">
         {pipelineSteps.map((step, idx) => {
           const isCompleted = step.status === "completed";
           const isExecuting = step.status === "executing" || step.status === "running";
@@ -320,49 +383,49 @@ export default function TaskChainTracker({ activePlan, planExecution, onClose })
               }`}
             >
               {/* Step indicator pill */}
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-md bg-zinc-800 text-[10px] font-bold text-zinc-300 border border-zinc-700/60">
+              <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-md bg-zinc-800 text-[10px] font-bold text-zinc-300 border border-zinc-700/60 shrink-0">
                     {idx + 1}
                   </span>
-                  <span className="text-xs">{getStepIcon(step)}</span>
-                  <span className="text-xs font-semibold text-zinc-100 truncate max-w-[140px]">
+                  <span className="text-xs shrink-0">{getStepIcon(step)}</span>
+                  <span className="text-xs font-semibold text-zinc-100 truncate max-w-[130px] sm:max-w-[150px]">
                     {step.tool}
                   </span>
                 </div>
 
                 {/* Live Status Badge */}
                 {isCompleted && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
-                    ✓ Completed
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 text-[10px] font-semibold text-emerald-300 shrink-0">
+                    ✓ Done
                   </span>
                 )}
                 {isExecuting && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 border border-purple-500/40 px-2 py-0.5 text-[10px] font-semibold text-purple-300 animate-pulse">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 border border-purple-500/40 px-2 py-0.5 text-[10px] font-semibold text-purple-300 animate-pulse shrink-0">
                     ⚡ In Progress
                   </span>
                 )}
                 {isWaiting && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 border border-zinc-700 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 border border-zinc-700 px-2 py-0.5 text-[10px] font-medium text-zinc-400 shrink-0">
                     ⏳ Waiting
                   </span>
                 )}
                 {isFailed && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 border border-red-500/40 px-2 py-0.5 text-[10px] font-semibold text-red-300">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 border border-red-500/40 px-2 py-0.5 text-[10px] font-semibold text-red-300 shrink-0">
                     ✕ Failed
                   </span>
                 )}
               </div>
 
               {/* Description */}
-              <p className="text-xs text-zinc-300 leading-relaxed mb-1">
+              <p className="text-xs text-zinc-300 leading-relaxed mb-1 break-words">
                 {step.description}
               </p>
 
               {/* Dynamic Live Substep if running */}
               {isExecuting && step.currentSubStep && (
                 <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-purple-950/60 border border-purple-800/60 px-2 py-1 text-[11px] text-purple-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-ping" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-ping shrink-0" />
                   <span className="font-mono truncate">{step.currentSubStep}</span>
                 </div>
               )}
@@ -398,6 +461,31 @@ export default function TaskChainTracker({ activePlan, planExecution, onClose })
           </Link>
         </div>
       )}
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop permanent sidebar */}
+      <aside className="hidden lg:flex w-80 shrink-0 flex-col border-r border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md overflow-hidden">
+        {content}
+      </aside>
+
+      {/* Mobile Drawer Overlay */}
+      {isOpenMobile && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+            onClick={onCloseMobile}
+          />
+          {/* Slide-out Sheet */}
+          <div className="fixed inset-y-0 left-0 w-full max-w-sm bg-zinc-950 border-r border-zinc-800 shadow-2xl z-10 flex flex-col">
+            {content}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
+

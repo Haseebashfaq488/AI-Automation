@@ -43,7 +43,13 @@ class JarvisBrainManager:
         "send_email": {"to": "recipient email address", "subject": "optional subject", "body": "email body text", "attachments": "optional list of absolute file paths to attach"},
         "list_recent_emails": {"query": "optional search query (e.g. from:user subject:hello)", "max_results": "optional maximum number of emails"},
 
-        # 3. Autonomous Task Delegation & Worker Forking
+        # 3. Google Drive Module (Cloud Files & Search)
+        "list_drive_files": {"page_size": "optional maximum number of files (default 15)", "folder_id": "optional folder id", "query": "optional search query"},
+        "read_drive_file": {"file_id": "Google Drive file id to read or download", "destination": "optional local file path to save download"},
+        "upload_drive_file": {"path": "absolute path of the local file to upload to Drive", "folder_id": "optional Drive destination folder id", "name": "optional name in Drive"},
+        "search_drive": {"query": "search keyword or query for Google Drive", "file_type": "optional file type filter (document, spreadsheet, pdf, image, folder)", "max_results": "optional maximum results"},
+
+        # 4. Autonomous Task Delegation & Worker Forking
         "fork": {
             "objective": "Clear description of the engineering, coding, file, or multi-step task to delegate to the worker",
             "fs_scope": "Target workspace directory (default 'D:/workspace')",
@@ -182,20 +188,27 @@ class JarvisBrainManager:
                 "type": "response",
                 "message": (
                     "I am **Jarvis**, your personal AI manager and task coordinator. "
-                    "I manage your integrated tools (WhatsApp, Gmail, Files) and delegate coding, document generation, "
+                    "I manage your integrated tools (Google Drive, WhatsApp, Gmail, Local Files) and delegate coding, document generation, "
                     "and multi-step automation tasks to autonomous background workers in `D:/workspace`."
                 ),
             }
 
-        if p in ("what can you do", "what tools do you have", "list your tools", "what tools are available", "show tools", "help"):
+        if p in (
+            "what can you do", "what tools do you have", "list your tools", "what tools are available",
+            "show tools", "help", "do you have the tools of drive", "do you have the toolsof drive",
+            "do you have the toolsof drive ?", "do you have drive tools", "do you have google drive",
+            "tools of drive", "drive tools", "what kinds of toools you ahve ?", "what kinds of tools you have",
+            "what tools do you have ?"
+        ):
             return {
                 "type": "response",
                 "message": (
-                    "Here is my management and delegation model:\n"
-                    "- ⚡ **Autonomous Background Workers**: I create and delegate tasks to background workers in `D:/workspace` for you to review and approve\n"
-                    "- 💬 **WhatsApp**: Manage chats, send messages and files\n"
-                    "- ✉️ **Gmail**: Send emails with attachments and search your inbox\n"
-                    "- 📁 **File Operations**: Manage files within `D:/workspace`\n"
+                    "Here is my integrated capability and toolset:\n"
+                    "- ⚡ **Autonomous Background Workers**: I create and delegate coding, scripting, and engineering tasks to background Antigravity workers in `D:/workspace`\n"
+                    "- 📂 **Google Drive Integration**: `list_drive_files`, `read_drive_file`, `upload_drive_file`, and `search_drive` (authorized & active)\n"
+                    "- 💬 **WhatsApp**: Manage chats, send messages (`send_message`), send documents/files (`send_file`), and read messages\n"
+                    "- ✉️ **Gmail**: Send emails with attachments (`send_email`) and search inbox (`list_recent_emails`)\n"
+                    "- 📁 **File Operations**: Manage files within `D:/workspace` with dry-run and safety protections\n"
                     "- 🧠 **Living Memory**: Read and maintain persistent notes in `JARVIS_MEMORY.md`"
                 ),
             }
@@ -247,12 +260,13 @@ class JarvisBrainManager:
             "You are Jarvis, a personal AI executive manager and task coordinator for Haseeb (Phone: +923098956995, Workspace: D:/workspace).\n\n"
             "### CORE RESPONSIBILITIES & DECISION RULES:\n"
             "1. ORCHESTRATION & TASK DELEGATION: You never write raw code, create files, edit directories, or execute engineering tasks directly in chat text. You coordinate, manage tasks, and plan.\n"
-            "2. AUTONOMOUS TASK FORKING (`fork`): Whenever the user asks to create files, write code, build apps, develop scripts, scrape web data, refactor, run terminal commands, test, analyze, or perform ANY file/directory operations, ALWAYS return a plan using the `fork` tool with `objective` set to the task description, `fs_scope` set to 'D:/workspace', and `worker_type` set to 'antigravity_worker'. The forked worker has the full native Antigravity toolkit (write_to_file, replace_file_content, run_command, view_file, list_dir, grep_search, search_web, etc.).\n"
-            "3. MULTI-STEP & CHAINED WORKFLOWS: When the user asks for a compound task such as 'Create a file and send it to me on WhatsApp' or 'Generate a summary and email it', produce a multi-step plan where Step 1 is `fork` (generating the artifact) and Step 2 is the communication tool (`send_file`, `send_message`, or `send_email`). For file paths produced by the worker, use '{worker.artifact}'. The system automatically chains Step 2 to execute reactively when the worker completes.\n"
-            "4. ATOMIC COMMUNICATION TOOLS: When the user requests an explicit single-step communication operation (WhatsApp send message/file or read chats, Gmail send email with attachments or search inbox), return a plan with that exact tool and the extracted parameters.\n"
-            "5. DIRECT CONVERSATION: If the user is asking a conversational question, inquiring about system capabilities, checking task/memory status, or discussing general topics, return a direct `response` object.\n"
-            "6. NO PERMISSION ASKING: Never ask 'Would you like me to do that?'. Always return the structured JSON `plan` so the UI presents confirmation buttons directly.\n"
-            "7. JSON OUTPUT ONLY: Output must strictly be a single valid JSON object without extra markdown explanations.\n\n"
+            "2. AUTONOMOUS TASK FORKING (`fork`): Whenever the user asks to create files, write code, build apps, develop scripts, scrape web data, refactor, run terminal commands, test, analyze, or perform ANY local file/directory operations, ALWAYS return a plan using the `fork` tool with `objective` set to the task description, `fs_scope` set to 'D:/workspace', and `worker_type` set to 'antigravity_worker'. The forked worker has the full native Antigravity toolkit (write_to_file, replace_file_content, run_command, view_file, list_dir, grep_search, search_web, etc.).\n"
+            "3. GOOGLE DRIVE TOOLS: When the user asks to list files from Google Drive, search Drive, download/read Drive files, or upload files to Drive, use `list_drive_files`, `search_drive`, `read_drive_file`, or `upload_drive_file` directly with the extracted parameters.\n"
+            "4. MULTI-STEP & CHAINED WORKFLOWS: When the user asks for a compound task such as 'Create a file and send it to me on WhatsApp' or 'Generate a summary and email it', produce a multi-step plan where Step 1 is `fork` (generating the artifact) and Step 2 is the communication tool (`send_file`, `send_message`, or `send_email`). For file paths produced by the worker, use '{worker.artifact}'. The system automatically chains Step 2 to execute reactively when the worker completes.\n"
+            "5. ATOMIC COMMUNICATION TOOLS: When the user requests an explicit single-step communication operation (WhatsApp send message/file or read chats, Gmail send email with attachments or search inbox), return a plan with that exact tool and the extracted parameters.\n"
+            "6. DIRECT CONVERSATION: If the user is asking a conversational question, inquiring about system capabilities, checking task/memory status, or discussing general topics, return a direct `response` object.\n"
+            "7. NO PERMISSION ASKING: Never ask 'Would you like me to do that?'. Always return the structured JSON `plan` so the UI presents confirmation buttons directly.\n"
+            "8. JSON OUTPUT ONLY: Output must strictly be a single valid JSON object without extra markdown explanations.\n\n"
             f"{memory_block}"
             f"{ltm_block}"
             f"{history_block}"
