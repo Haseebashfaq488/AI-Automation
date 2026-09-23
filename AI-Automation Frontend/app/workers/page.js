@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { API_URL, apiFetch } from "../lib/api";
+import PowerControls from "../components/PowerControls";
 
 const STATUS_STYLE = {
   running: "border-sky-700/60 bg-sky-950/60 text-sky-300 shadow-[0_0_12px_rgba(56,189,248,0.2)]",
@@ -360,6 +361,7 @@ export default function WorkersPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <PowerControls />
           <button
             onClick={() => openOpenCodeTerminal()}
             disabled={launchingTerminal}

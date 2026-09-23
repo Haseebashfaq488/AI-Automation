@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import health, tools, skills, pipelines, agent, events, tasks, workers
+from app.api.routes import health, tools, skills, pipelines, agent, events, tasks, workers, system
 from app.core.config import settings
 from app.core.exceptions import JarvisException, jarvis_exception_handler
 from app.core.lifecycle import lifespan
@@ -44,6 +44,7 @@ def create_app() -> FastAPI:
     app.include_router(events.router)
     app.include_router(tasks.router)
     app.include_router(workers.router)
+    app.include_router(system.router)
 
     return app
 

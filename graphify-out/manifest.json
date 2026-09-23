@@ -108,10 +108,10 @@
     "semantic_hash": "189b8cb3e18e2d393400ec57475c68f4"
   },
   "backend/app/main.py": {
-    "mtime": 1790151053.1738758,
-    "seen": 1790152353.3769636,
-    "ast_hash": "32184339f3aa812ef9f58b0c1450ed81",
-    "semantic_hash": "32184339f3aa812ef9f58b0c1450ed81"
+    "mtime": 1790162891.927883,
+    "seen": 1790163058.9422207,
+    "ast_hash": "83e4abcd6d82bcf69a6cf13ea60f977b",
+    "semantic_hash": ""
   },
   "backend/app/modules/__init__.py": {
     "mtime": 1789533605.0,
@@ -570,10 +570,10 @@
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "backend/app/workers/base/bus.py": {
-    "mtime": 1790138684.0742297,
-    "seen": 1790152353.3771098,
-    "ast_hash": "157ce6487640ad93b35b4358e5221f34",
-    "semantic_hash": "157ce6487640ad93b35b4358e5221f34"
+    "mtime": 1790161584.7645018,
+    "seen": 1790163058.942426,
+    "ast_hash": "af84bdf13ae59182f741470a93a20b34",
+    "semantic_hash": ""
   },
   "backend/app/workers/base/contract.py": {
     "mtime": 1790083878.675137,
@@ -1032,9 +1032,9 @@
     "semantic_hash": "8d2c5358d2bd69e718f0359e5dff2e2d"
   },
   "backend/app/modules/antigravity/JARVIS_MEMORY.md": {
-    "mtime": 1790160022.2525184,
-    "seen": 1790160172.9451182,
-    "ast_hash": "845faccf12b39f8de3d4ad94ab89e993",
+    "mtime": 1790161025.35231,
+    "seen": 1790163058.942539,
+    "ast_hash": "0ef594c74ba60b7ca4d54ed921bbffc1",
     "semantic_hash": ""
   },
   "backend/app/modules/antigravity/JARVIS_TOOLS_GUIDE.md": {
@@ -1158,22 +1158,22 @@
     "semantic_hash": "a8a9e6b1d4ce651b3d08fabfe2df47e4"
   },
   "AI-Automation Frontend/app/page.js": {
-    "mtime": 1790155377.412779,
-    "seen": 1790158147.1778038,
-    "ast_hash": "4df0558778fd78f2e5945de314ba787d",
-    "semantic_hash": "4df0558778fd78f2e5945de314ba787d"
+    "mtime": 1790162941.3323128,
+    "seen": 1790163058.9421513,
+    "ast_hash": "eb67c55d9fbaf0a0ac71cd60802253b5",
+    "semantic_hash": ""
   },
   "AI-Automation Frontend/app/worker/[id]/page.js": {
-    "mtime": 1790157458.2266521,
-    "seen": 1790158147.1778057,
-    "ast_hash": "93e06449e296d294d9d2a2ebf214f30f",
-    "semantic_hash": "93e06449e296d294d9d2a2ebf214f30f"
+    "mtime": 1790162060.0997834,
+    "seen": 1790163058.9421537,
+    "ast_hash": "aad64fc4e6aa07a153e0d06fb1e8072e",
+    "semantic_hash": ""
   },
   "AI-Automation Frontend/app/workers/page.js": {
-    "mtime": 1790155429.924857,
-    "seen": 1790158147.177807,
-    "ast_hash": "56e964dd1d4f702640f9a41d818a2dd4",
-    "semantic_hash": "56e964dd1d4f702640f9a41d818a2dd4"
+    "mtime": 1790162985.0461483,
+    "seen": 1790163058.9421556,
+    "ast_hash": "0720fecf75dc04942496a1f66ac38c66",
+    "semantic_hash": ""
   },
   "AI-Automation Frontend/eslint.config.mjs": {
     "mtime": 1789533605.0,
@@ -1312,5 +1312,23 @@
     "seen": 1790158147.1780353,
     "ast_hash": "d6ede11be5303cd218bf05d7a0f9fc63",
     "semantic_hash": "d6ede11be5303cd218bf05d7a0f9fc63"
+  },
+  "AI-Automation Frontend/app/components/PowerControls.js": {
+    "mtime": 1790162907.011541,
+    "seen": 1790163058.9421358,
+    "ast_hash": "faaf58081485a0353e16605adfc6693b",
+    "semantic_hash": ""
+  },
+  "backend/app/api/routes/system.py": {
+    "mtime": 1790162869.721676,
+    "seen": 1790163058.9421859,
+    "ast_hash": "5c67e840f609b31fe4c72dddacaae206",
+    "semantic_hash": ""
+  },
+  "backend/tests/unit/test_system_routes.py": {
+    "mtime": 1790162996.096637,
+    "seen": 1790163058.9424899,
+    "ast_hash": "d7880ac747ec89c1d4ea95ece1b3b2ff",
+    "semantic_hash": ""
   }
 }

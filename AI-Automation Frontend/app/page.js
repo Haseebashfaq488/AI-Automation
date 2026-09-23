@@ -6,6 +6,7 @@ import { UserBubble, BotMessage } from "./components/Chat";
 import VoiceInput from "./components/VoiceInput";
 import ActivityFeed from "./components/ActivityFeed";
 import TaskChainTracker from "./components/TaskChainTracker";
+import PowerControls from "./components/PowerControls";
 
 import { API_URL, apiFetch } from "./lib/api";
 const CHAT_STORAGE_KEY = "jarvis_chat_messages";
@@ -226,6 +227,7 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap">
+          <PowerControls />
           {activePlan && (
             <button
               onClick={() => setShowChainMobile((prev) => !prev)}
