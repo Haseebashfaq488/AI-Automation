@@ -7,7 +7,7 @@ import VoiceInput from "./components/VoiceInput";
 import ActivityFeed from "./components/ActivityFeed";
 import TaskChainTracker from "./components/TaskChainTracker";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+import { API_URL, apiFetch } from "./lib/api";
 const CHAT_STORAGE_KEY = "jarvis_chat_messages";
 
 function generateId() {
@@ -56,8 +56,13 @@ export default function Home() {
   useEffect(() => {
     async function checkHealth() {
       try {
-        const res = await fetch(`${API_URL}/health`);
-        setBackendOnline(res.ok);
+        const res = await apiFetch("/health");
+        if (res.ok) {
+          const data = await res.json().catch(() => null);
+          setBackendOnline(Boolean(data && data.status === "ok"));
+        } else {
+          setBackendOnline(false);
+        }
       } catch {
         setBackendOnline(false);
       }
@@ -82,9 +87,8 @@ export default function Home() {
   }, [messages]);
 
   async function callAgent(body) {
-    const res = await fetch(`${API_URL}/agent/run`, {
+    const res = await apiFetch("/agent/run", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
     const data = await res.json();
@@ -165,9 +169,8 @@ export default function Home() {
   async function openOpenCodeTerminal() {
     setLaunchingTerminal(true);
     try {
-      await fetch(`${API_URL}/workers/open-terminal`, {
+      await apiFetch("/workers/open-terminal", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ directory: "D:/workspace" }),
       });
     } catch {

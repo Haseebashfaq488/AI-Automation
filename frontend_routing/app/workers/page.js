@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+import { API_URL, apiFetch } from "../lib/api";
 
 const STATUS_STYLE = {
   running: "border-sky-700/60 bg-sky-950/60 text-sky-300 shadow-[0_0_12px_rgba(56,189,248,0.2)]",
@@ -43,9 +43,8 @@ function ForkForm() {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`${API_URL}/workers/fork`, {
+      const res = await apiFetch("/workers/fork", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           objective: objective.trim(),
           worker_type: workerType,
@@ -271,7 +270,7 @@ export default function WorkersPage() {
     if (!confirm("Are you sure you want to clear all worker sessions and history?")) return;
     setClearing(true);
     try {
-      const res = await fetch(`${API_URL}/workers`, { method: "DELETE" });
+      const res = await apiFetch("/workers", { method: "DELETE" });
       if (res.ok) {
         setWorkers([]);
       }
@@ -286,9 +285,8 @@ export default function WorkersPage() {
     setLaunchingTerminal(true);
     setTerminalMsg(null);
     try {
-      const res = await fetch(`${API_URL}/workers/open-terminal`, {
+      const res = await apiFetch("/workers/open-terminal", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ directory: dir }),
       });
       const data = await res.json();
@@ -308,7 +306,7 @@ export default function WorkersPage() {
 
     async function poll() {
       try {
-        const res = await fetch(`${API_URL}/workers/list`);
+        const res = await apiFetch("/workers/list");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!cancelled) {

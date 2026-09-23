@@ -14,13 +14,19 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # CORS — allow the Next.js frontend to call the backend in dev
+    # CORS — allow the Next.js frontend to call the backend in dev & via ngrok tunnel
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
             "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:3002",
             "http://127.0.0.1:3000",
+            "http://127.0.0.1:3001",
+            "http://127.0.0.1:3002",
+            "https://upstairs-earring-craftwork.ngrok-free.dev",
         ],
+        allow_origin_regex=r"^https?://.*",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

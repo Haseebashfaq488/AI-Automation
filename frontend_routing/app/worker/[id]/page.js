@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import VoiceInput from "../../components/VoiceInput";
 import ToolOutputViewer from "../../components/ToolOutputViewer";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+import { API_URL, apiFetch } from "../../lib/api";
 
 const EVENT_STYLE = {
   WORK_STARTED: "text-sky-400",
@@ -64,7 +64,7 @@ export default function WorkerPage() {
   const fetchArtifacts = useCallback(async () => {
     if (!sessionId) return;
     try {
-      const res = await fetch(`${API_URL}/workers/${sessionId}/artifacts`);
+      const res = await apiFetch(`/workers/${sessionId}/artifacts`);
       if (res.ok) {
         const data = await res.json();
         setArtifacts(data.artifacts || []);
@@ -78,7 +78,7 @@ export default function WorkerPage() {
   const fetchResolution = useCallback(async () => {
     if (!sessionId) return;
     try {
-      const res = await fetch(`${API_URL}/workers/${sessionId}/resolution`);
+      const res = await apiFetch(`/workers/${sessionId}/resolution`);
       if (res.ok) {
         const data = await res.json();
         setResolution(data.evaluation || null);
@@ -95,7 +95,7 @@ export default function WorkerPage() {
 
     async function poll() {
       try {
-        const res = await fetch(`${API_URL}/workers/${sessionId}`);
+        const res = await apiFetch(`/workers/${sessionId}`);
         if (res.status === 404) {
           if (!cancelled) setNotFound(true);
           return;
@@ -242,9 +242,8 @@ export default function WorkerPage() {
     if (!message) return;
     setIntervention("");
     try {
-      await fetch(`${API_URL}/workers/${sessionId}/intervene`, {
+      await apiFetch(`/workers/${sessionId}/intervene`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),
       });
     } catch {
@@ -255,7 +254,7 @@ export default function WorkerPage() {
   const cancelWorker = useCallback(async () => {
     setCancelling(true);
     try {
-      await fetch(`${API_URL}/workers/${sessionId}/cancel`, { method: "POST" });
+      await apiFetch(`/workers/${sessionId}/cancel`, { method: "POST" });
     } catch {
       /* ignore */
     } finally {
@@ -272,12 +271,11 @@ export default function WorkerPage() {
     try {
       const endpoint =
         state?.worker_type === "opencode_worker" || state?.worker_type === "opencode"
-          ? `${API_URL}/workers/open-terminal`
-          : `${API_URL}/workers/open-agy-terminal`;
+          ? "/workers/open-terminal"
+          : "/workers/open-agy-terminal";
 
-      const res = await fetch(endpoint, {
+      const res = await apiFetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ directory: state?.fs_scope || "D:/AI-Automation" }),
       });
       const data = await res.json();
