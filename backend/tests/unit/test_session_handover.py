@@ -185,3 +185,47 @@ def test_milestone_prompt_builders_incorporate_handover():
     )
     assert "SESSION CONTINUATION & PRIOR HANDOVER" in exec_prompt
     assert "Living Documentation Protocol" in exec_prompt
+
+
+def test_graphify_handover_integration():
+    """Test that graphify knowledge graph is signaled in handover section and contract."""
+    contract = TaskContract(
+        objective="Analyze project",
+        fs_scope="D:/workspace",
+        has_graphify=True,
+    )
+    assert contract.has_graphify is True
+
+    handover_with_graph = {
+        "objective": "Build app",
+        "has_graphify": True,
+        "architecture_decisions": ["Used FastAPI"],
+    }
+    rendered = _format_handover_section(handover_with_graph, ["src/README.md"], is_refinement=True)
+    assert "Knowledge Graph (graphify)" in rendered
+    assert "graphify query" in rendered
+    assert "graphify path" in rendered
+
+
+@pytest.mark.asyncio
+async def test_dynamic_fs_scope_resolution(tmp_path: Path):
+    """Test that _fork_task respects explicit fs_scope or extracts directory from prompt."""
+    from app.api.routes.agent import _fork_task
+
+    target_dir = tmp_path / "custom_project"
+    res = await _fork_task(
+        {"objective": "Create site", "fs_scope": str(target_dir)},
+        prompt="build a site",
+    )
+    assert res["success"] is True
+    assert target_dir.is_dir()
+
+    # Test path extracted from prompt
+    prompt_dir = tmp_path / "prompt_project"
+    res2 = await _fork_task(
+        {"objective": "Create site"},
+        prompt=f"build a landing page in {prompt_dir}",
+    )
+    assert res2["success"] is True
+    assert prompt_dir.is_dir()
+

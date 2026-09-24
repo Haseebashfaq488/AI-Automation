@@ -91,6 +91,10 @@ class TaskContract(BaseModel):
         default_factory=list,
         description="Paths of discovered folder-level README.md living documentation files.",
     )
+    has_graphify: bool = Field(
+        default=False,
+        description="Whether an AST knowledge graph is available at graphify-out/.",
+    )
 
     @field_validator("fs_scope")
     @classmethod

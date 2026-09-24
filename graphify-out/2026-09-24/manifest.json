@@ -12,10 +12,10 @@
     "semantic_hash": "cd9453066c4d9b2fefc083c7fbe8b732"
   },
   "backend/app/api/routes/agent.py": {
-    "mtime": 1790142351.5751853,
-    "seen": 1790152353.3769293,
-    "ast_hash": "39c2b0e7f4f85bc7ec5a77effb2e5c5e",
-    "semantic_hash": "39c2b0e7f4f85bc7ec5a77effb2e5c5e"
+    "mtime": 1790261576.3175168,
+    "seen": 1790261710.0788512,
+    "ast_hash": "e904463371622bb723980b1bd66c21a7",
+    "semantic_hash": ""
   },
   "backend/app/api/routes/events.py": {
     "mtime": 1790253366.7212772,
@@ -54,9 +54,9 @@
     "semantic_hash": "a408fc1390738a4aa419b0fa5eb8efbc"
   },
   "backend/app/api/routes/workers.py": {
-    "mtime": 1790241387.3285873,
-    "seen": 1790246487.607656,
-    "ast_hash": "764ad2c212758f60520c43b6c85a9180",
+    "mtime": 1790261562.7319715,
+    "seen": 1790261710.0788643,
+    "ast_hash": "1f62a14787007e541c414fa2804b3c64",
     "semantic_hash": ""
   },
   "backend/app/core/__init__.py": {
@@ -576,15 +576,15 @@
     "semantic_hash": ""
   },
   "backend/app/workers/base/contract.py": {
-    "mtime": 1790241253.008473,
-    "seen": 1790246487.6078346,
-    "ast_hash": "1c8dbcc1a45f930aa37e709e7316044b",
+    "mtime": 1790261348.553384,
+    "seen": 1790261710.0790322,
+    "ast_hash": "374a4a1cf19f74dab33b56c7e34fd071",
     "semantic_hash": ""
   },
   "backend/app/workers/base/engine.py": {
-    "mtime": 1790257049.351547,
-    "seen": 1790257195.2193596,
-    "ast_hash": "d7d95deb8ecbfc87866481f5ccf504c8",
+    "mtime": 1790261389.8326995,
+    "seen": 1790261710.0790334,
+    "ast_hash": "770d9222c708af6e844054928a710cd5",
     "semantic_hash": ""
   },
   "backend/app/workers/base/scoped_registry.py": {
@@ -594,9 +594,9 @@
     "semantic_hash": "54c65a70c66ae7eeeb47c251050c1c8e"
   },
   "backend/app/workers/base/session.py": {
-    "mtime": 1790241511.0076652,
-    "seen": 1790246487.6078398,
-    "ast_hash": "b8b46968d2143687108a46ad49dd141e",
+    "mtime": 1790261368.6533349,
+    "seen": 1790261710.0790372,
+    "ast_hash": "f42e78784243bbe79e7f64d3750ced06",
     "semantic_hash": ""
   },
   "backend/pyproject.toml": {
@@ -948,15 +948,15 @@
     "semantic_hash": "97aa790c5ea34b4db2673b896b7ce098"
   },
   "backend/app/workers/antigravity_worker/agent/milestones.py": {
-    "mtime": 1790241243.8188598,
-    "seen": 1790246487.607829,
-    "ast_hash": "8959c676111ecbc43317b66c240e0fcf",
+    "mtime": 1790261488.6999855,
+    "seen": 1790261710.0790265,
+    "ast_hash": "1e5887f107f41523e6053e53100e4fda",
     "semantic_hash": ""
   },
   "backend/app/workers/antigravity_worker/agent/worker_agent.py": {
-    "mtime": 1790252191.878485,
-    "seen": 1790252272.2146547,
-    "ast_hash": "814f6860aad1ebdfc18e7b1d955fe79b",
+    "mtime": 1790261536.8205311,
+    "seen": 1790261710.0790277,
+    "ast_hash": "a0f54fdd79e50cdce00412a2432db6f0",
     "semantic_hash": ""
   },
   "backend/tests/unit/test_antigravity_worker.py": {
@@ -1032,9 +1032,9 @@
     "semantic_hash": ""
   },
   "backend/app/modules/antigravity/JARVIS_MEMORY.md": {
-    "mtime": 1790257345.4696038,
-    "seen": 1790258123.9004672,
-    "ast_hash": "bca8202bd525cefbff22df244296f4db",
+    "mtime": 1790258461.0037858,
+    "seen": 1790261710.0791428,
+    "ast_hash": "4679b16543c2d3b1c45cc4c98a8def2e",
     "semantic_hash": ""
   },
   "backend/app/modules/antigravity/JARVIS_TOOLS_GUIDE.md": {
@@ -1395,6 +1395,24 @@
     "mtime": 1790230373.08925,
     "seen": 1790246487.607807,
     "ast_hash": "a03b823ba14373bca7dad6d803f97d45",
+    "semantic_hash": ""
+  },
+  "backend/tests/unit/test_session_handover.py": {
+    "mtime": 1790261659.218052,
+    "seen": 1790261710.0790887,
+    "ast_hash": "619c0ba57b7656f74ac791c44a7df9de",
+    "semantic_hash": ""
+  },
+  "handover.json": {
+    "mtime": 1790261693.1765256,
+    "seen": 1790261710.0791082,
+    "ast_hash": "084fb8be18e2d62161732f3d0c6fd9ae",
+    "semantic_hash": ""
+  },
+  "SESSION_HANDOVER.md": {
+    "mtime": 1790261693.2055318,
+    "seen": 1790261710.0791376,
+    "ast_hash": "f323f1b842c25b45de1de5e68c7b56c5",
     "semantic_hash": ""
   }
 }

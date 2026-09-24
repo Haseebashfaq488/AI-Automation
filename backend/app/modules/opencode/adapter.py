@@ -131,7 +131,7 @@ class OpenCodeAdapter:
             "   - In 'requirements', extract a list of specific requirements/libraries/features requested (if any).\n"
             "   - In 'constraints', extract any negative boundaries or things NOT to touch/break (if any).\n"
             "   - In 'success_criteria', extract measurable pass/fail conditions like tests passing (if any).\n"
-            "   - In 'fs_scope', specify the target workspace folder (defaults to 'D:/AI-Automation').\n"
+            "   - In 'fs_scope', specify the target workspace folder path where the worker should execute (use the exact directory if the user mentions one, e.g. 'in frontend', 'in D:/projects/site'; otherwise default to 'D:/workspace').\n"
             "3. Each step maps to exactly ONE of the available tools listed above, using the "
             "exact param names shown.\n"
             "4. Use absolute paths for files (including email/WhatsApp attachments). "

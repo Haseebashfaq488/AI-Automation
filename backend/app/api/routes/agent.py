@@ -265,7 +265,22 @@ async def _fork_task(params: Dict[str, Any], prompt: str) -> Dict[str, Any]:
     from app.workers.base.contract import TaskContract
 
     objective = (params.get("objective") or "").strip() or prompt.strip() or "Forked task"
-    fs_scope = params.get("fs_scope") or "D:/AI-Automation"
+    
+    # Dynamic workspace scope resolution:
+    # Priority: params['fs_scope'] -> directory mentioned in prompt -> JARVIS_WORKSPACE env var -> 'D:/workspace'
+    import re
+    default_scope = os.getenv("JARVIS_WORKSPACE", "D:/workspace")
+    explicit_scope = (params.get("fs_scope") or "").strip()
+    if not explicit_scope:
+        path_match = re.search(r"(?:in|to|inside|folder|directory|at)\s+['\"]?([A-Za-z]:[\\/][\w\-\.\s\\/]+|\.[\w\-\.\s\\/]+)['\"]?", prompt, re.IGNORECASE)
+        if path_match:
+            explicit_scope = path_match.group(1).strip()
+
+    fs_scope = explicit_scope or default_scope
+    try:
+        os.makedirs(fs_scope, exist_ok=True)
+    except Exception:
+        pass
     allowed = params.get("allowed_tools") or list(_DEFAULT_FORK_TOOLS)
 
     reqs = params.get("requirements") or []

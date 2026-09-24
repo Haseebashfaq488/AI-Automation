@@ -232,13 +232,23 @@ def _format_handover_section(
     if folder_manifests:
         lines.append(f"- **Discovered Subfolder Docs**: {', '.join(folder_manifests)}")
 
+    has_graphify = prior_handover.get("has_graphify", False) if prior_handover else False
+    if has_graphify:
+        lines.extend([
+            "- **Knowledge Graph (graphify)**: Available at `graphify-out/`",
+            "  • Query architecture: `graphify query \"<question>\"`",
+            "  • Trace dependencies: `graphify path \"<file_a>\" \"<file_b>\"`",
+            "  • Read summary: `graphify-out/GRAPH_REPORT.md`",
+        ])
+
     lines.extend([
         "",
         "### ⚠️ NON-DESTRUCTIVE REFINEMENT RULES:",
         "1. DO NOT wipe, delete, or rewrite the codebase from scratch.",
         "2. Review existing files and subfolder `README.md` docs before editing.",
-        "3. Make targeted, clean delta edits that preserve the established architecture.",
-        "4. Update the relevant subfolder `README.md` docs to document your changes.",
+        "3. If graphify is available, query the knowledge graph to understand architecture in seconds instead of reading all raw files.",
+        "4. Make targeted, clean delta edits that preserve the established architecture.",
+        "5. Update the relevant subfolder `README.md` docs to document your changes.",
     ])
     return "\n".join(lines)
 

@@ -688,6 +688,23 @@ class WorkerEngine:
                 if len(decisions) >= 5:
                     break
 
+        # Automatically execute graphify AST extraction if graphify CLI is available
+        has_graphify = False
+        try:
+            if scope_dir.is_dir():
+                import shutil
+                import subprocess
+                if shutil.which("graphify"):
+                    cmd = (
+                        ["graphify", "update", "."]
+                        if (scope_dir / "graphify-out" / "graph.json").is_file()
+                        else ["graphify", "extract", ".", "--code-only", "--no-viz"]
+                    )
+                    subprocess.run(cmd, cwd=str(scope_dir), capture_output=True, timeout=20, check=False)
+                    has_graphify = (scope_dir / "graphify-out" / "graph.json").is_file()
+        except Exception as exc:
+            logger.debug("Automatic graphify execution failed: %s", exc)
+
         handover = {
             "session_id": self._session_id,
             "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
@@ -698,6 +715,7 @@ class WorkerEngine:
             "architecture_decisions": decisions,
             "test_summary": test_res,
             "summary": summary,
+            "has_graphify": has_graphify,
         }
 
         # Format human-readable markdown
@@ -726,6 +744,16 @@ class WorkerEngine:
             md_lines.extend(["", "## ⚙️ Architecture & Decisions"])
             for d in decisions:
                 md_lines.append(f"- {d}")
+
+        if has_graphify:
+            md_lines.extend([
+                "",
+                "## 🕸️ Knowledge Graph & Architecture (graphify)",
+                "AST architecture graph is generated and queryable at `graphify-out/`.",
+                "- Query symbols & dependencies: `graphify query \"<question>\"`",
+                "- Trace component paths: `graphify path \"<file_a>\" \"<file_b>\"`",
+                "- View architecture summary: `graphify-out/GRAPH_REPORT.md`",
+            ])
 
         if test_res:
             md_lines.extend(["", "## 🧪 Verification & Test Results", f"```json\n{json.dumps(test_res, indent=2)}\n```"])

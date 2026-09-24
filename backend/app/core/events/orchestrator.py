@@ -238,7 +238,8 @@ class TaskOrchestrator:
         # 3. Fallback disk lookup
         from app.workers.base.session import WorkerSession
         session_dir = WorkerSession.SESSIONS_ROOT / session_id
-        scope_dir = Path("D:/workspace")
+        import os
+        scope_dir = Path(os.getenv("JARVIS_WORKSPACE", "D:/workspace"))
 
         # 3a. Read objective from task.json
         obj = ""
