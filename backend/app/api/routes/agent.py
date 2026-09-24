@@ -53,6 +53,7 @@ class PromptRequest(BaseModel):
     confirm: bool = False
     plan_id: Optional[str] = None
     session_id: str = "default"
+    fs_scope: Optional[str] = None
 
 
 @router.post("/run")
@@ -73,7 +74,7 @@ async def run_prompt(request: PromptRequest) -> Dict[str, Any]:
         steps = _plan_cache.pop(request.plan_id, None)
         if steps is None:
             raise HTTPException(status_code=404, detail="Plan not found or already executed. Please send a new request.")
-        outcome = await _execute_plan(steps, prompt=request.prompt)
+        outcome = await _execute_plan(steps, prompt=request.prompt, fs_scope=request.fs_scope)
         chat_memory.add(session_id, "user", f"[confirmed plan] {request.prompt}")
         chat_memory.add(
             session_id, "assistant",
@@ -173,7 +174,7 @@ async def _learn_from_turn(prompt: str, outcome: str, force: bool = False) -> Li
     return learned
 
 
-async def _execute_plan(steps: List[Dict[str, Any]], prompt: str = "") -> Dict[str, Any]:
+async def _execute_plan(steps: List[Dict[str, Any]], prompt: str = "", fs_scope: Optional[str] = None) -> Dict[str, Any]:
     """Execute plan steps sequentially and return collected results."""
     results: List[Dict[str, Any]] = []
     for i, step in enumerate(steps):
@@ -183,7 +184,7 @@ async def _execute_plan(steps: List[Dict[str, Any]], prompt: str = "") -> Dict[s
 
         if tool_name == "fork":
             # Pseudo-tool: not in the registry — fork a background worker.
-            result = await _fork_task(params, prompt)
+            result = await _fork_task(params, prompt, fs_scope=fs_scope)
             session_id = result.get("data", {}).get("session_id") if result.get("data") else None
             results.append({
                 "index": i,
@@ -258,7 +259,7 @@ _DEFAULT_FORK_TOOLS = [
 ]
 
 
-async def _fork_task(params: Dict[str, Any], prompt: str) -> Dict[str, Any]:
+async def _fork_task(params: Dict[str, Any], prompt: str, fs_scope: Optional[str] = None) -> Dict[str, Any]:
     """Fork a background worker session via the workers module and record a tracked Task in SQLite."""
     import os
     from app.api.routes import workers as workers_routes
@@ -267,18 +268,18 @@ async def _fork_task(params: Dict[str, Any], prompt: str) -> Dict[str, Any]:
     objective = (params.get("objective") or "").strip() or prompt.strip() or "Forked task"
     
     # Dynamic workspace scope resolution:
-    # Priority: params['fs_scope'] -> directory mentioned in prompt -> JARVIS_WORKSPACE env var -> 'D:/workspace'
+    # Priority: params['fs_scope'] -> explicit request fs_scope -> directory mentioned in prompt -> JARVIS_WORKSPACE env var -> 'D:/workspace'
     import re
     default_scope = os.getenv("JARVIS_WORKSPACE", "D:/workspace")
-    explicit_scope = (params.get("fs_scope") or "").strip()
+    explicit_scope = (params.get("fs_scope") or "").strip() or (fs_scope or "").strip()
     if not explicit_scope:
         path_match = re.search(r"(?:in|to|inside|folder|directory|at)\s+['\"]?([A-Za-z]:[\\/][\w\-\.\s\\/]+|\.[\w\-\.\s\\/]+)['\"]?", prompt, re.IGNORECASE)
         if path_match:
             explicit_scope = path_match.group(1).strip()
 
-    fs_scope = explicit_scope or default_scope
+    fs_scope_val = explicit_scope or default_scope
     try:
-        os.makedirs(fs_scope, exist_ok=True)
+        os.makedirs(fs_scope_val, exist_ok=True)
     except Exception:
         pass
     allowed = params.get("allowed_tools") or list(_DEFAULT_FORK_TOOLS)
@@ -314,7 +315,7 @@ async def _fork_task(params: Dict[str, Any], prompt: str) -> Dict[str, Any]:
             requirements=reqs,
             constraints=cons,
             success_criteria=crit,
-            fs_scope=fs_scope,
+            fs_scope=fs_scope_val,
             allowed_tools=allowed,
             max_steps=int(params.get("max_steps", 20)),
             master_prompt=params.get("master_prompt"),

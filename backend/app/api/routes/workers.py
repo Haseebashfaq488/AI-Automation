@@ -679,6 +679,66 @@ async def worker_stream(session_id: str, request: Request):
     )
 
 
+@router.get("/{session_id}/handover")
+async def get_worker_handover(session_id: str):
+    """Retrieve session handover, graphify status, and living documentation metadata."""
+    from app.workers.base.session import WorkerSession
+
+    eng = _engines.get(session_id)
+    session_dir = (
+        eng._session.path if eng and eng._session else WorkerSession.SESSIONS_ROOT / session_id
+    )
+    if not eng and not (session_dir / "task.json").is_file():
+        raise HTTPException(status_code=404, detail="Worker session not found")
+
+    task_json = session_dir / "task.json"
+    fs_scope = None
+    if task_json.is_file():
+        try:
+            tdata = json.loads(task_json.read_text(encoding="utf-8"))
+            fs_scope = tdata.get("fs_scope")
+        except Exception:
+            pass
+
+    handover_json = session_dir / "handover.json"
+    session_handover_md = session_dir / "SESSION_HANDOVER.md"
+
+    handover_data = None
+    if handover_json.is_file():
+        try:
+            handover_data = json.loads(handover_json.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    markdown_content = None
+    if session_handover_md.is_file():
+        try:
+            markdown_content = session_handover_md.read_text(encoding="utf-8")
+        except Exception:
+            pass
+    elif fs_scope and (Path(fs_scope) / "SESSION_HANDOVER.md").is_file():
+        try:
+            markdown_content = (Path(fs_scope) / "SESSION_HANDOVER.md").read_text(encoding="utf-8")
+        except Exception:
+            pass
+
+    has_graphify = False
+    if handover_data and handover_data.get("has_graphify"):
+        has_graphify = True
+    elif fs_scope and (Path(fs_scope) / "graphify-out").is_dir():
+        has_graphify = True
+
+    return {
+        "session_id": session_id,
+        "fs_scope": fs_scope,
+        "has_handover": bool(handover_data or markdown_content),
+        "has_graphify": has_graphify,
+        "handover": handover_data,
+        "markdown": markdown_content,
+        "folder_manifests": handover_data.get("folder_manifests", []) if handover_data else [],
+    }
+
+
 def get_engine(session_id: str) -> Optional[WorkerEngine]:
     """Used by the agent route to look up engines after delegation."""
-    return _engines.get(session_id)
+    return _engines.get(session_id)

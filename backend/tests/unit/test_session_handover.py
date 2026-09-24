@@ -229,3 +229,42 @@ async def test_dynamic_fs_scope_resolution(tmp_path: Path):
     assert res2["success"] is True
     assert prompt_dir.is_dir()
 
+
+@pytest.mark.asyncio
+async def test_get_worker_handover_endpoint(tmp_path: Path):
+    """Test the GET /workers/{session_id}/handover API endpoint."""
+    from httpx import AsyncClient, ASGITransport
+    from app.main import app
+    from app.workers.base.session import WorkerSession
+
+    session_id = "test-handover-api-session"
+    session_dir = WorkerSession.SESSIONS_ROOT / session_id
+    session_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        (session_dir / "task.json").write_text(json.dumps({"objective": "Test API", "fs_scope": str(tmp_path)}), encoding="utf-8")
+        handover_data = {
+            "session_id": session_id,
+            "objective": "Test API",
+            "has_graphify": True,
+            "folder_manifests": ["src/README.md"],
+        }
+        (session_dir / "handover.json").write_text(json.dumps(handover_data), encoding="utf-8")
+        (session_dir / "SESSION_HANDOVER.md").write_text("# Session Handover Brief\n\nAll tasks completed.", encoding="utf-8")
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            res = await client.get(f"/workers/{session_id}/handover")
+            assert res.status_code == 200
+            body = res.json()
+            assert body["has_handover"] is True
+            assert body["has_graphify"] is True
+            assert body["handover"]["objective"] == "Test API"
+            assert "Session Handover Brief" in body["markdown"]
+            assert body["folder_manifests"] == ["src/README.md"]
+    finally:
+        import shutil
+        if session_dir.exists():
+            shutil.rmtree(session_dir, ignore_errors=True)
+
+

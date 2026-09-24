@@ -12,9 +12,9 @@
     "semantic_hash": "cd9453066c4d9b2fefc083c7fbe8b732"
   },
   "backend/app/api/routes/agent.py": {
-    "mtime": 1790262105.6310575,
-    "seen": 1790262255.3822365,
-    "ast_hash": "88ef4df7b92117062ddbf567c6a0c894",
+    "mtime": 1790262718.0166335,
+    "seen": 1790263291.2947333,
+    "ast_hash": "d34a7c06bd9ea15a985ee5806b8451a6",
     "semantic_hash": ""
   },
   "backend/app/api/routes/events.py": {
@@ -54,9 +54,9 @@
     "semantic_hash": "a408fc1390738a4aa419b0fa5eb8efbc"
   },
   "backend/app/api/routes/workers.py": {
-    "mtime": 1790261562.7319715,
-    "seen": 1790261710.0788643,
-    "ast_hash": "1f62a14787007e541c414fa2804b3c64",
+    "mtime": 1790262665.9741569,
+    "seen": 1790263291.2947462,
+    "ast_hash": "c42996d1700c94e0ca53c4ca2c2cb6c4",
     "semantic_hash": ""
   },
   "backend/app/core/__init__.py": {
@@ -1158,21 +1158,21 @@
     "semantic_hash": "a8a9e6b1d4ce651b3d08fabfe2df47e4"
   },
   "AI-Automation Frontend/app/page.js": {
-    "mtime": 1790162941.3323128,
-    "seen": 1790163058.9421513,
-    "ast_hash": "eb67c55d9fbaf0a0ac71cd60802253b5",
+    "mtime": 1790262921.2362573,
+    "seen": 1790263291.2947156,
+    "ast_hash": "32960d007a7aca738b4bdc53b1901fb4",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/worker/[id]/page.js": {
-    "mtime": 1790252228.3633924,
-    "seen": 1790252272.2144568,
-    "ast_hash": "277a92b3cd284df88adf74d7c3a238a6",
+    "mtime": 1790263182.0987442,
+    "seen": 1790263291.2947178,
+    "ast_hash": "87e76477dcc3b29c6c9159b1886d76d5",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/workers/page.js": {
-    "mtime": 1790246397.2476075,
-    "seen": 1790246487.6076298,
-    "ast_hash": "8c038f3e9108ce9b00c30bb0063fd112",
+    "mtime": 1790262957.4542212,
+    "seen": 1790263291.2947192,
+    "ast_hash": "99db837295e5c5e600bc42b59795c900",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/eslint.config.mjs": {
@@ -1398,9 +1398,9 @@
     "semantic_hash": ""
   },
   "backend/tests/unit/test_session_handover.py": {
-    "mtime": 1790262181.5670545,
-    "seen": 1790262255.3824875,
-    "ast_hash": "7d9e700fea4c4a83aac794afc6849398",
+    "mtime": 1790262808.218793,
+    "seen": 1790263291.2949767,
+    "ast_hash": "ee07acc46b75c25a16a6ba2db7848966",
     "semantic_hash": ""
   },
   "handover.json": {
