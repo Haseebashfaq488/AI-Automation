@@ -38,13 +38,26 @@ class FakeWhatsAppClient:
     async def status(self):
         return {"state": "ready", "qr": None, "pushname": "Tester"}
 
-    async def list_chats(self, limit=50):
-        self.calls.append(("list_chats", limit))
-        return list(self.chats)
+    async def list_chats(self, limit=50, days=3, unread_only=False):
+        self.calls.append(("list_chats", limit, days, unread_only))
+        chats = list(self.chats)
+        if unread_only:
+            chats = [c for c in chats if c.get("unread", 0) > 0]
+        return chats
 
-    async def get_messages(self, chat, limit=20):
-        self.calls.append(("get_messages", chat, limit))
+    async def get_messages(self, chat, limit=20, days=3):
+        self.calls.append(("get_messages", chat, limit, days))
         return {"chat": {"id": chat, "name": "Mom"}, "messages": list(self.messages[:limit])}
+
+    async def get_recent_conversations(self, chat_limit=8, messages_per_chat=10, days=3):
+        self.calls.append(("get_recent_conversations", chat_limit, messages_per_chat, days))
+        results = []
+        for c in self.chats[:chat_limit]:
+            results.append({
+                **c,
+                "messages": list(self.messages[:messages_per_chat]),
+            })
+        return results
 
     async def send_message(self, to, message):
         self.calls.append(("send_message", to, message))
@@ -292,9 +305,20 @@ async def test_get_recent_whatsapp_activity_tool(fake_client):
     tool = GetRecentWhatsAppActivityTool()
     res = await tool.execute({"chat_limit": 5, "messages_per_chat": 3})
     assert res["chat_count"] == 2
-    assert len(res["chats"]) == 2
+    assert len(res["conversations"]) == 2
     assert "Mom" in res["summary"]
     assert "Family Group" in res["summary"]
+
+
+@pytest.mark.asyncio
+async def test_get_whatsapp_chat_messages_tool(fake_client):
+    from app.modules.whatsapp.tools.get_whatsapp_chat_messages import GetWhatsAppChatMessagesTool
+    tool = GetWhatsAppChatMessagesTool()
+    res = await tool.execute({"chat": "Mom", "limit": 10, "days": 3})
+    assert res["count"] == 3
+    assert len(res["messages"]) == 3
+    assert "Mom" in res["summary"]
+    assert "call me when free" in res["summary"]
 
 
 # ---------------------------------------------------------------------------

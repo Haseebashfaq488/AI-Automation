@@ -33,6 +33,7 @@ from app.modules.whatsapp.tools.download_media import DownloadMediaTool
 from app.modules.whatsapp.tools.get_status import GetStatusTool
 from app.modules.whatsapp.tools.get_unread_messages import GetUnreadMessagesTool
 from app.modules.whatsapp.tools.get_recent_whatsapp_activity import GetRecentWhatsAppActivityTool
+from app.modules.whatsapp.tools.get_whatsapp_chat_messages import GetWhatsAppChatMessagesTool
 from app.modules.whatsapp.skills.send_report import SendReportSkill
 from app.modules.whatsapp.skills.unread_digest import UnreadDigestSkill
 
@@ -80,6 +81,7 @@ registry.register(SendMessageTool())
 registry.register(SendFileTool())
 registry.register(ListChatsTool())
 registry.register(GetMessagesTool())
+registry.register(GetWhatsAppChatMessagesTool())
 registry.register(GetUnreadMessagesTool())
 registry.register(GetRecentWhatsAppActivityTool())
 registry.register(SearchMessagesTool())

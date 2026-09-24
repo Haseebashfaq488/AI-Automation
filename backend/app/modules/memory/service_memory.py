@@ -45,6 +45,7 @@ class ServiceMemoryManager:
                     "sender": evt.sender,
                     "title": evt.subject_or_title,
                     "snippet": evt.snippet,
+                    "full_content": evt.full_content,
                     "is_unread": bool(evt.is_unread),
                     "timestamp": evt.event_timestamp.isoformat() if evt.event_timestamp else None,
                 }

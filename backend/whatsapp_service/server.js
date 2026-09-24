@@ -186,50 +186,93 @@ function enqueue(fn) {
 // DOM helpers
 // ---------------------------------------------------------------------------
 async function openChatByName(name) {
-  const needles = [name, name.split(" ")[0]].filter(Boolean);
+  if (!name) throw new Error("Chat name is required");
+  const cleanName = name.trim();
+  const lowerName = cleanName.toLowerCase();
+  const asciiName = cleanName.replace(/[^\w\s]/g, "").trim().toLowerCase();
+
+  // 1. Check visible chats in #pane-side directly first (fast & reliable)
+  const handles = await page.$$('#pane-side [role="listitem"], #pane-side [data-testid="cell-frame-container"]');
+  for (const h of handles) {
+    const title = await h.evaluate((i) => {
+      const span = i.querySelector("span[title]");
+      return span ? (span.getAttribute("title") || span.textContent.trim()) : (i.getAttribute("title") || i.innerText || "");
+    });
+    const tLower = title.trim().toLowerCase();
+    const tAscii = tLower.replace(/[^\w\s]/g, "").trim();
+
+    if (tLower === lowerName || (lowerName && tLower.includes(lowerName)) || (asciiName && tAscii.includes(asciiName))) {
+      await h.click();
+      try {
+        await page.waitForSelector("#main", { timeout: 6000 });
+        await sleep(1000);
+        return;
+      } catch (_) {}
+    }
+  }
+
+  // 2. Search fallback
+  const needles = [cleanName, cleanName.split(" ")[0], asciiName].filter(Boolean);
   for (const needle of needles) {
-    // click the search box (current WhatsApp Web uses a plain <input>)
     const searchSel = await firstSelector(page, [
       'input[aria-label="Search or start a new chat"]',
       '[data-testid="chat-list-search-container"] input',
       'input.html-input',
       '[data-testid="search"] input',
-    ], 4000);
-    if (!searchSel) {
-      await page.screenshot({ path: path.join(__dirname, "dbg_search_fail.png") }).catch(() => {});
-      throw new Error("Could not find the search box");
-    }
-    await page.click(searchSel);
-    await sleep(300);
-    const phoneLike = /^[+0-9()\-\s]+$/.test(needle) && needle.replace(/[^0-9]/g, "").length >= 7;
-    const query = phoneLike ? needle.replace(/\s/g, "") : needle;
-    // set the value via the native setter + input event: React-controlled inputs
-    // re-render on each keystroke and drop focus, so raw keyboard.type loses chars
-    await page.evaluate((q, sel) => {
-      const input = document.querySelector(sel);
-      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-      setter.call(input, q);
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-    }, query, searchSel);
-    await sleep(2000);
-    // pick result: exact title match first, then substring; click via element handle
-    const handles = await page.$$('#pane-side [role="listitem"], #pane-side [data-testid="cell-frame-container"]');
-    const titles = await Promise.all(handles.map((h) => h.evaluate((i) =>
-      i.getAttribute("title") || i.querySelector("span[title]")?.getAttribute("title") || "")));
-    const n = needle.toLowerCase();
-    const nd = needle.replace(/[^0-9]/g, "");
-    let idx = titles.findIndex((t) => t.trim().toLowerCase() === n);
-    if (idx < 0) idx = titles.findIndex((t) => t.toLowerCase().includes(n));
-    if (idx < 0 && phoneLike) idx = titles.findIndex((t) => t.replace(/[^0-9]/g, "").includes(nd));
-    if (idx >= 0) {
-      await handles[idx].click();
-      try {
-        await page.waitForSelector("#main", { timeout: 8000 });
-        await sleep(1500);
-        return;
-      } catch (_) { /* fall through to next needle */ }
+    ], 3000);
+
+    if (searchSel) {
+      await page.click(searchSel);
+      await sleep(200);
+
+      // Clear search box first
+      await page.evaluate((sel) => {
+        const input = document.querySelector(sel);
+        if (input) {
+          const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+          setter.call(input, "");
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      }, searchSel);
+
+      await sleep(200);
+
+      const phoneLike = /^[+0-9()\-\s]+$/.test(needle) && needle.replace(/[^0-9]/g, "").length >= 7;
+      const query = phoneLike ? needle.replace(/\s/g, "") : needle;
+
+      await page.evaluate((q, sel) => {
+        const input = document.querySelector(sel);
+        if (input) {
+          const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+          setter.call(input, q);
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      }, query, searchSel);
+
+      await sleep(2000);
+
+      const searchHandles = await page.$$('#pane-side [role="listitem"], #pane-side [data-testid="cell-frame-container"]');
+      for (const h of searchHandles) {
+        const title = await h.evaluate((i) => {
+          const span = i.querySelector("span[title]");
+          return span ? (span.getAttribute("title") || span.textContent.trim()) : (i.getAttribute("title") || i.innerText || "");
+        });
+        const tLower = title.trim().toLowerCase();
+        const nLower = needle.toLowerCase();
+        if (tLower === nLower || tLower.includes(nLower)) {
+          await h.click();
+          try {
+            await page.waitForSelector("#main", { timeout: 8000 });
+            await sleep(1500);
+            return;
+          } catch (_) {}
+        }
+      }
     }
   }
+
+  // Clear search on exit
+  await page.keyboard.press("Escape").catch(() => {});
   await page.screenshot({ path: path.join(__dirname, "dbg_chat_open_fail.png") }).catch(() => {});
   throw new Error(`Chat not found: ${name}`);
 }
@@ -276,8 +319,78 @@ async function clickSendButton() {
   await page.click(sel);
 }
 
-async function scrapeChats(limit) {
-  return page.evaluate((max) => {
+function classifyTimestamp(timeStr) {
+  if (!timeStr) return { bucket: "today", is_within_3_days: true };
+  const s = timeStr.trim().toLowerCase();
+
+  // Time format e.g. "10:30 AM", "9:50", "14:20" -> Today
+  if (/^\d{1,2}:\d{2}(\s*[ap]m)?$/i.test(s)) {
+    return { bucket: "today", is_within_3_days: true };
+  }
+
+  // "Yesterday" -> Yesterday
+  if (s === "yesterday") {
+    return { bucket: "yesterday", is_within_3_days: true };
+  }
+
+  // Day names check (relative to current day of week)
+  const daysOfWeek = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+  const now = new Date();
+  const dayBeforeYesterday = daysOfWeek[(now.getDay() + 5) % 7];
+  const yesterdayDay = daysOfWeek[(now.getDay() + 6) % 7];
+  const todayDay = daysOfWeek[now.getDay()];
+
+  if (s === dayBeforeYesterday) {
+    return { bucket: "day_before_yesterday", is_within_3_days: true };
+  }
+  if (s === yesterdayDay || s === todayDay) {
+    return { bucket: "yesterday", is_within_3_days: true };
+  }
+
+  // Check if date format DD/MM/YYYY or MM/DD/YYYY
+  const dateMatch = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+  if (dateMatch) {
+    const d = parseInt(dateMatch[1], 10);
+    const m = parseInt(dateMatch[2], 10) - 1;
+    const y = parseInt(dateMatch[3].length === 2 ? "20" + dateMatch[3] : dateMatch[3], 10);
+    const msgDate = new Date(y, m, d);
+    const diffDays = Math.floor((now - msgDate) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 0) return { bucket: "today", is_within_3_days: true };
+    if (diffDays <= 1) return { bucket: "yesterday", is_within_3_days: true };
+    if (diffDays <= 2) return { bucket: "day_before_yesterday", is_within_3_days: true };
+    return { bucket: "older", is_within_3_days: false };
+  }
+
+  return { bucket: "older", is_within_3_days: false };
+}
+
+async function toggleUnreadFilter(enable) {
+  if (!page) return false;
+  return page.evaluate((shouldEnable) => {
+    const candidates = [
+      ...document.querySelectorAll('button, div[role="button"], span[role="button"], [data-testid*="filter"], [aria-label*="unread" i], [title*="unread" i]')
+    ];
+    const unreadBtn = candidates.find((el) => {
+      const label = (el.getAttribute("aria-label") || el.getAttribute("title") || el.innerText || "").trim().toLowerCase();
+      return label === "unread" || label.includes("filter unread") || label.includes("unread chats");
+    });
+    if (!unreadBtn) return false;
+
+    const isPressed = unreadBtn.getAttribute("aria-pressed") === "true" ||
+                      unreadBtn.getAttribute("aria-selected") === "true" ||
+                      unreadBtn.classList.contains("selected") ||
+                      unreadBtn.classList.contains("active");
+
+    if ((shouldEnable && !isPressed) || (!shouldEnable && isPressed)) {
+      unreadBtn.click();
+      return true;
+    }
+    return false;
+  }, enable);
+}
+
+async function scrapeChats(limit = 50, days = 3) {
+  const rawChats = await page.evaluate((max) => {
     const items = [...document.querySelectorAll(
       '#pane-side [role="listitem"], #pane-side [data-testid="cell-frame-container"]'
     )].slice(0, max);
@@ -328,14 +441,66 @@ async function scrapeChats(limit) {
       };
     }).filter(Boolean);
   }, limit);
+
+  return rawChats.map((c) => {
+    const classification = classifyTimestamp(c.timestamp);
+    return {
+      ...c,
+      activity_bucket: classification.bucket,
+      is_within_3_days: classification.is_within_3_days,
+    };
+  }).filter((c) => {
+    if (days === 3) return c.is_within_3_days;
+    return true;
+  });
 }
 
-async function scrapeMessages(limit) {
-  return page.evaluate((max) => {
+async function scrapeMessagesWithDates(limit = 30, maxDays = 3) {
+  return page.evaluate((max, daysLimit) => {
     const main = document.querySelector("#main");
-    const panelRight = main ? main.getBoundingClientRect().right : 0;
-    const bubbles = [...document.querySelectorAll('#main [data-testid="msg-container"]')];
-    return bubbles.slice(-max).map((b) => {
+    if (!main) return [];
+    const panelRight = main.getBoundingClientRect().right;
+
+    const daysOfWeek = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    const now = new Date();
+    const dayBeforeYesterdayDayName = daysOfWeek[(now.getDay() + 5) % 7];
+    const yesterdayDayName = daysOfWeek[(now.getDay() + 6) % 7];
+    const todayDayName = daysOfWeek[now.getDay()];
+
+    let currentDateCategory = "Today";
+
+    // Scan all message containers and date dividers in chronological order
+    const nodes = [...main.querySelectorAll('[data-testid="msg-container"], div[role="row"], div[class*="focusable-list-item"]')];
+    const results = [];
+    const seenKeys = new Set();
+
+    for (const node of nodes) {
+      const textContent = node.innerText ? node.innerText.trim() : "";
+      const isMsg = node.matches('[data-testid="msg-container"]') || !!node.querySelector('[data-testid="msg-container"]');
+
+      // Date divider detection
+      if (!isMsg && textContent.length > 0 && textContent.length < 35) {
+        if (/^TODAY$/i.test(textContent)) {
+          currentDateCategory = "Today";
+          continue;
+        } else if (/^YESTERDAY$/i.test(textContent)) {
+          currentDateCategory = "Yesterday";
+          continue;
+        } else if (textContent.toLowerCase() === dayBeforeYesterdayDayName) {
+          currentDateCategory = "Day Before Yesterday";
+          continue;
+        } else if (daysOfWeek.includes(textContent.toLowerCase())) {
+          currentDateCategory = textContent;
+          continue;
+        } else if (/^\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}$/.test(textContent) || /^[A-Z]+ \d{1,2}, \d{4}$/i.test(textContent)) {
+          currentDateCategory = textContent;
+          continue;
+        }
+      }
+
+      const b = node.matches('[data-testid="msg-container"]') ? node : node.querySelector('[data-testid="msg-container"]');
+      if (!b) continue;
+
       const textEl = b.querySelector(".selectable-text.copyable-text, .selectable-text, [data-testid*='msg-text']");
       const copyable = b.querySelector(".copyable-text");
       const preText = copyable ? copyable.getAttribute("data-pre-plain-text") : null;
@@ -364,25 +529,40 @@ async function scrapeMessages(limit) {
         }
       }
 
-      // outgoing bubbles hug the right edge of the panel (~57px gap);
-      // tick icons no longer have stable data-testids in current WA Web
       const fromMe = panelRight - b.getBoundingClientRect().right < 120;
-      return {
+      const bodyText = textEl ? textEl.innerText.trim() : "";
+
+      // Deduplicate identical bubbles
+      const itemKey = `${fromMe ? 'me' : (author || 'anon')}_${timeStr || ''}_${bodyText || 'media'}`;
+      if (seenKeys.has(itemKey)) continue;
+      seenKeys.add(itemKey);
+
+      // Classify whether message is within Today, Yesterday, or Day Before Yesterday
+      const allowedCategories = ["Today", "Yesterday", "Day Before Yesterday", todayDayName, yesterdayDayName, dayBeforeYesterdayDayName];
+      const isWithinDays = allowedCategories.some((c) => c.toLowerCase() === currentDateCategory.toLowerCase());
+
+      results.push({
         id: null,
-        body: textEl ? textEl.innerText.trim() : "",
+        body: bodyText,
         from: fromMe ? "You" : author,
         to: null,
         fromMe,
-        timestamp: timeStr,
+        date: currentDateCategory,
+        time: timeStr || "Recent",
+        timestamp: `${currentDateCategory} ${timeStr || ''}`.trim(),
         type: textEl ? "chat" : "media",
         hasMedia: !textEl,
         caption: null,
         mimetype: null,
         filename: null,
         author: author || (fromMe ? "You" : null),
-      };
-    });
-  }, limit);
+        is_within_days: isWithinDays,
+      });
+    }
+
+    const filtered = (daysLimit === 3 ? results.filter((r) => r.is_within_days) : results);
+    return (filtered.length > 0 ? filtered : results).slice(-max);
+  }, limit, maxDays);
 }
 
 // ---------------------------------------------------------------------------
@@ -413,14 +593,31 @@ app.get("/qr", aw(async (req, res) => {
 app.get("/chats", aw(async (req, res) => {
   await ensureReady();
   const limit = Math.min(parseInt(req.query.limit || "50", 10), 200);
-  const chats = await enqueue(() => scrapeChats(limit));
+  const days = req.query.days ? parseInt(req.query.days, 10) : 3;
+  const unreadOnly = req.query.unread_only === "true" || req.query.unread_only === "1";
+
+  const chats = await enqueue(async () => {
+    if (unreadOnly) {
+      const toggled = await toggleUnreadFilter(true);
+      if (toggled) await sleep(1200);
+      let list = await scrapeChats(limit, null);
+      if (toggled) {
+        await toggleUnreadFilter(false);
+        await sleep(600);
+      }
+      return list.filter((c) => c.unread > 0 || toggled);
+    }
+    return scrapeChats(limit, days);
+  });
   res.json({ chats });
 }));
 
 app.get("/messages", aw(async (req, res) => {
   await ensureReady();
   const chat = req.query.chat || "";
-  const limit = Math.min(parseInt(req.query.limit || "20", 10), 100);
+  const limit = Math.min(parseInt(req.query.limit || "30", 10), 100);
+  const days = req.query.days ? parseInt(req.query.days, 10) : 3;
+
   const messages = await enqueue(async () => {
     const digits = phoneDigits(chat);
     if (digits) {
@@ -432,9 +629,51 @@ app.get("/messages", aw(async (req, res) => {
     } else {
       await openChatByName(chat);
     }
-    return scrapeMessages(limit);
+    return scrapeMessagesWithDates(limit, days);
   });
   res.json({ chat: { id: chat, name: chat }, messages });
+}));
+
+app.get("/conversations/recent", aw(async (req, res) => {
+  await ensureReady();
+  const chatLimit = Math.min(parseInt(req.query.chat_limit || "8", 10), 20);
+  const msgLimit = Math.min(parseInt(req.query.messages_per_chat || "10", 10), 30);
+  const days = req.query.days ? parseInt(req.query.days, 10) : 3;
+
+  const conversations = await enqueue(async () => {
+    const activeChats = await scrapeChats(chatLimit, days);
+    const results = [];
+
+    for (const c of activeChats) {
+      const chatName = c.name;
+      try {
+        const digits = phoneDigits(chatName);
+        if (digits) {
+          await page.goto(`https://web.whatsapp.com/send?phone=${digits}`,
+            { waitUntil: "domcontentloaded", timeout: 90000 });
+          await page.waitForSelector("#main", { timeout: 15000 }).catch(() => {});
+          await sleep(2000);
+        } else {
+          await openChatByName(chatName);
+        }
+
+        const msgs = await scrapeMessagesWithDates(msgLimit, days);
+        results.push({
+          ...c,
+          messages: msgs,
+        });
+      } catch (err) {
+        results.push({
+          ...c,
+          messages: [],
+          error: err.message,
+        });
+      }
+    }
+    return results;
+  });
+
+  res.json({ count: conversations.length, conversations });
 }));
 
 app.post("/send", aw(async (req, res) => {

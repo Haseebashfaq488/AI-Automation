@@ -1,4 +1,4 @@
-﻿"""Async HTTP client for the local WhatsApp sidecar (whatsapp_service)."""
+"""Async HTTP client for the local WhatsApp sidecar (whatsapp_service)."""
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -58,12 +58,45 @@ class WhatsAppClient:
         return await self._get("/qr")
 
     # -- reads --------------------------------------------------------------
-    async def list_chats(self, limit: int = 50) -> List[Dict[str, Any]]:
-        data = await self._get("/chats", limit=limit)
-        return data["chats"]
+    async def list_chats(
+        self,
+        limit: int = 50,
+        days: Optional[int] = 3,
+        unread_only: bool = False,
+    ) -> List[Dict[str, Any]]:
+        params = {"limit": limit}
+        if days is not None:
+            params["days"] = days
+        if unread_only:
+            params["unread_only"] = "true"
+        data = await self._get("/chats", **params)
+        return data.get("chats", [])
 
-    async def get_messages(self, chat: str, limit: int = 20) -> Dict[str, Any]:
-        return await self._get("/messages", chat=chat, limit=limit)
+    async def get_messages(
+        self,
+        chat: str,
+        limit: int = 30,
+        days: Optional[int] = 3,
+    ) -> Dict[str, Any]:
+        params = {"chat": chat, "limit": limit}
+        if days is not None:
+            params["days"] = days
+        return await self._get("/messages", **params)
+
+    async def get_recent_conversations(
+        self,
+        chat_limit: int = 8,
+        messages_per_chat: int = 10,
+        days: Optional[int] = 3,
+    ) -> List[Dict[str, Any]]:
+        params = {
+            "chat_limit": chat_limit,
+            "messages_per_chat": messages_per_chat,
+        }
+        if days is not None:
+            params["days"] = days
+        data = await self._get("/conversations/recent", **params)
+        return data.get("conversations", [])
 
     async def contacts(self, query: Optional[str] = None) -> List[Dict[str, Any]]:
         data = await self._get("/contacts", query=query)

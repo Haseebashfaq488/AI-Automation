@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import time
-from typing import Dict, Optional, Set
+from typing import Dict, Optional, Set, List, Any
 
 from app.core.events.bus import get_event_bus
 from app.core.events.schema import EventType, JarvisEvent
@@ -38,17 +38,18 @@ class WhatsAppInboundListener:
                 pass
         logger.info("WhatsAppInboundListener stopped.")
 
-    async def sync_recent_chats(self, limit: int = 25) -> int:
-        """Fetch and persist recent WhatsApp chats into SQLite service_events immediately."""
+    async def sync_recent_chats(self, limit: int = 15, days: int = 3) -> int:
+        """Fetch and persist recent WhatsApp chats and messages into SQLite service_events immediately."""
         client = get_client()
         try:
             status_res = await client.status()
             if status_res.get("state") != "ready":
                 return 0
 
-            chats = await client.list_chats(limit=limit)
+            # Fetch active conversations within the 3-day window
+            conversations = await client.get_recent_conversations(chat_limit=limit, messages_per_chat=10, days=days)
             persisted_count = 0
-            for chat in chats:
+            for chat in conversations:
                 chat_id = chat.get("id") or chat.get("name")
                 if not chat_id:
                     continue
@@ -58,6 +59,8 @@ class WhatsAppInboundListener:
                 unread_count = chat.get("unread") or 0
                 is_group = chat.get("isGroup", False)
                 timestamp = chat.get("timestamp") or time.strftime("%I:%M %p")
+                activity_bucket = chat.get("activity_bucket") or "today"
+                messages = chat.get("messages", [])
 
                 self._persist_to_db(
                     chat_id=chat_id,
@@ -66,6 +69,8 @@ class WhatsAppInboundListener:
                     unread_count=unread_count,
                     is_group=is_group,
                     timestamp_str=timestamp,
+                    activity_bucket=activity_bucket,
+                    messages=messages,
                 )
                 self._seen_previews[chat_id] = preview
                 persisted_count += 1
@@ -154,11 +159,26 @@ class WhatsAppInboundListener:
         unread_count: int,
         is_group: bool = False,
         timestamp_str: Optional[str] = None,
+        activity_bucket: str = "today",
+        messages: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
         """Persist incoming chat preview to SQLite service_events table."""
         try:
+            import json
             from app.modules.database.db import SessionLocal
             from app.modules.database.repository import Repository
+
+            full_payload = {
+                "chat_name": chat_name,
+                "chat_id": chat_id,
+                "is_group": is_group,
+                "unread_count": unread_count,
+                "timestamp": timestamp_str or "Recent",
+                "activity_bucket": activity_bucket,
+                "preview": preview,
+                "messages": messages or [],
+            }
+
             with SessionLocal() as db:
                 repo = Repository(db)
                 repo.upsert_service_event(
@@ -167,7 +187,7 @@ class WhatsAppInboundListener:
                     sender=chat_name,
                     subject_or_title=f"Chat: {chat_name}" + (" (Group)" if is_group else ""),
                     snippet=preview,
-                    full_content=f"Chat: {chat_name}\nLatest preview: {preview}\nUnread count: {unread_count}\nTimestamp: {timestamp_str or 'Recent'}",
+                    full_content=json.dumps(full_payload, ensure_ascii=False),
                     is_unread=unread_count > 0,
                 )
         except Exception as exc:
