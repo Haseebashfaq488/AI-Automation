@@ -61,10 +61,31 @@ async function launch() {
   });
   page = await browser.newPage();
   page.setDefaultTimeout(60000);
+  console.log("[dom] navigating to https://web.whatsapp.com...");
   await page.goto("https://web.whatsapp.com", { waitUntil: "domcontentloaded", timeout: 90000 });
-  await sleep(8000);
-  await refreshState();
-  console.log(`[dom] state after boot: ${state}`);
+
+  // Keep checking in a loop until state is 'ready' or 'qr'
+  console.log("[dom] waiting for WhatsApp Web session to reach 'ready' state...");
+  let attempt = 1;
+  while (true) {
+    await sleep(5000);
+    await refreshState();
+    console.log(`[dom] boot check attempt #${attempt}: state = ${state}`);
+    if (state === "ready") {
+      console.log(`[dom] WhatsApp Web connected successfully! State after boot: ready`);
+      break;
+    }
+    if (state === "qr") {
+      console.log(`[dom] WhatsApp Web requires QR code scan. Screenshot saved to ${QR_SHOT}`);
+      break;
+    }
+    // Every 30 seconds if still disconnected, reload the page to refresh connection
+    if (attempt % 6 === 0) {
+      console.log("[dom] still disconnected after 30s, reloading WhatsApp Web page...");
+      await page.reload({ waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
+    }
+    attempt++;
+  }
 }
 
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
@@ -479,3 +500,18 @@ app.listen(PORT, () => {
 
 // boot the browser in the background
 launch().catch((err) => console.error("[dom] launch failed:", err.message));
+
+// background health check to auto-recover if state ever drops
+setInterval(async () => {
+  if (page && state !== "ready" && state !== "qr" && state !== "starting") {
+    try {
+      await enqueue(async () => {
+        await refreshState();
+        if (state === "ready") {
+          console.log("[dom] background auto-recovery: state is now READY!");
+        }
+      });
+    } catch (_) {}
+  }
+}, 15000);
+

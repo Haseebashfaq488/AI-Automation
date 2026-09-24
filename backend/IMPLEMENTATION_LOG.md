@@ -2,9 +2,18 @@
 
 ---
 
-## ✅ Completed Modules
+### Module 12 – 7-Day Ambient Multi-Service Memory & 24-Hour Hot Activity Feed
+- **3-Layer Memory Architecture**:
+  - **Layer 1 (24-Hour Hot Activity Stream)**: SQLite `service_events` table tracking WhatsApp, Gmail, and Google Drive interactions with deduplication, sender/snippet extraction, and unread flags.
+  - **Layer 2 (7-Day Rolling Semantic Memory)**: SQLite `service_daily_digests` table maintaining summarized daily snapshots (topics, contacts, action items, files) with automatic rolling 7-day retention cleanup.
+  - **Layer 3 (Context Retriever & Brain Prompt Injector)**: Dynamically constructs rich ambient snapshots into `JarvisBrainManager` and `OpenCodeAdapter` system prompts, enabling Jarvis to answer ambient questions about WhatsApp, Gmail, and Drive in sub-second latency.
+- **Inbound Sync Listeners**:
+  - Continuous non-blocking pollers for WhatsApp (`WhatsAppInboundListener`), Gmail (`GmailInboundListener`), and Google Drive (`DriveInboundListener`).
+  - Background maintenance cron (`_periodic_memory_maintenance`) aggregating daily digests and pruning expired records.
+- **API & Frontend Overhaul**:
+  - REST endpoints: `GET /events/feed` (24h stream with filters), `GET /events/unread-counts` (unread badges), `GET /events/7day-digests` (7-day memory review).
+  - Next.js 16 `ActivityFeed.js` overhauled with multi-channel filtering (`All`, `WhatsApp 💬`, `Gmail ✉️`, `Drive 📁`, `Unread 🔴`), 24h timeline view, and 7-day memory toggle.
 
-### Module 1 – Backend Foundation & Core Config
 - Project scaffold (`backend/`), dependencies (`requirements.txt`), build config (`pyproject.toml`).
 - Environment files (`.env.example`, `.env`).
 - Core config (`app/core/config.py`), structured logging (`app/core/logging.py`).

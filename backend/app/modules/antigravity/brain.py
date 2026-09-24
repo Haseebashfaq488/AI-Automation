@@ -215,10 +215,23 @@ class JarvisBrainManager:
 
         if p in ("show memory", "read memory", "view memory", "what is in your memory"):
             mem = self.read_memory()
+            from app.modules.memory.service_memory import get_service_memory_manager
+            ambient_mem = get_service_memory_manager().build_brain_context_prompt()
             return {
                 "type": "response",
-                "message": f"### 🧠 Jarvis Living Memory (`JARVIS_MEMORY.md`)\n\n{mem}",
+                "message": f"### 🧠 Jarvis Living Memory (`JARVIS_MEMORY.md`)\n\n{mem}\n\n{ambient_mem}",
             }
+
+        # Check for ambient service queries (WhatsApp, Gmail, Drive status / recent activity)
+        if any(keyword in p for keyword in [
+            "what is happening in my whatsapp", "what's happening in my whatsapp", "whatsapp status", "recent whatsapp",
+            "what is happening in my gmail", "what's happening in my gmail", "recent gmail", "recent emails", "unread emails",
+            "what is happening in my drive", "what's happening in my drive", "recent drive",
+            "what is happening", "what's happening", "any updates", "summarize my messages", "unread messages"
+        ]):
+            from app.modules.memory.service_memory import get_service_memory_manager
+            ambient_mem = get_service_memory_manager().build_brain_context_prompt()
+            # Let the LLM synthesize this with ambient memory injected into prompt
 
         # 3. Explicit Remember Directives
         for prefix in ("remember that ", "remember: ", "save note: ", "note that ", "keep in mind that "):
@@ -239,7 +252,7 @@ class JarvisBrainManager:
         history: Optional[List[Dict[str, str]]] = None,
         memories: Optional[List[str]] = None,
     ) -> str:
-        """Build structured planning prompt with complete tool knowledge."""
+        """Build structured planning prompt with complete tool knowledge and ambient service memory."""
         history_block = ""
         if history:
             history_lines = [f"{msg.get('role', 'user')}: {msg.get('content', '')}" for msg in history[-10:]]
@@ -254,6 +267,13 @@ class JarvisBrainManager:
             ltm_facts = "\n".join(f"- {m}" for m in memories)
             ltm_block = f"## Long-Term Learned Facts:\n{ltm_facts}\n\n"
 
+        # Ambient 7-day multi-service memory (WhatsApp, Gmail, Google Drive)
+        try:
+            from app.modules.memory.service_memory import get_service_memory_manager
+            service_memory_block = get_service_memory_manager().build_brain_context_prompt() + "\n\n"
+        except Exception:
+            service_memory_block = ""
+
         tools = self._tools_block()
 
         return (
@@ -264,11 +284,12 @@ class JarvisBrainManager:
             "3. GOOGLE DRIVE TOOLS: When the user asks to list files from Google Drive, search Drive, download/read Drive files, or upload files to Drive, use `list_drive_files`, `search_drive`, `read_drive_file`, or `upload_drive_file` directly with the extracted parameters.\n"
             "4. MULTI-STEP & CHAINED WORKFLOWS: When the user asks for a compound task such as 'Create a file and send it to me on WhatsApp' or 'Generate a summary and email it', produce a multi-step plan where Step 1 is `fork` (generating the artifact) and Step 2 is the communication tool (`send_file`, `send_message`, or `send_email`). For file paths produced by the worker, use '{worker.artifact}'. The system automatically chains Step 2 to execute reactively when the worker completes.\n"
             "5. ATOMIC COMMUNICATION TOOLS: When the user requests an explicit single-step communication operation (WhatsApp send message/file or read chats, Gmail send email with attachments or search inbox), return a plan with that exact tool and the extracted parameters.\n"
-            "6. DIRECT CONVERSATION: If the user is asking a conversational question, inquiring about system capabilities, checking task/memory status, or discussing general topics, return a direct `response` object.\n"
+            "6. DIRECT CONVERSATION & AMBIENT MEMORY: If the user is asking about what happened in their WhatsApp, Gmail, Google Drive, recent messages, unread emails, or general status, answer directly using the provided AMBIENT MULTI-SERVICE MEMORY.\n"
             "7. NO PERMISSION ASKING: Never ask 'Would you like me to do that?'. Always return the structured JSON `plan` so the UI presents confirmation buttons directly.\n"
             "8. JSON OUTPUT ONLY: Output must strictly be a single valid JSON object without extra markdown explanations.\n\n"
             f"{memory_block}"
             f"{ltm_block}"
+            f"{service_memory_block}"
             f"{history_block}"
             f"### AVAILABLE TOOLS & SCHEMAS:\n"
             f"{tools}\n\n"
@@ -279,6 +300,7 @@ class JarvisBrainManager:
             '{"type": "response", "message": "<direct conversational reply>"}\n\n'
             f"User Prompt: {prompt}"
         )
+
 
     def _safe_parse_json(self, raw: str) -> Optional[Dict[str, Any]]:
         """Safely extract JSON object from raw response text."""

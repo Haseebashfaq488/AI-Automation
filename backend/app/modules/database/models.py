@@ -59,3 +59,40 @@ class ChatMessage(Base):
 
     def __repr__(self) -> str:
         return f"<ChatMessage id={self.id} session={self.session_id} role={self.role}>"
+
+
+class ServiceEvent(Base):
+    """24-Hour Hot Activity Feed event for WhatsApp, Gmail, and Google Drive."""
+    __tablename__ = "service_events"
+
+    id = Column(String, primary_key=True, index=True)  # e.g., "wa_msg_123" or "gmail_456"
+    service = Column(String(32), nullable=False, index=True)  # "whatsapp" | "gmail" | "drive"
+    sender = Column(String(255), nullable=True)
+    subject_or_title = Column(Text, nullable=True)
+    snippet = Column(Text, nullable=True)
+    full_content = Column(Text, nullable=True)
+    is_unread = Column(Integer, default=0, index=True)  # 1 for unread, 0 for read
+    event_timestamp = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+
+    def __repr__(self) -> str:
+        return f"<ServiceEvent id={self.id} service={self.service} sender={self.sender}>"
+
+
+class ServiceDailyDigest(Base):
+    """7-Day Rolling Semantic Memory digests per service."""
+    __tablename__ = "service_daily_digests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    day_date = Column(String(16), nullable=False, index=True)  # "YYYY-MM-DD"
+    service = Column(String(32), nullable=False, index=True)   # "whatsapp" | "gmail" | "drive" | "all"
+    summary_text = Column(Text, nullable=False)
+    key_contacts = Column(Text, nullable=True)                 # JSON string list
+    action_items = Column(Text, nullable=True)                 # JSON string list
+    key_topics = Column(Text, nullable=True)                   # JSON string list
+    files_mentioned = Column(Text, nullable=True)              # JSON string list
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+
+    def __repr__(self) -> str:
+        return f"<ServiceDailyDigest day={self.day_date} service={self.service}>"
+

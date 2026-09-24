@@ -220,6 +220,13 @@ class OpenCodeAdapter:
                     "\n\nLONG-TERM MEMORY (known facts about the user — use these "
                     f"paths/preferences when relevant):\n{facts}"
                 )
+            try:
+                from app.modules.memory.service_memory import get_service_memory_manager
+                service_mem = get_service_memory_manager().build_brain_context_prompt()
+                system_prompt += f"\n\n{service_mem}"
+            except Exception:
+                pass
+
             messages = [{"role": "system", "content": system_prompt}]
             messages.extend(history or [])
             messages.append({"role": "user", "content": prompt})

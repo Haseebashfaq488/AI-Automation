@@ -76,6 +76,10 @@ class WhatsAppInboundListener:
                         if unread_count > 1:
                             summary += f" ({unread_count} unread)"
 
+                        # 1. Persist into SQLite Hot Activity Feed
+                        self._persist_to_db(chat_id, chat_name, preview, unread_count, is_group=chat.get("isGroup", False))
+
+                        # 2. Publish to Global Event Bus (SSE)
                         event = JarvisEvent(
                             event_type=EventType.WHATSAPP_INBOUND_DIGEST,
                             source="whatsapp:listener",
@@ -101,6 +105,26 @@ class WhatsAppInboundListener:
                 logger.debug("WhatsApp listener poll error (will retry): %s", exc)
 
             await asyncio.sleep(self.poll_interval)
+
+    def _persist_to_db(self, chat_id: str, chat_name: str, preview: str, unread_count: int, is_group: bool = False) -> None:
+        """Persist incoming chat preview to SQLite service_events table."""
+        try:
+            from app.modules.database.db import SessionLocal
+            from app.modules.database.repository import Repository
+            with SessionLocal() as db:
+                repo = Repository(db)
+                repo.upsert_service_event(
+                    event_id=f"wa_{chat_id}",
+                    service="whatsapp",
+                    sender=chat_name,
+                    subject_or_title=f"Chat: {chat_name}" + (" (Group)" if is_group else ""),
+                    snippet=preview,
+                    full_content=f"Chat: {chat_name}\nLatest preview: {preview}\nUnread count: {unread_count}",
+                    is_unread=unread_count > 0,
+                )
+        except Exception as exc:
+            logger.debug("Failed to persist WhatsApp event to database: %s", exc)
+
 
 
 # Global singleton instance

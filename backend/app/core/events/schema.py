@@ -9,6 +9,7 @@ class EventType(str, Enum):
     # Inbound message digests
     WHATSAPP_INBOUND_DIGEST = "WHATSAPP_INBOUND_DIGEST"
     GMAIL_INBOUND_DIGEST = "GMAIL_INBOUND_DIGEST"
+    DRIVE_INBOUND_DIGEST = "DRIVE_INBOUND_DIGEST"
 
     # Worker lifecycle events
     WORKER_STARTED = "WORKER_STARTED"

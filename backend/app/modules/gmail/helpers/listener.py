@@ -85,6 +85,7 @@ class GmailInboundListener:
 
                     if not self._initial_scan_done:
                         self._seen_ids.add(msg_id)
+                        self._persist_to_db(email_item, is_unread=False)
                         continue
 
                     if msg_id not in self._seen_ids:
@@ -98,6 +99,10 @@ class GmailInboundListener:
                         if snippet:
                             summary += f" — {snippet[:80]}..."
 
+                        # 1. Persist to SQLite Hot Activity Feed
+                        self._persist_to_db(email_item, is_unread=True)
+
+                        # 2. Publish to Global Event Bus (SSE)
                         event = JarvisEvent(
                             event_type=EventType.GMAIL_INBOUND_DIGEST,
                             source="gmail:listener",
@@ -123,6 +128,31 @@ class GmailInboundListener:
                 logger.debug("Gmail listener poll error (will retry): %s", exc)
 
             await asyncio.sleep(self.poll_interval)
+
+    def _persist_to_db(self, email_item: Dict[str, Any], is_unread: bool = False) -> None:
+        """Persist email to SQLite service_events table."""
+        try:
+            from app.modules.database.db import SessionLocal
+            from app.modules.database.repository import Repository
+            with SessionLocal() as db:
+                repo = Repository(db)
+                msg_id = email_item.get("id", "")
+                sender = email_item.get("from", "Unknown")
+                subject = email_item.get("subject", "(No Subject)")
+                snippet = email_item.get("snippet", "")
+
+                repo.upsert_service_event(
+                    event_id=f"gmail_{msg_id}",
+                    service="gmail",
+                    sender=sender,
+                    subject_or_title=subject,
+                    snippet=snippet,
+                    full_content=f"From: {sender}\nSubject: {subject}\nDate: {email_item.get('date', '')}\nSnippet: {snippet}",
+                    is_unread=is_unread,
+                )
+        except Exception as exc:
+            logger.debug("Failed to persist Gmail event to database: %s", exc)
+
 
     def _fetch_recent_emails(self, creds) -> List[Dict[str, Any]]:
         """Synchronous fetch executed in worker thread."""

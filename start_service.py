@@ -6,13 +6,21 @@ import atexit
 import requests
 from pathlib import Path
 import subprocess as sp
+from dotenv import load_dotenv
 from pyngrok import ngrok
 
 # ================= CONFIGURATION =================
 BASE_DIR = Path(__file__).resolve().parent
 BACKEND_DIR = BASE_DIR / "backend"
 WHATSAPP_DIR = BACKEND_DIR / "whatsapp_service"
+CHROME_PROFILE = WHATSAPP_DIR / "chrome_profile_copy"
 LOG_FILE = BASE_DIR / "tunnel_service.log"
+BACKEND_LOG = BASE_DIR / "backend_service.log"
+WHATSAPP_LOG = BASE_DIR / "whatsapp_service.log"
+
+# Load environment variables from backend/.env and .env
+load_dotenv(BACKEND_DIR / ".env")
+load_dotenv(BASE_DIR / ".env")
 
 BACKEND_PORT = 8000
 WHATSAPP_PORT = 4097
@@ -25,12 +33,12 @@ ENV_VAR_KEYS = [
     "NEXT_PUBLIC_API_URL",
 ]
 
-# Optional: set via environment variables if desired
 NGROK_AUTHTOKEN = os.getenv("NGROK_AUTHTOKEN", "")
 NGROK_DOMAIN = os.getenv("NGROK_DOMAIN", "")
 
 # Process tracking for cleanup
 _processes = []
+_open_files = []
 # =================================================
 
 
@@ -45,20 +53,56 @@ def log(msg: str):
         pass
 
 
+def wait_for_network(max_wait_seconds: int = 60) -> bool:
+    """Ensure active network & internet connectivity before starting dependent services."""
+    log("Verifying internet connectivity...")
+    start_time = time.time()
+    while time.time() - start_time < max_wait_seconds:
+        try:
+            res = requests.get("https://1.1.1.1", timeout=3)
+            if res.status_code in [200, 301, 302, 403, 404]:
+                log("Internet connectivity confirmed.")
+                return True
+        except Exception:
+            time.sleep(2)
+    log("Internet check timed out; proceeding anyway.")
+    return False
+
+
+def clean_stale_chrome_locks():
+    """Remove stale Chrome singleton locks from profile copy if Chrome crashed previously."""
+    if not CHROME_PROFILE.exists():
+        return
+    lock_names = ["SingletonLock", "SingletonSocket", "SingletonCookie"]
+    for lock in lock_names:
+        lock_path = CHROME_PROFILE / lock
+        if lock_path.exists():
+            try:
+                if lock_path.is_file() or lock_path.is_symlink():
+                    lock_path.unlink(missing_ok=True)
+                    log(f"Cleaned up stale Chrome lock: {lock}")
+            except Exception as e:
+                log(f"Notice: Could not remove {lock}: {e}")
+
+
 def update_vercel_env(new_url: str):
-    if not VERCEL_TOKEN or not PROJECT_ID:
+    token = os.getenv("VERCEL_TOKEN", VERCEL_TOKEN)
+    project_id = os.getenv("VERCEL_PROJECT_ID", PROJECT_ID)
+    team_id = os.getenv("VERCEL_TEAM_ID", TEAM_ID)
+
+    if not token or not project_id:
         log("Vercel token or project ID not configured; skipping Vercel env update.")
         return False
 
     headers = {
-        "Authorization": f"Bearer {VERCEL_TOKEN}",
+        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
     }
 
-    query_params = f"?teamId={TEAM_ID}" if TEAM_ID else ""
-    url = f"https://api.vercel.com/v9/projects/{PROJECT_ID}/env{query_params}"
+    query_params = f"?teamId={team_id}" if team_id else ""
+    url = f"https://api.vercel.com/v9/projects/{project_id}/env{query_params}"
 
-    log(f"Fetching existing Vercel environment variables for project {PROJECT_ID}...")
+    log(f"Fetching existing Vercel environment variables for project {project_id}...")
     try:
         response = requests.get(url, headers=headers, timeout=15)
         if response.status_code != 200:
@@ -86,7 +130,7 @@ def update_vercel_env(new_url: str):
             }
 
             if var_id:
-                update_url = f"https://api.vercel.com/v9/projects/{PROJECT_ID}/env/{var_id}{query_params}"
+                update_url = f"https://api.vercel.com/v9/projects/{project_id}/env/{var_id}{query_params}"
                 res = requests.patch(update_url, headers=headers, json=payload, timeout=15)
             else:
                 res = requests.post(url, headers=headers, json=payload, timeout=15)
@@ -104,19 +148,22 @@ def update_vercel_env(new_url: str):
 
 
 def trigger_vercel_redeploy():
-    if not VERCEL_TOKEN or not PROJECT_ID:
+    token = os.getenv("VERCEL_TOKEN", VERCEL_TOKEN)
+    project_id = os.getenv("VERCEL_PROJECT_ID", PROJECT_ID)
+    team_id = os.getenv("VERCEL_TEAM_ID", TEAM_ID)
+
+    if not token or not project_id:
         return False
 
     headers = {
-        "Authorization": f"Bearer {VERCEL_TOKEN}",
+        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
     }
 
-    query_params = f"?teamId={TEAM_ID}" if TEAM_ID else ""
-    log(f"Triggering Vercel redeployment for project {PROJECT_ID}...")
+    query_params = f"?teamId={team_id}" if team_id else ""
+    log(f"Triggering Vercel redeployment for project {project_id}...")
     try:
-        # Fetch the latest deployment ID for the project
-        get_deployments_url = f"https://api.vercel.com/v6/deployments{query_params}&projectId={PROJECT_ID}&limit=1"
+        get_deployments_url = f"https://api.vercel.com/v6/deployments{query_params}&projectId={project_id}&limit=1"
         res_get = requests.get(get_deployments_url, headers=headers, timeout=15)
 
         latest_deployment_id = None
@@ -129,7 +176,7 @@ def trigger_vercel_redeploy():
         if latest_deployment_id:
             post_deploy_url = f"https://api.vercel.com/v13/deployments{query_params}"
             payload = {
-                "name": PROJECT_ID,
+                "name": project_id,
                 "deploymentId": latest_deployment_id,
                 "target": "production",
             }
@@ -140,7 +187,7 @@ def trigger_vercel_redeploy():
                 return True
 
             redeploy_url = f"https://api.vercel.com/v13/deployments/{latest_deployment_id}/redeploy{query_params}"
-            res_re = requests.post(redeploy_url, headers=headers, json={"name": PROJECT_ID, "target": "production"}, timeout=30)
+            res_re = requests.post(redeploy_url, headers=headers, json={"name": project_id, "target": "production"}, timeout=30)
             if res_re.status_code in [200, 201]:
                 dep_data = res_re.json()
                 log(f"Successfully triggered Vercel redeployment via endpoint! ID: {dep_data.get('id')}")
@@ -158,7 +205,7 @@ def trigger_vercel_redeploy():
 
 def is_backend_running() -> bool:
     try:
-        response = requests.get(f"http://127.0.0.1:{BACKEND_PORT}/health", timeout=2)
+        response = requests.get(f"http://127.0.0.1:{BACKEND_PORT}/health", timeout=5)
         return response.status_code == 200
     except Exception:
         return False
@@ -166,17 +213,30 @@ def is_backend_running() -> bool:
 
 def is_whatsapp_running() -> bool:
     try:
-        response = requests.get(f"http://127.0.0.1:{WHATSAPP_PORT}/status", timeout=2)
+        response = requests.get(f"http://127.0.0.1:{WHATSAPP_PORT}/status", timeout=5)
         return response.status_code == 200
     except Exception:
         return False
 
 
 def start_backend():
-    log("Starting FastAPI Backend server (uvicorn app.main:app --reload)...")
+    log("Starting FastAPI Backend server (uvicorn app.main:app)...")
+    try:
+        backend_log_f = open(BACKEND_LOG, "a", encoding="utf-8")
+        _open_files.append(backend_log_f)
+    except Exception:
+        backend_log_f = sp.DEVNULL
+
+    env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
+
     proc = sp.Popen(
-        [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", str(BACKEND_PORT), "--reload"],
+        [sys.executable, "-u", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", str(BACKEND_PORT)],
         cwd=str(BACKEND_DIR),
+        stdout=backend_log_f,
+        stderr=sp.STDOUT,
+        env=env,
     )
     _processes.append(proc)
     return proc
@@ -184,10 +244,20 @@ def start_backend():
 
 def start_whatsapp():
     log("Starting WhatsApp Sidecar (node server.js)...")
-    # Use 'node' or 'node.exe' directly
+    clean_stale_chrome_locks()
+    try:
+        whatsapp_log_f = open(WHATSAPP_LOG, "a", encoding="utf-8")
+        _open_files.append(whatsapp_log_f)
+    except Exception:
+        whatsapp_log_f = sp.DEVNULL
+
+    env = os.environ.copy()
     proc = sp.Popen(
         ["node", "server.js"],
         cwd=str(WHATSAPP_DIR),
+        stdout=whatsapp_log_f,
+        stderr=sp.STDOUT,
+        env=env,
     )
     _processes.append(proc)
     return proc
@@ -196,19 +266,22 @@ def start_whatsapp():
 def establish_tunnel():
     """Start ngrok tunnel pointing to FastAPI backend (port 8000)."""
     log("Starting ngrok Tunnel...")
-    if NGROK_AUTHTOKEN:
-        ngrok.set_auth_token(NGROK_AUTHTOKEN)
+    auth_token = os.getenv("NGROK_AUTHTOKEN", NGROK_AUTHTOKEN)
+    domain = os.getenv("NGROK_DOMAIN", NGROK_DOMAIN)
+
+    if auth_token:
+        ngrok.set_auth_token(auth_token)
 
     try:
         connect_kwargs = {}
-        if NGROK_DOMAIN:
-            connect_kwargs["domain"] = NGROK_DOMAIN
+        if domain:
+            connect_kwargs["domain"] = domain
 
         tunnel = ngrok.connect(BACKEND_PORT, "http", **connect_kwargs)
         tunnel_url = tunnel.public_url
         log(f"Captured ngrok Tunnel URL: {tunnel_url}")
 
-        if VERCEL_TOKEN:
+        if os.getenv("VERCEL_TOKEN", VERCEL_TOKEN):
             updated = update_vercel_env(tunnel_url)
             if updated:
                 trigger_vercel_redeploy()
@@ -225,6 +298,28 @@ def establish_tunnel():
     return None
 
 
+def is_tunnel_alive(tunnel_proc) -> bool:
+    if tunnel_proc is not None and hasattr(tunnel_proc, "poll") and tunnel_proc.poll() is not None:
+        return False
+    try:
+        tunnels = ngrok.get_tunnels()
+        return len(tunnels) > 0
+    except Exception:
+        return False
+
+
+def kill_proc(proc):
+    if proc:
+        try:
+            proc.terminate()
+            proc.wait(timeout=2)
+        except Exception:
+            try:
+                proc.kill()
+            except Exception:
+                pass
+
+
 def cleanup():
     log("Cleaning up active child processes...")
     try:
@@ -233,15 +328,13 @@ def cleanup():
         pass
 
     for p in _processes:
+        kill_proc(p)
+
+    for f in _open_files:
         try:
-            if p and p.poll() is None:
-                p.terminate()
-                p.wait(timeout=2)
+            f.close()
         except Exception:
-            try:
-                p.kill()
-            except Exception:
-                pass
+            pass
 
 
 def main():
@@ -250,12 +343,13 @@ def main():
     log(f"Backend Path   : {BACKEND_DIR}")
     log(f"WhatsApp Path  : {WHATSAPP_DIR}")
 
-    # Register cleanup handlers
     atexit.register(cleanup)
     signal.signal(signal.SIGINT, lambda s, f: sys.exit(0))
     signal.signal(signal.SIGTERM, lambda s, f: sys.exit(0))
 
-    # Clear any stale ngrok processes so they don't block new tunnel creation
+    # Pre-flight: Wait for active internet connection (especially important on boot)
+    wait_for_network(max_wait_seconds=60)
+
     try:
         ngrok.kill()
     except Exception:
@@ -275,46 +369,46 @@ def main():
     else:
         backend_proc = start_backend()
 
-    # Wait briefly for services to initialize
-    time.sleep(2)
+    # 3. Settle wait
+    time.sleep(3)
 
-    # 3. Establish tunnel loop & monitor health
+    tunnel_proc = establish_tunnel()
+
+    log("Active monitoring loop engaged. Checking services and tunnel health continuously...")
+    last_heartbeat_time = time.time()
+
+    # 4. Reliable Non-Intrusive Monitoring Loop
     while True:
-        tunnel_proc = None
-        try:
-            tunnel_proc = establish_tunnel()
-        except Exception as e:
-            log(f"Tunnel setup exception: {str(e)}")
+        now = time.time()
 
-        if tunnel_proc:
-            log("Tunnel active. Monitoring services and tunnel process...")
+        # Check FastAPI Backend: ONLY restart if process actually died
+        if backend_proc is not None and backend_proc.poll() is not None:
+            log("FastAPI backend process exited unexpectedly. Restarting backend...")
+            backend_proc = start_backend()
+
+        # Check WhatsApp Sidecar: ONLY restart if process actually died
+        if whatsapp_proc is not None and whatsapp_proc.poll() is not None:
+            log("WhatsApp sidecar process exited unexpectedly. Restarting WhatsApp service...")
+            whatsapp_proc = start_whatsapp()
+
+        # Check ngrok Tunnel: Re-establish if tunnel dropped
+        if not is_tunnel_alive(tunnel_proc):
+            log("ngrok Tunnel is down. Re-establishing tunnel...")
             try:
-                tunnel_proc.wait()
-            except Exception as e:
-                log(f"Tunnel process wait error: {str(e)}")
-            log("Tunnel process has stopped.")
-        else:
-            log("No tunnel could be established.")
+                ngrok.kill()
+            except Exception:
+                pass
+            tunnel_proc = establish_tunnel()
 
-        # Health monitor and restart if any service died
-        try:
-            if backend_proc is None or backend_proc.poll() is not None:
-                if not is_backend_running():
-                    log("Backend not running. Restarting FastAPI backend...")
-                    backend_proc = start_backend()
-        except Exception as e:
-            log(f"Backend restart error: {str(e)}")
+        # Periodic Heartbeat Log (Every 60 seconds)
+        if now - last_heartbeat_time >= 60:
+            b_status = "UP" if is_backend_running() else "STARTING/INITIALIZING"
+            w_status = "UP" if is_whatsapp_running() else "STARTING/INITIALIZING"
+            t_status = "UP" if is_tunnel_alive(tunnel_proc) else "DOWN"
+            log(f"Heartbeat: Backend [{b_status}], WhatsApp [{w_status}], Tunnel [{t_status}]")
+            last_heartbeat_time = now
 
-        try:
-            if whatsapp_proc is None or whatsapp_proc.poll() is not None:
-                if not is_whatsapp_running():
-                    log("WhatsApp service not running. Restarting WhatsApp service...")
-                    whatsapp_proc = start_whatsapp()
-        except Exception as e:
-            log(f"WhatsApp restart error: {str(e)}")
-
-        log("Re-establishing tunnel in 10 seconds...")
-        time.sleep(10)
+        time.sleep(5)
 
 
 if __name__ == "__main__":

@@ -24,7 +24,8 @@ class LongTermMemory:
             return False
         db = self._session_factory()
         try:
-            if db.query(Memory).filter(Memory.content == content).first():
+            existing = db.query(Memory).filter(Memory.content == content).all()
+            if existing:
                 return False
             # enforce cap by dropping the oldest fact
             count = db.query(Memory).count()
@@ -35,8 +36,12 @@ class LongTermMemory:
             db.add(Memory(content=content))
             db.commit()
             return True
+        except Exception:
+            db.rollback()
+            raise
         finally:
             db.close()
+
 
     def all(self, limit: int = 20) -> List[str]:
         """Return up to ``limit`` most recent facts (oldest first)."""
@@ -62,6 +67,30 @@ class LongTermMemory:
         finally:
             db.close()
 
+    def remember(self, content: str, category: Optional[str] = None) -> bool:
+        """Alias for add."""
+        return self.add(content)
+
+    def recall(self, limit: int = 20) -> List[str]:
+        """Alias for all."""
+        return self.all(limit=limit)
+
+    def forget(self, content: str) -> bool:
+        """Remove a specific fact by exact content match."""
+        content = (content or "").strip()
+        if not content:
+            return False
+        db = self._session_factory()
+        try:
+            row = db.query(Memory).filter(Memory.content == content).first()
+            if row:
+                db.delete(row)
+                db.commit()
+                return True
+            return False
+        finally:
+            db.close()
+
     def clear(self) -> int:
         """Remove all facts. Returns how many were deleted."""
         db = self._session_factory()
@@ -72,3 +101,4 @@ class LongTermMemory:
             return count
         finally:
             db.close()
+

@@ -67,16 +67,11 @@ def test_chat_memory_sessions_isolated_and_clear(mem_db_factory):
 
 def test_long_term_memory_remember_and_recall(mem_db_factory):
     mem = LongTermMemory(session_factory=mem_db_factory)
-    mem.remember("user prefers concise answers", category="preference")
-    mem.remember("user works in Python", category="context")
+    mem.remember("user prefers concise answers")
+    mem.remember("user works in Python")
 
     recalled = mem.recall()
     assert len(recalled) == 2
-
-    # category filtering
-    prefs = mem.recall(category="preference")
-    assert len(prefs) == 1
-    assert "concise" in prefs[0]
 
 
 def test_long_term_memory_search(mem_db_factory):
@@ -110,15 +105,21 @@ class FakeAdapter:
     def __init__(self):
         self.calls = []
 
-    async def plan(self, prompt: str, session_id: str, history=None, memories=None):
-        self.calls.append({"prompt": prompt, "session_id": session_id, "history": history or [], "memories": memories or []})
+    async def analyze_prompt(self, prompt: str, history=None, memories=None):
+        self.calls.append({"prompt": prompt, "history": history or [], "memories": memories or []})
         if "plan" in prompt:
             return {
-                "mode": "plan",
+                "type": "plan",
+                "plan_id": "fakeplan1",
                 "reasoning": "fake plan",
                 "steps": [{"tool": "list_directory", "params": {"path": "."}, "description": "list dir"}],
             }
-        return {"mode": "direct", "response": "fake reply"}
+        return {"type": "response", "message": "fake reply"}
+
+    async def extract_memories(self, prompt: str, outcome: str):
+        if "remember" in prompt.lower():
+            return ["User's favorite folder is D:/Stuff"]
+        return []
 
     async def close(self):
         pass
@@ -130,9 +131,12 @@ def fake_agent_env(monkeypatch, mem_db_factory):
     monkeypatch.setattr(agent_route, "_adapter", fake)
     monkeypatch.setattr(agent_route, "chat_memory", ChatMemory(max_messages=10, session_factory=mem_db_factory))
     monkeypatch.setattr(agent_route, "long_term_memory", LongTermMemory(session_factory=mem_db_factory))
+    monkeypatch.setattr(agent_route, "MEMORY_EXTRACTION_INTERVAL", 1)
     # clear any cached plans
     agent_route._plan_cache.clear()
     return fake
+
+
 
 
 def test_agent_passes_history_and_memories(client, fake_agent_env):

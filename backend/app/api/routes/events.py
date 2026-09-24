@@ -37,6 +37,39 @@ async def get_recent_events(limit: int = Query(30, ge=1, le=100)) -> List[Dict[s
     return [e.model_dump() for e in events]
 
 
+@router.get("/feed")
+async def get_activity_feed(
+    service: Optional[str] = Query(None, description="Filter by service: whatsapp, gmail, drive, or all"),
+    hours: int = Query(24, ge=1, le=168, description="Timespan in hours (default 24h)"),
+    unread_only: bool = Query(False, description="Filter to unread items only"),
+    limit: int = Query(50, ge=1, le=100),
+) -> List[Dict[str, Any]]:
+    """Return persistent 24-hour hot activity feed across WhatsApp, Gmail, and Google Drive."""
+    from app.modules.memory.service_memory import get_service_memory_manager
+    mem_mgr = get_service_memory_manager()
+    return mem_mgr.get_hot_events(service=service, hours=hours, unread_only=unread_only, limit=limit)
+
+
+@router.get("/unread-counts")
+async def get_feed_unread_counts() -> Dict[str, Any]:
+    """Return unread counts per integrated service within the hot 24-hour window."""
+    from app.modules.memory.service_memory import get_service_memory_manager
+    mem_mgr = get_service_memory_manager()
+    return mem_mgr.get_unread_summary()
+
+
+@router.get("/7day-digests")
+async def get_seven_day_digests(
+    days: int = Query(7, ge=1, le=30),
+    service: Optional[str] = Query(None),
+) -> List[Dict[str, Any]]:
+    """Return structured 7-day rolling temporal memory digests."""
+    from app.modules.memory.service_memory import get_service_memory_manager
+    mem_mgr = get_service_memory_manager()
+    return mem_mgr.get_7day_digests(days=days, service=service)
+
+
+
 @router.post("/hook")
 async def register_task_hook(request: HookRegistrationRequest) -> Dict[str, Any]:
     """Register a reactive follow-up action to execute when target_session_id completes."""
