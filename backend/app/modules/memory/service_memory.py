@@ -84,22 +84,33 @@ class ServiceMemoryManager:
         today_str = now.strftime("%Y-%m-%d")
         seven_days_ago = (now - timedelta(days=self.retention_days)).strftime("%Y-%m-%d")
 
-        hot_events = self.get_hot_events(hours=self.hot_window_hours, limit=25)
+        hot_events = self.get_hot_events(hours=self.hot_window_hours, limit=40)
         unread_counts = self.get_unread_summary()
         past_digests = self.get_7day_digests(days=self.retention_days)
 
         lines = [
             f"### 🌐 AMBIENT MULTI-SERVICE MEMORY (7-Day Horizon: {seven_days_ago} to {today_str})",
-            f"Unread Status: WhatsApp ({unread_counts.get('whatsapp', 0)} unread) | Gmail ({unread_counts.get('gmail', 0)} unread) | Drive ({unread_counts.get('drive', 0)} recent)",
+            f"Active Unread Status (Past 24h): WhatsApp: {unread_counts.get('whatsapp', 0)} unread | Gmail: {unread_counts.get('gmail', 0)} unread | Drive: {unread_counts.get('drive', 0)} updates",
             "",
-            "#### ⚡ Past 24-Hour Hot Activity Stream:",
+            "#### ✉️ Recent Gmail Activity (Past 24 Hours):",
         ]
 
-        if not hot_events:
-            lines.append("- No recent inbound updates recorded in the past 24 hours.")
+        gmail_events = [e for e in hot_events if e["service"] == "gmail"]
+        if not gmail_events:
+            lines.append("- No emails received in the past 24 hours.")
         else:
-            for evt in hot_events[:15]:
-                svc_icon = "💬" if evt["service"] == "whatsapp" else ("✉️" if evt["service"] == "gmail" else "📁")
+            for evt in gmail_events[:15]:
+                status = " [UNREAD]" if evt["is_unread"] else ""
+                lines.append(f"- ✉️{status} **{evt['title']}** (From: {evt['sender']}) — {evt['snippet'][:120]}")
+
+        lines.append("")
+        lines.append("#### 💬 Recent WhatsApp & Drive Activity (Past 24 Hours):")
+        other_events = [e for e in hot_events if e["service"] != "gmail"]
+        if not other_events:
+            lines.append("- No recent WhatsApp or Google Drive updates recorded.")
+        else:
+            for evt in other_events[:15]:
+                svc_icon = "💬" if evt["service"] == "whatsapp" else "📁"
                 status = " [UNREAD]" if evt["is_unread"] else ""
                 lines.append(f"- {svc_icon} [{evt['service'].upper()}]{status} {evt['sender'] or 'Unknown'}: {evt['snippet'] or evt['title'] or ''}")
 
@@ -111,23 +122,31 @@ class ServiceMemoryManager:
         else:
             for dg in past_digests[:10]:
                 lines.append(f"- **[{dg['date']}] {dg['service'].upper()}**: {dg['summary']}")
+                if dg.get("topics"):
+                    lines.append(f"  * Key Topics: {', '.join(dg['topics'])}")
                 if dg.get("action_items"):
                     lines.append(f"  * Action items: {', '.join(dg['action_items'])}")
-                if dg.get("topics"):
-                    lines.append(f"  * Topics: {', '.join(dg['topics'])}")
 
         return "\n".join(lines)
 
     def aggregate_daily_digest(self, day_date: Optional[str] = None) -> None:
         """Compile raw events for a given day into structured daily digests."""
-        target_date = day_date or datetime.now(UTC).strftime("%Y-%m-%d")
+        target_date_str = day_date or datetime.now(UTC).strftime("%Y-%m-%d")
+
+        try:
+            target_dt = datetime.strptime(target_date_str, "%Y-%m-%d").replace(tzinfo=UTC)
+            day_start = target_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = target_dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+        except Exception:
+            day_start = datetime.now(UTC) - timedelta(hours=24)
+            day_end = datetime.now(UTC)
 
         with SessionLocal() as db:
             repo = Repository(db)
-            # Find all events matching the target day
+            # Find all events matching the target day window
             events = (
                 db.query(ServiceEvent)
-                .filter(ServiceEvent.created_at.like(f"{target_date}%"))
+                .filter(ServiceEvent.event_timestamp >= day_start, ServiceEvent.event_timestamp <= day_end)
                 .all()
             )
 
@@ -144,19 +163,25 @@ class ServiceMemoryManager:
                     continue
 
                 contacts = list({e.sender for e in sv_events if e.sender})
-                titles = [e.subject_or_title or e.snippet or "" for e in sv_events[:5]]
-                summary = f"Recorded {len(sv_events)} {svc} interactions. Key contacts: {', '.join(contacts[:4])}. Recent: {'; '.join(titles[:3])}"
+                titles = [e.subject_or_title or "" for e in sv_events if e.subject_or_title]
+
+                if svc == "gmail":
+                    summary = f"Processed {len(sv_events)} emails. Key topics: {'; '.join(titles[:5])}. Senders: {', '.join(contacts[:5])}."
+                elif svc == "whatsapp":
+                    summary = f"Recorded {len(sv_events)} chat interactions with {', '.join(contacts[:5])}."
+                else:
+                    summary = f"Recorded {len(sv_events)} Google Drive file updates: {', '.join(titles[:4])}."
 
                 repo.upsert_daily_digest(
-                    day_date=target_date,
+                    day_date=target_date_str,
                     service=svc,
                     summary_text=summary,
                     key_contacts=contacts[:10],
                     action_items=[],
-                    key_topics=[t[:40] for t in titles[:5]],
+                    key_topics=[t[:60] for t in titles[:6]],
                     files_mentioned=[],
                 )
-            logger.info("Aggregated daily memory digest for date: %s", target_date)
+            logger.info("Aggregated daily memory digest for date: %s", target_date_str)
 
     def prune_expired(self) -> Dict[str, int]:
         """Execute rolling cleanup according to retention policies."""

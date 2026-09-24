@@ -211,10 +211,11 @@ class ChatMemory:
             if session_id is None:
                 self._cache.clear()
             else:
-                self._cache.pop(session_id, None)
+                self._cache[session_id] = []
 
         if self._db_available:
             self._persist_queue.put_nowait(("CLEAR", session_id))
+
 
     def flush(self, timeout: float = 2.0) -> None:
         """Wait for pending background SQLite writes to complete (used on test/shutdown)."""

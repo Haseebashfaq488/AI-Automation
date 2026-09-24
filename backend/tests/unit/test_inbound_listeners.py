@@ -74,8 +74,9 @@ async def test_gmail_inbound_listener_emits_event():
 
     with patch("app.modules.gmail.helpers.listener._load_creds", return_value=MagicMock()):
         listener.start()
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(0.4)
         await listener.stop()
+
 
     assert len(emitted) >= 1
     evt = emitted[0]

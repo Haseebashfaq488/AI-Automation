@@ -1,7 +1,9 @@
 import asyncio
+import html
 import logging
 import os
 import time
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -12,15 +14,25 @@ logger = logging.getLogger("jarvis.gmail.listener")
 
 
 def _load_creds():
+    """Load Google OAuth credentials with multiple fallback search paths."""
     try:
         from google.oauth2.credentials import Credentials
         from google.auth.transport.requests import Request
 
-        token_path = Path(__file__).resolve().parents[4] / "token.json"
-        if not token_path.exists():
-            token_path = Path(__file__).resolve().parent / "token.json"
+        candidates = [
+            Path(__file__).resolve().parent / "token.json",
+            Path(__file__).resolve().parents[3] / "token.json",
+            Path(__file__).resolve().parents[4] / "token.json",
+            Path("token.json").resolve(),
+            Path("backend/token.json").resolve(),
+        ]
+        token_path = None
+        for p in candidates:
+            if p.is_file():
+                token_path = p
+                break
 
-        if token_path.exists():
+        if token_path and token_path.exists():
             creds = Credentials.from_authorized_user_file(
                 str(token_path),
                 [
@@ -30,7 +42,7 @@ def _load_creds():
             )
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
-                token_path.write_text(creds.to_json())
+                token_path.write_text(creds.to_json(), encoding="utf-8")
             return creds
     except Exception as exc:
         logger.debug("Could not load Gmail credentials: %s", exc)
@@ -38,9 +50,9 @@ def _load_creds():
 
 
 class GmailInboundListener:
-    """Continuous background listener that monitors Gmail for new unread messages and emits digests."""
+    """Continuous background listener that monitors Gmail for new unread messages and 24h updates."""
 
-    def __init__(self, poll_interval: float = 30.0):
+    def __init__(self, poll_interval: float = 300.0):
         self.poll_interval = poll_interval
         self._running = False
         self._task: Optional[asyncio.Task] = None
@@ -83,9 +95,12 @@ class GmailInboundListener:
                     if not msg_id:
                         continue
 
+                    is_unread = email_item.get("is_unread", False)
+                    event_ts = email_item.get("timestamp")
+
                     if not self._initial_scan_done:
                         self._seen_ids.add(msg_id)
-                        self._persist_to_db(email_item, is_unread=False)
+                        self._persist_to_db(email_item, is_unread=is_unread, event_timestamp=event_ts)
                         continue
 
                     if msg_id not in self._seen_ids:
@@ -100,7 +115,7 @@ class GmailInboundListener:
                             summary += f" — {snippet[:80]}..."
 
                         # 1. Persist to SQLite Hot Activity Feed
-                        self._persist_to_db(email_item, is_unread=True)
+                        self._persist_to_db(email_item, is_unread=is_unread, event_timestamp=event_ts)
 
                         # 2. Publish to Global Event Bus (SSE)
                         event = JarvisEvent(
@@ -122,6 +137,14 @@ class GmailInboundListener:
 
                 self._initial_scan_done = True
 
+                # Trigger memory daily digest refresh in background thread
+                try:
+                    from app.modules.memory.service_memory import get_service_memory_manager
+                    loop.run_in_executor(None, get_service_memory_manager().aggregate_daily_digest)
+                except Exception:
+                    pass
+
+
             except asyncio.CancelledError:
                 break
             except Exception as exc:
@@ -129,7 +152,12 @@ class GmailInboundListener:
 
             await asyncio.sleep(self.poll_interval)
 
-    def _persist_to_db(self, email_item: Dict[str, Any], is_unread: bool = False) -> None:
+    def _persist_to_db(
+        self,
+        email_item: Dict[str, Any],
+        is_unread: bool = False,
+        event_timestamp: Optional[datetime] = None,
+    ) -> None:
         """Persist email to SQLite service_events table."""
         try:
             from app.modules.database.db import SessionLocal
@@ -149,10 +177,10 @@ class GmailInboundListener:
                     snippet=snippet,
                     full_content=f"From: {sender}\nSubject: {subject}\nDate: {email_item.get('date', '')}\nSnippet: {snippet}",
                     is_unread=is_unread,
+                    event_timestamp=event_timestamp,
                 )
         except Exception as exc:
             logger.debug("Failed to persist Gmail event to database: %s", exc)
-
 
     def _fetch_recent_emails(self, creds) -> List[Dict[str, Any]]:
         """Synchronous fetch executed in worker thread."""
@@ -165,6 +193,8 @@ class GmailInboundListener:
                         "subject": "Mock Project Update",
                         "snippet": "Here is the latest status on the automation task...",
                         "date": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "is_unread": True,
+                        "timestamp": datetime.now(UTC),
                     }
                 ]
             return []
@@ -173,8 +203,12 @@ class GmailInboundListener:
             from googleapiclient.discovery import build
 
             service = build("gmail", "v1", credentials=creds, cache_discovery=False)
-            res = service.users().messages().list(userId="me", q="in:inbox", maxResults=5).execute()
+            # Query last 24h emails (or fallback to recent 20 inbox)
+            res = service.users().messages().list(userId="me", q="newer_than:2d", maxResults=20).execute()
             messages = res.get("messages", [])
+            if not messages:
+                res = service.users().messages().list(userId="me", q="in:inbox", maxResults=15).execute()
+                messages = res.get("messages", [])
 
             results = []
             for msg_meta in messages:
@@ -188,12 +222,30 @@ class GmailInboundListener:
                     h["name"].lower(): h["value"]
                     for h in msg_data.get("payload", {}).get("headers", [])
                 }
+                label_ids = msg_data.get("labelIds", [])
+                is_unread = "UNREAD" in label_ids
+
+                snippet = html.unescape(msg_data.get("snippet", ""))
+                subject = html.unescape(headers.get("subject", "(No Subject)"))
+                sender = headers.get("from", "Unknown")
+
+                # Parse timestamp from internalDate (milliseconds)
+                event_ts = None
+                internal_date = msg_data.get("internalDate")
+                if internal_date:
+                    try:
+                        event_ts = datetime.fromtimestamp(int(internal_date) / 1000.0, tz=UTC)
+                    except Exception:
+                        event_ts = None
+
                 results.append({
                     "id": m_id,
-                    "from": headers.get("from", "Unknown"),
-                    "subject": headers.get("subject", "(No Subject)"),
-                    "snippet": msg_data.get("snippet", ""),
+                    "from": sender,
+                    "subject": subject,
+                    "snippet": snippet,
                     "date": headers.get("date", ""),
+                    "is_unread": is_unread,
+                    "timestamp": event_ts or datetime.now(UTC),
                 })
             return results
         except Exception as exc:
