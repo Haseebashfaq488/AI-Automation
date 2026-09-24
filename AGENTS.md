@@ -21,6 +21,43 @@ Headless Chrome ──► live WhatsApp Web session (logged in via copied profil
 > - Root repository (`Haseebashfaq488/AI-Automation`) houses the full workspace, FastAPI backend engine, Antigravity brain, and worker daemons.
 > - Frontend repository (`Haseebashfaq488/Ai-Automation-Frontend`) is the standalone Next.js 16 web interface deployed to Vercel.
 
+---
+
+## Living Documentation System & Agent Navigation Rules
+
+> [!IMPORTANT]
+> **MANDATORY FIRST STEP BEFORE ANY BACKEND CODE CHANGE:**
+> Before inspecting, modifying, or creating code in any backend folder, you **MUST** first read that directory's local `README.md`. 
+> Do **NOT** crawl through hundreds of lines of code or guess contracts. Each folder maintains an authoritative living contract with file tables, API routes, and critical invariants.
+
+### Backend Living Documentation Map:
+| Directory | Local Living Doc | What It Explains |
+| :--- | :--- | :--- |
+| **`backend/`** | [`backend/README.md`](file:///d:/AI-Automation/backend/README.md) | High-level engine overview, environment variables, OAuth setup, and runbook. |
+| **`backend/app/`** | [`backend/app/README.md`](file:///d:/AI-Automation/backend/app/README.md) | FastAPI app factory (`main.py`), CORS middleware, lifespan events, and lazy loading. |
+| **`backend/app/api/`** | [`backend/app/api/README.md`](file:///d:/AI-Automation/backend/app/api/README.md) | Full route inventory (`/agent`, `/workers`, `/events`), request schemas, and SSE streams. |
+| **`backend/app/core/`** | [`backend/app/core/README.md`](file:///d:/AI-Automation/backend/app/core/README.md) | Universal `BaseTool` contract, in-memory event bus, and reactive downstream orchestrator. |
+| **`backend/app/modules/`**| [`backend/app/modules/README.md`](file:///d:/AI-Automation/backend/app/modules/README.md) | Domain plugins (Drive, Gmail, Database, Memory, Files) and OAuth token rules. |
+| **`backend/app/workers/`**| [`backend/app/workers/README.md`](file:///d:/AI-Automation/backend/app/workers/README.md) | 3-job worker protocol, living docs scanner, and graphify handover synthesis. |
+| **`backend/tests/`** | [`backend/tests/README.md`](file:///d:/AI-Automation/backend/tests/README.md) | Test suites list, pytest conventions, and external API mocking patterns. |
+
+### How to Maintain & Update Folder Documentation:
+1. **When Modifying Existing Code**:
+   * If you add new tools, alter route parameters, or introduce new database models, update the file inventory and contracts in that folder's `README.md`.
+2. **When Resolving Edge Cases / Bugs**:
+   * Record the root cause and guardrail in the **Critical Invariants & Gotchas** section of that folder's `README.md`.
+3. **When Creating a New Folder**:
+   * Add a `README.md` following the **Standard Anatomy**:
+     1. *Directory Role & Boundary*
+     2. *File Inventory & Roles Table*
+     3. *External Contracts & APIs*
+     4. *Critical Invariants & Gotchas*
+     5. *Extension Guide*
+4. **Code Knowledge Graph**:
+   * Always run `graphify update .` after modifying code files to keep the AST knowledge graph synchronized.
+
+---
+
 - Backend tools/skills/pipelines → `app/modules/whatsapp/helpers/client.py`
   (singleton `get_client()`, tests monkeypatch with `FakeWhatsAppClient`)
   → sidecar REST API.

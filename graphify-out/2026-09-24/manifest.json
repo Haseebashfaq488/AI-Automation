@@ -1206,9 +1206,9 @@
     "semantic_hash": "481fac0fdecd70e1821cc30b86030c1a"
   },
   "AI-Automation Frontend/AGENTS.md": {
-    "mtime": 1789533605.0,
-    "seen": 1790156103.479196,
-    "ast_hash": "3ad29ed1c7e1970f724e872fcffc4909",
+    "mtime": 1790263613.5484302,
+    "seen": 1790263670.8306358,
+    "ast_hash": "fe5ec5d703817cadbed5884df4275b0c",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/CLAUDE.md": {
@@ -1413,6 +1413,36 @@
     "mtime": 1790261693.2055318,
     "seen": 1790261710.0791376,
     "ast_hash": "f323f1b842c25b45de1de5e68c7b56c5",
+    "semantic_hash": ""
+  },
+  "AI-Automation Frontend/app/README.md": {
+    "mtime": 1790263540.7306368,
+    "seen": 1790263670.8306422,
+    "ast_hash": "904887b7be4c4c8f1b2e7dc4e3f33529",
+    "semantic_hash": ""
+  },
+  "AI-Automation Frontend/app/components/README.md": {
+    "mtime": 1790263557.1436672,
+    "seen": 1790263670.830644,
+    "ast_hash": "a2fb11a7cfbef4dd0dd0a40fcb194bdc",
+    "semantic_hash": ""
+  },
+  "AI-Automation Frontend/app/lib/README.md": {
+    "mtime": 1790263570.9890397,
+    "seen": 1790263670.8306453,
+    "ast_hash": "a7939382bf54ed39f5d1e670561bfb3b",
+    "semantic_hash": ""
+  },
+  "AI-Automation Frontend/app/worker/[id]/README.md": {
+    "mtime": 1790263597.3246627,
+    "seen": 1790263670.8306463,
+    "ast_hash": "d5583e8f69ed4b811e13e42c26004516",
+    "semantic_hash": ""
+  },
+  "AI-Automation Frontend/app/workers/README.md": {
+    "mtime": 1790263586.427133,
+    "seen": 1790263670.8306475,
+    "ast_hash": "b4398e12c9fe82720a08d2366d5ee0be",
     "semantic_hash": ""
   }
 }
