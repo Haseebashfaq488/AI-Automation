@@ -212,3 +212,164 @@ async def test_task_orchestrator_multi_worker_pipeline_chaining(monkeypatch):
     assert "haseeb.txt" in call["path"]
 
 
+@pytest.mark.asyncio
+async def test_task_orchestrator_interpolates_email_attachments():
+    class MockSendEmailTool(BaseTool):
+        name = "mock_send_email"
+        description = "Mock send email tool"
+        risk = RiskLevel.LOW
+        category = "tool"
+        input_schema = {
+            "type": "object",
+            "properties": {
+                "to": {"type": "string"},
+                "subject": {"type": "string"},
+                "body": {"type": "string"},
+                "attachments": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["to", "body"],
+        }
+
+        def __init__(self):
+            super().__init__()
+            self.executed_calls = []
+
+        async def execute(self, params: dict) -> dict:
+            self.executed_calls.append(params)
+            return {"status": "sent", "to": params["to"], "attachments": params.get("attachments", [])}
+
+    email_tool = MockSendEmailTool()
+    registry.register(email_tool)
+
+    orchestrator = TaskOrchestrator()
+    orchestrator.start()
+
+    session_id = "ws_email_chain_test"
+    hook = orchestrator.register_hook(
+        target_session_id=session_id,
+        action_tool="mock_send_email",
+        action_params={
+            "to": "haseebhamza789@gmail.com",
+            "subject": "Your File",
+            "body": "Hi, please find attached {worker.artifact}",
+            "attachments": ["{worker.artifact}"],
+        },
+        description="Send the generated file to Haseeb's email",
+    )
+
+    bus = get_event_bus()
+    bus.publish(
+        JarvisEvent(
+            event_type=EventType.WORKER_COMPLETED,
+            source=f"worker:{session_id}",
+            title="Worker Completed",
+            summary="Done",
+            data={
+                "session_id": session_id,
+                "success": True,
+                "artifacts": ["D:/workspace/haseeb_report.pdf"],
+                "output": "Report generated",
+            },
+        )
+    )
+
+    await asyncio.sleep(0.1)
+
+    assert len(email_tool.executed_calls) == 1
+    call = email_tool.executed_calls[0]
+    assert call["to"] == "haseebhamza789@gmail.com"
+    assert call["attachments"] == ["D:/workspace/haseeb_report.pdf"]
+    assert "D:/workspace/haseeb_report.pdf" in call["body"]
+
+
+@pytest.mark.asyncio
+async def test_task_orchestrator_multi_step_follower_pipeline():
+    class MockSendEmailTool(BaseTool):
+        name = "mock_pipeline_email"
+        description = "Mock email"
+        risk = RiskLevel.LOW
+        category = "tool"
+        input_schema = {"type": "object", "properties": {"to": {"type": "string"}, "attachments": {"type": "array"}}, "required": ["to"]}
+
+        def __init__(self):
+            super().__init__()
+            self.calls = []
+
+        async def execute(self, params: dict) -> dict:
+            self.calls.append(params)
+            return {"sent": True, "to": params.get("to"), "attachments": params.get("attachments", [])}
+
+    class MockDriveTool(BaseTool):
+        name = "mock_pipeline_drive"
+        description = "Mock drive"
+        risk = RiskLevel.LOW
+        category = "tool"
+        input_schema = {"type": "object", "properties": {"file_path": {"type": "string"}, "name": {"type": "string"}}}
+
+        def __init__(self):
+            super().__init__()
+            self.calls = []
+
+        async def execute(self, params: dict) -> dict:
+            self.calls.append(params)
+            return {"success": True, "file_id": "mock_drive_id_123", "name": params.get("name")}
+
+    email_tool = MockSendEmailTool()
+    drive_tool = MockDriveTool()
+    registry.register(email_tool)
+    registry.register(drive_tool)
+
+    orchestrator = TaskOrchestrator()
+    orchestrator.start()
+
+    session_id = "ws_multi_step_follower"
+    orchestrator.register_hook(
+        target_session_id=session_id,
+        action_tool="mock_pipeline_email",
+        action_params={"to": "haseebhamza789@gmail.com", "attachments": ["{worker.artifact}"]},
+        description="Email file to Haseeb",
+        downstream_steps=[
+            {
+                "tool": "mock_pipeline_drive",
+                "params": {"file_path": "{worker.artifact}"},
+                "description": "Upload to Google Drive",
+            }
+        ],
+    )
+
+    bus = get_event_bus()
+    bus.publish(
+        JarvisEvent(
+            event_type=EventType.WORKER_COMPLETED,
+            source=f"worker:{session_id}",
+            title="Worker Completed",
+            summary="Done",
+            data={
+                "session_id": session_id,
+                "success": True,
+                "artifacts": ["D:/workspace/document.txt"],
+                "output": "Document created successfully.",
+            },
+        )
+    )
+
+    await asyncio.sleep(0.1)
+
+    # 1. Email tool executed with artifact
+    assert len(email_tool.calls) == 1
+    assert email_tool.calls[0]["to"] == "haseebhamza789@gmail.com"
+    assert email_tool.calls[0]["attachments"] == ["D:/workspace/document.txt"]
+
+    # 2. Drive tool executed with artifact
+    assert len(drive_tool.calls) == 1
+    assert drive_tool.calls[0]["file_path"] == "D:/workspace/document.txt"
+    assert drive_tool.calls[0]["name"] == "document.txt"
+
+    # 3. All hooks registered for session are marked executed
+    hooks = orchestrator.get_hooks(session_id)
+    assert len(hooks) == 2
+    assert all(h.executed for h in hooks)
+
+
+
+

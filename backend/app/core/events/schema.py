@@ -56,5 +56,7 @@ class ReactiveHook(BaseModel):
     description: str = ""
     created_at: float = Field(default_factory=time.time)
     executed: bool = False
+    result: Optional[Any] = None
+    error: Optional[Any] = None
     downstream_steps: List[Dict[str, Any]] = Field(default_factory=list)
 

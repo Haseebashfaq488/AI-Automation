@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, Optional, Set
 
 from app.core.execution_engine import ExecutionEngine
 from app.registry.tool_registry import ToolRegistry
-from app.workers.base.bus import EventBus
+from app.workers.base.bus import EventBus, emit
 from app.workers.base.contract import TaskContract
 from app.workers.base.scoped_registry import ScopedToolRegistry
 from app.workers.base.session import WorkerSession
@@ -158,7 +158,14 @@ class WorkerEngine:
 
         if self._session:
             self._session.append_event("PLAN_APPROVED", {"plan": self._implementation_plan or ""})
+            self._session.write_state({
+                "status": "running",
+                "current_step": "Job 2: Execute Implementation Plan",
+                "plan_status": "approved",
+                "implementation_plan": self._implementation_plan or self._session.read_plan(),
+            })
 
+        emit(self._session_id, "PLAN_APPROVED", {"plan": self._implementation_plan or ""})
         self._awaiting_plan_approval = False
         self._plan_approved_event.set()
         return True
@@ -170,7 +177,14 @@ class WorkerEngine:
 
         if self._session:
             self._session.append_event("PLAN_REJECTED", {"feedback": feedback})
+            self._session.write_state({
+                "status": "running",
+                "current_step": "Revising Implementation Plan",
+                "plan_status": "rejected",
+                "implementation_plan": self._implementation_plan or self._session.read_plan(),
+            })
 
+        emit(self._session_id, "PLAN_REJECTED", {"feedback": feedback})
         self.intervene(f"Plan revision request: {feedback}")
         self._awaiting_plan_approval = False
         self._plan_approved_event.set()
@@ -289,8 +303,21 @@ class WorkerEngine:
                         if self._cancelled:
                             break
 
-                        if hasattr(agent, "set_approved_plan") and self._implementation_plan:
-                            agent.set_approved_plan(self._implementation_plan)
+                        if hasattr(agent, "set_approved_plan"):
+                            agent.set_approved_plan(self._implementation_plan or "")
+
+                        # Immediately update disk state so pollers and SSE clients see running state while Job 2 executes
+                        self._session.write_state({
+                            "status": "running",
+                            "current_step": "Job 2: Execute Implementation Plan",
+                            "completed": completed,
+                            "remaining": [contract.objective],
+                            "errors": [e["message"] for e in errors],
+                            "progress_percent": 35,
+                            "plan_status": self._contract.plan_status if self._contract else "approved",
+                            "implementation_plan": self._implementation_plan or self._session.read_plan(),
+                            "test_results": self._test_results or self._session.read_test_results(),
+                        })
 
                     continue
 
@@ -351,6 +378,7 @@ class WorkerEngine:
         else:
             success = bool(completed) and not errors
 
+        artifacts = self._collect_artifacts(agent)
         result_data = {
             "success": success,
             "completed_steps": len(completed),
@@ -360,6 +388,7 @@ class WorkerEngine:
             "summary": summary,
             "implementation_plan": self._implementation_plan or self._session.read_plan(),
             "test_results": self._test_results or self._session.read_test_results(),
+            "artifacts": artifacts,
         }
         self._finalize(ev, completed, errors, result_data)
         return result_data
@@ -398,15 +427,100 @@ class WorkerEngine:
         self._drain_interventions(None, to_events_only=True)
 
         success = not self._cancelled and bool(completed) and not errors
+        artifacts = self._collect_artifacts(None)
         result_data = {
             "success": success,
             "completed_steps": len(completed),
             "tools_used": completed,
             "errors": errors,
             "cancelled": self._cancelled,
+            "artifacts": artifacts,
         }
         self._finalize(ev, completed, errors, result_data)
         return result_data
+
+    def _collect_artifacts(self, agent: Any = None) -> List[str]:
+        """Discover and collect absolute paths of generated files/artifacts."""
+        from pathlib import Path
+        import json
+        import re
+
+        artifacts: List[str] = []
+        seen = set()
+
+        def _add(path_str: Any):
+            if not path_str or not isinstance(path_str, str):
+                return
+            cleaned = path_str.strip().strip("'\"")
+            if not cleaned:
+                return
+            if cleaned.startswith("file:///"):
+                cleaned = cleaned.replace("file:///", "")
+            elif cleaned.startswith("file://"):
+                cleaned = cleaned.replace("file://", "")
+            p = Path(cleaned)
+            try:
+                if p.is_file() and str(p.resolve()) not in seen:
+                    # Ignore internal logs/state json files
+                    if not p.name.endswith((".json", ".jsonl", ".log", ".tmp")):
+                        resolved = str(p.resolve())
+                        seen.add(resolved)
+                        artifacts.append(resolved)
+            except Exception:
+                pass
+
+        # 1. Inspect session.path / "artifacts"
+        try:
+            if self._session and self._session.path:
+                art_dir = self._session.path / "artifacts"
+                if art_dir.is_dir():
+                    for f in sorted(art_dir.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True):
+                        if f.is_file():
+                            _add(str(f))
+        except Exception:
+            pass
+
+        # 2. Inspect fs_scope directory
+        scope_dir = Path(self._contract.fs_scope) if self._contract and self._contract.fs_scope else Path(".")
+        try:
+            if scope_dir.is_dir():
+                # Look for recently modified non-hidden files in workspace
+                for f in sorted(scope_dir.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True):
+                    if f.is_file() and not f.name.startswith((".", "implementation_plan.md", "task.json")):
+                        _add(str(f))
+        except Exception:
+            pass
+
+        # 3. Extract paths mentioned in agent's execution summary, test results, or implementation plan
+        text_sources = []
+        if agent:
+            if hasattr(agent, "_execution_summary") and agent._execution_summary:
+                text_sources.append(agent._execution_summary)
+            if hasattr(agent, "implementation_plan") and agent.implementation_plan:
+                text_sources.append(agent.implementation_plan)
+            if hasattr(agent, "test_results") and agent.test_results:
+                try:
+                    text_sources.append(json.dumps(agent.test_results))
+                except Exception:
+                    pass
+
+        # Also check objective
+        if self._contract and self._contract.objective:
+            text_sources.append(self._contract.objective)
+
+        for txt in text_sources:
+            if not txt:
+                continue
+            # Regex for Windows / Unix absolute paths
+            win_matches = re.findall(r"([A-Za-z]:(?:\\\\|/|\\)[\w\-\.\s\\/]+\.[a-zA-Z0-9]{1,8})", txt)
+            for wm in win_matches:
+                _add(wm.replace("\\\\", "\\"))
+            # Regex for relative filenames in scope
+            rel_matches = re.findall(r"(?:created|written|saved|file|path|to)\s+['\"]?([\w\-\.]+\.[a-zA-Z0-9]{1,8})['\"]?", txt, re.IGNORECASE)
+            for rm in rel_matches:
+                _add(str(scope_dir / rm))
+
+        return artifacts
 
     # ==================================================================
     # Shared helpers
@@ -434,7 +548,7 @@ class WorkerEngine:
         })
 
         # Direct autonomous task execution or intervention (executed by CLI driver)
-        if tool_name in ("task_execution", "apply_intervention", "opencode_milestone"):
+        if tool_name in ("task_execution", "apply_intervention", "opencode_milestone", "self_testing"):
             error_msg = params.get("error")
             if error_msg:
                 errors.append({"tool": step_label, "message": error_msg})
@@ -502,7 +616,9 @@ class WorkerEngine:
         errors: List[Dict[str, str]],
         result_data: Dict[str, Any],
     ) -> None:
+        final_status = "cancelled" if self._cancelled else ("completed" if result_data.get("success") else "failed")
         self._session.write_state({
+            "status": final_status,
             "current_step": None,
             "completed": completed,
             "remaining": [],

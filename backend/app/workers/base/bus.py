@@ -96,6 +96,9 @@ def emit(session_id: str, event_type: str, data: dict) -> None:
             "WORK_STARTED": EventType.WORKER_STARTED,
             "STEP_STARTED": EventType.WORKER_STEP_STARTED,
             "STEP_COMPLETED": EventType.WORKER_STEP_COMPLETED,
+            "PLAN_READY": EventType.WORKER_BLOCKED,
+            "PLAN_APPROVED": EventType.WORKER_STEP_STARTED,
+            "PLAN_REJECTED": EventType.WORKER_STEP_STARTED,
             "VALIDATION_FAILED": EventType.WORKER_VALIDATION_FAILED,
             "RECOVERY_STARTED": EventType.WORKER_RECOVERY_STARTED,
             "RECOVERY_COMPLETED": EventType.WORKER_RECOVERY_COMPLETED,
@@ -110,6 +113,15 @@ def emit(session_id: str, event_type: str, data: dict) -> None:
             elif event_type == "STEP_COMPLETED":
                 title = f"Step Completed: {data.get('step', 'unknown')}"
                 summary = f"Step '{data.get('step')}' finished."
+            elif event_type == "PLAN_READY":
+                title = f"Worker {session_id[:8]}: Plan Ready"
+                summary = "Implementation plan ready for user review."
+            elif event_type == "PLAN_APPROVED":
+                title = f"Worker {session_id[:8]}: Plan Approved"
+                summary = "Plan approved. Worker starting execution."
+            elif event_type == "PLAN_REJECTED":
+                title = f"Worker {session_id[:8]}: Plan Rejected"
+                summary = "Revisions requested for implementation plan."
             elif event_type == "WORK_COMPLETED":
                 success = data.get("success", False)
                 title = f"Worker Completed [{session_id[:8]}]" if success else f"Worker Failed [{session_id[:8]}]"

@@ -130,6 +130,8 @@ class AntigravityWorkerAgent:
         if intervention:
             self._pending_intervention = None
             self._step_count += 1
+            if "Plan revision" in intervention or "reject" in intervention.lower():
+                self._phase = "planning"
             prompt = (
                 f"# ⚠️ PRIORITY MANAGER INTERVENTION DIRECTIVE\n"
                 f"{intervention}\n\n"
@@ -259,6 +261,10 @@ class AntigravityWorkerAgent:
                     "session_id": self._session_id,
                 },
             }
+
+        # If decide_next_step is invoked while phase is awaiting_approval (plan was approved), advance to execution
+        if self._phase == "awaiting_approval":
+            self._phase = "execution"
 
         # ── JOB 2: Plan Execution ───────────────────────────────────────────
         if self._phase == "execution":

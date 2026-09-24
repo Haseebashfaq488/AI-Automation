@@ -169,4 +169,8 @@ class TestAntigravityEngineIntegration:
 
             state = eng.get_state()
             assert state["status"] == "completed"
-            assert len(state["completed"]) >= 1
+            assert len(state["completed"]) == 3
+            assert "Job 1: Author Implementation Plan" in state["completed"]
+            assert "Job 2: Execute Implementation Plan" in state["completed"]
+            assert "Job 3: Self-Testing & Verification" in state["completed"]
+            assert len(state["errors"]) == 0

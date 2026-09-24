@@ -70,6 +70,14 @@ async def get_seven_day_digests(
 
 
 
+@router.get("/hooks")
+async def get_task_hooks(session_id: Optional[str] = Query(None)) -> List[Dict[str, Any]]:
+    """Return all registered/executed reactive task hooks."""
+    orchestrator = get_orchestrator()
+    hooks = orchestrator.get_hooks(session_id=session_id)
+    return [h.model_dump() for h in hooks]
+
+
 @router.post("/hook")
 async def register_task_hook(request: HookRegistrationRequest) -> Dict[str, Any]:
     """Register a reactive follow-up action to execute when target_session_id completes."""
