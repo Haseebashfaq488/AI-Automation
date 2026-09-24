@@ -274,6 +274,29 @@ async def test_unread_digest_skill(fake_client):
     assert result2["sent"] is True
 
 
+@pytest.mark.asyncio
+async def test_get_unread_messages_tool(fake_client):
+    from app.modules.whatsapp.tools.get_unread_messages import GetUnreadMessagesTool
+    tool = GetUnreadMessagesTool()
+    res = await tool.execute({"chat_limit": 10})
+    assert res["unread_chat_count"] == 1
+    assert res["total_unread_messages"] == 2
+    assert len(res["chats"]) == 1
+    assert res["chats"][0]["name"] == "Mom"
+    assert "call me when free" in res["summary"]
+
+
+@pytest.mark.asyncio
+async def test_get_recent_whatsapp_activity_tool(fake_client):
+    from app.modules.whatsapp.tools.get_recent_whatsapp_activity import GetRecentWhatsAppActivityTool
+    tool = GetRecentWhatsAppActivityTool()
+    res = await tool.execute({"chat_limit": 5, "messages_per_chat": 3})
+    assert res["chat_count"] == 2
+    assert len(res["chats"]) == 2
+    assert "Mom" in res["summary"]
+    assert "Family Group" in res["summary"]
+
+
 # ---------------------------------------------------------------------------
 # Pipelines
 # ---------------------------------------------------------------------------

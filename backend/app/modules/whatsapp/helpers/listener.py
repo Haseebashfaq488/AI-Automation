@@ -38,6 +38,43 @@ class WhatsAppInboundListener:
                 pass
         logger.info("WhatsAppInboundListener stopped.")
 
+    async def sync_recent_chats(self, limit: int = 25) -> int:
+        """Fetch and persist recent WhatsApp chats into SQLite service_events immediately."""
+        client = get_client()
+        try:
+            status_res = await client.status()
+            if status_res.get("state") != "ready":
+                return 0
+
+            chats = await client.list_chats(limit=limit)
+            persisted_count = 0
+            for chat in chats:
+                chat_id = chat.get("id") or chat.get("name")
+                if not chat_id:
+                    continue
+
+                chat_name = chat.get("name") or chat_id
+                preview = chat.get("preview") or ""
+                unread_count = chat.get("unread") or 0
+                is_group = chat.get("isGroup", False)
+                timestamp = chat.get("timestamp") or time.strftime("%I:%M %p")
+
+                self._persist_to_db(
+                    chat_id=chat_id,
+                    chat_name=chat_name,
+                    preview=preview,
+                    unread_count=unread_count,
+                    is_group=is_group,
+                    timestamp_str=timestamp,
+                )
+                self._seen_previews[chat_id] = preview
+                persisted_count += 1
+
+            return persisted_count
+        except Exception as exc:
+            logger.debug("Error during WhatsApp sync_recent_chats: %s", exc)
+            return 0
+
     async def _poll_loop(self) -> None:
         client = get_client()
         bus = get_event_bus()
@@ -50,36 +87,37 @@ class WhatsAppInboundListener:
                     await asyncio.sleep(self.poll_interval)
                     continue
 
-                chats = await client.list_chats(limit=15)
+                chats = await client.list_chats(limit=20)
                 for chat in chats:
                     chat_id = chat.get("id") or chat.get("name")
                     if not chat_id:
                         continue
 
+                    chat_name = chat.get("name") or chat_id
                     preview = chat.get("preview") or ""
                     unread_count = chat.get("unread") or 0
+                    is_group = chat.get("isGroup", False)
+                    timestamp_str = chat.get("timestamp") or time.strftime("%I:%M %p")
                     last_seen = self._seen_previews.get(chat_id)
 
-                    # If this is the initial scan on startup, populate cache without blasting old events
-                    if not self._initial_scan_done:
-                        self._seen_previews[chat_id] = preview
-                        continue
+                    # Always persist to DB so 24h feed & 7-day memory are up to date
+                    self._persist_to_db(
+                        chat_id=chat_id,
+                        chat_name=chat_name,
+                        preview=preview,
+                        unread_count=unread_count,
+                        is_group=is_group,
+                        timestamp_str=timestamp_str,
+                    )
 
-                    # If the preview has changed or there are unread messages not yet seen
-                    if preview and preview != last_seen and (unread_count > 0 or last_seen is not None):
+                    # If preview changed or new unread messages arrived after startup, emit event to frontend SSE
+                    if self._initial_scan_done and ((preview and preview != last_seen) or unread_count > 0):
                         self._seen_previews[chat_id] = preview
-                        chat_name = chat.get("name") or chat_id
-                        timestamp_str = time.strftime("%I:%M %p")
-
-                        # Summarize content
                         summary = f"[{timestamp_str}] {chat_name}: {preview}"
                         if unread_count > 1:
                             summary += f" ({unread_count} unread)"
 
-                        # 1. Persist into SQLite Hot Activity Feed
-                        self._persist_to_db(chat_id, chat_name, preview, unread_count, is_group=chat.get("isGroup", False))
-
-                        # 2. Publish to Global Event Bus (SSE)
+                        # Publish to Global Event Bus (SSE)
                         event = JarvisEvent(
                             event_type=EventType.WHATSAPP_INBOUND_DIGEST,
                             source="whatsapp:listener",
@@ -90,12 +128,14 @@ class WhatsAppInboundListener:
                                 "name": chat_name,
                                 "preview": preview,
                                 "unread": unread_count,
-                                "is_group": chat.get("isGroup", False),
+                                "is_group": is_group,
                                 "time_str": timestamp_str,
                             },
                         )
                         bus.publish(event)
                         logger.info("Emitted WhatsApp inbound digest event for %s", chat_name)
+                    else:
+                        self._seen_previews[chat_id] = preview
 
                 self._initial_scan_done = True
 
@@ -106,7 +146,15 @@ class WhatsAppInboundListener:
 
             await asyncio.sleep(self.poll_interval)
 
-    def _persist_to_db(self, chat_id: str, chat_name: str, preview: str, unread_count: int, is_group: bool = False) -> None:
+    def _persist_to_db(
+        self,
+        chat_id: str,
+        chat_name: str,
+        preview: str,
+        unread_count: int,
+        is_group: bool = False,
+        timestamp_str: Optional[str] = None,
+    ) -> None:
         """Persist incoming chat preview to SQLite service_events table."""
         try:
             from app.modules.database.db import SessionLocal
@@ -119,7 +167,7 @@ class WhatsAppInboundListener:
                     sender=chat_name,
                     subject_or_title=f"Chat: {chat_name}" + (" (Group)" if is_group else ""),
                     snippet=preview,
-                    full_content=f"Chat: {chat_name}\nLatest preview: {preview}\nUnread count: {unread_count}",
+                    full_content=f"Chat: {chat_name}\nLatest preview: {preview}\nUnread count: {unread_count}\nTimestamp: {timestamp_str or 'Recent'}",
                     is_unread=unread_count > 0,
                 )
         except Exception as exc:

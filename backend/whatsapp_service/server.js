@@ -286,20 +286,45 @@ async function scrapeChats(limit) {
       const name = titleEl ? (titleEl.getAttribute("title") || titleEl.textContent.trim()) : null;
       if (!name) return null;
       const lines = el.innerText.split("\n").map((s) => s.trim()).filter(Boolean);
-      const unreadEl = el.querySelector('[data-testid="icon-unread-count"], [aria-label*="unread" i]');
+
+      // Search for time/date string
+      let timeStr = null;
+      const timeRegex = /^(\d{1,2}:\d{2}(\s*[AP]M)?|yesterday|\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}|monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/i;
+      for (const line of lines) {
+        if (timeRegex.test(line)) {
+          timeStr = line;
+          break;
+        }
+      }
+
+      // Search unread badge
+      const unreadEl = el.querySelector('[data-testid="icon-unread-count"], [aria-label*="unread" i], span[aria-label*="unread"]');
       let unread = 0;
       if (unreadEl) {
         const m = (unreadEl.getAttribute("aria-label") || unreadEl.innerText || "").match(/\d+/);
         unread = m ? parseInt(m[0], 10) : 1;
+      } else {
+        const lastLine = lines[lines.length - 1];
+        if (/^\d{1,4}$/.test(lastLine) && lines.length > 2 && lastLine !== timeStr && lastLine !== name) {
+          unread = parseInt(lastLine, 10);
+        }
       }
+
+      // Filter preview lines
+      const previewLines = lines.filter((l) => l !== name && l !== timeStr && l !== String(unread));
+      const preview = previewLines.join(" ");
+
+      const hasGroupIcon = !!el.querySelector('[data-testid="group"], [data-icon*="group"], [data-icon*="community"]');
+      const isGroup = hasGroupIcon || preview.includes(":");
+
       return {
         id: name, // DOM driver identifies chats by name
         name,
-        preview: lines.length > 1 ? lines.slice(1, 3).join(" ") : "",
+        preview: preview || (lines.length > 1 ? lines.slice(1, 3).join(" ") : ""),
         unread,
-        isGroup: false,
-        pinned: false,
-        timestamp: null,
+        isGroup,
+        pinned: !!el.querySelector('[data-testid="pinned"], [data-icon="pinned"]'),
+        timestamp: timeStr,
       };
     }).filter(Boolean);
   }, limit);
@@ -312,22 +337,49 @@ async function scrapeMessages(limit) {
     const bubbles = [...document.querySelectorAll('#main [data-testid="msg-container"]')];
     return bubbles.slice(-max).map((b) => {
       const textEl = b.querySelector(".selectable-text.copyable-text, .selectable-text, [data-testid*='msg-text']");
+      const copyable = b.querySelector(".copyable-text");
+      const preText = copyable ? copyable.getAttribute("data-pre-plain-text") : null;
+
+      let author = null;
+      let timeStr = null;
+      if (preText) {
+        const m = preText.match(/\[(.*?)(?:,\s*(.*?))?\]\s*([^:]+):?/);
+        if (m) {
+          timeStr = m[1] + (m[2] ? ` ${m[2]}` : "");
+          author = m[3] ? m[3].trim() : null;
+        }
+      }
+
+      if (!author) {
+        const authorEl = b.querySelector('[data-testid="author-name"], span._ak8i, span[dir="auto"]');
+        if (authorEl && !b.querySelector('.selectable-text')?.contains(authorEl)) {
+          author = authorEl.innerText.trim();
+        }
+      }
+
+      if (!timeStr) {
+        const metaEl = b.querySelector('[data-testid="msg-meta"], div[class*="_amjz"], span[class*="_amjz"]');
+        if (metaEl) {
+          timeStr = metaEl.innerText.trim();
+        }
+      }
+
       // outgoing bubbles hug the right edge of the panel (~57px gap);
       // tick icons no longer have stable data-testids in current WA Web
       const fromMe = panelRight - b.getBoundingClientRect().right < 120;
       return {
         id: null,
-        body: textEl ? textEl.innerText : "",
-        from: null,
+        body: textEl ? textEl.innerText.trim() : "",
+        from: fromMe ? "You" : author,
         to: null,
         fromMe,
-        timestamp: null,
+        timestamp: timeStr,
         type: textEl ? "chat" : "media",
         hasMedia: !textEl,
         caption: null,
         mimetype: null,
         filename: null,
-        author: null,
+        author: author || (fromMe ? "You" : null),
       };
     });
   }, limit);
