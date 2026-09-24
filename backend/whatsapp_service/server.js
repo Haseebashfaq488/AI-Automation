@@ -323,7 +323,7 @@ function classifyTimestamp(timeStr) {
   if (!timeStr) return { bucket: "today", is_within_3_days: true };
   const s = timeStr.trim().toLowerCase();
 
-  // Time format e.g. "10:30 AM", "9:50", "14:20" -> Today
+  // Time format e.g. "10:30 AM", "9:50", "14:20", "11:24 am" -> Today
   if (/^\d{1,2}:\d{2}(\s*[ap]m)?$/i.test(s)) {
     return { bucket: "today", is_within_3_days: true };
   }
@@ -336,9 +336,9 @@ function classifyTimestamp(timeStr) {
   // Day names check (relative to current day of week)
   const daysOfWeek = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
   const now = new Date();
-  const dayBeforeYesterday = daysOfWeek[(now.getDay() + 5) % 7];
-  const yesterdayDay = daysOfWeek[(now.getDay() + 6) % 7];
   const todayDay = daysOfWeek[now.getDay()];
+  const yesterdayDay = daysOfWeek[(now.getDay() + 6) % 7];
+  const dayBeforeYesterday = daysOfWeek[(now.getDay() + 5) % 7];
 
   if (s === dayBeforeYesterday) {
     return { bucket: "day_before_yesterday", is_within_3_days: true };
@@ -347,17 +347,34 @@ function classifyTimestamp(timeStr) {
     return { bucket: "yesterday", is_within_3_days: true };
   }
 
-  // Check if date format DD/MM/YYYY or MM/DD/YYYY
+  // Check if date format M/D/YYYY or D/M/YYYY
   const dateMatch = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
   if (dateMatch) {
-    const d = parseInt(dateMatch[1], 10);
-    const m = parseInt(dateMatch[2], 10) - 1;
+    let p1 = parseInt(dateMatch[1], 10);
+    let p2 = parseInt(dateMatch[2], 10);
     const y = parseInt(dateMatch[3].length === 2 ? "20" + dateMatch[3] : dateMatch[3], 10);
+
+    let m, d;
+    if (p1 <= 12 && p2 > 12) {
+      // M/D/YYYY
+      m = p1 - 1;
+      d = p2;
+    } else if (p1 > 12 && p2 <= 12) {
+      // D/M/YYYY
+      d = p1;
+      m = p2 - 1;
+    } else {
+      // Default to M/D/YYYY for standard WhatsApp Web English UI
+      m = p1 - 1;
+      d = p2;
+    }
+
     const msgDate = new Date(y, m, d);
-    const diffDays = Math.floor((now - msgDate) / (1000 * 60 * 60 * 24));
-    if (diffDays <= 0) return { bucket: "today", is_within_3_days: true };
-    if (diffDays <= 1) return { bucket: "yesterday", is_within_3_days: true };
-    if (diffDays <= 2) return { bucket: "day_before_yesterday", is_within_3_days: true };
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffDays = Math.round((todayStart - new Date(y, m, d)) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return { bucket: "today", is_within_3_days: true };
+    if (diffDays === 1) return { bucket: "yesterday", is_within_3_days: true };
+    if (diffDays === 2) return { bucket: "day_before_yesterday", is_within_3_days: true };
     return { bucket: "older", is_within_3_days: false };
   }
 
@@ -368,78 +385,123 @@ async function toggleUnreadFilter(enable) {
   if (!page) return false;
   return page.evaluate((shouldEnable) => {
     const candidates = [
-      ...document.querySelectorAll('button, div[role="button"], span[role="button"], [data-testid*="filter"], [aria-label*="unread" i], [title*="unread" i]')
+      ...document.querySelectorAll('button, div[role="button"], span[role="button"], [data-testid*="filter"], [aria-label*="unread" i], [title*="unread" i], [aria-label*="all" i], [title*="all" i]')
     ];
-    const unreadBtn = candidates.find((el) => {
-      const label = (el.getAttribute("aria-label") || el.getAttribute("title") || el.innerText || "").trim().toLowerCase();
-      return label === "unread" || label.includes("filter unread") || label.includes("unread chats");
-    });
-    if (!unreadBtn) return false;
-
-    const isPressed = unreadBtn.getAttribute("aria-pressed") === "true" ||
-                      unreadBtn.getAttribute("aria-selected") === "true" ||
-                      unreadBtn.classList.contains("selected") ||
-                      unreadBtn.classList.contains("active");
-
-    if ((shouldEnable && !isPressed) || (!shouldEnable && isPressed)) {
-      unreadBtn.click();
-      return true;
+    
+    if (shouldEnable) {
+      const unreadBtn = candidates.find((el) => {
+        const text = (el.innerText || "").trim().toLowerCase();
+        const label = (el.getAttribute("aria-label") || el.getAttribute("title") || "").trim().toLowerCase();
+        return text.startsWith("unread") || label.startsWith("unread") || label.includes("filter unread") || label.includes("unread chats");
+      });
+      if (unreadBtn) {
+        unreadBtn.click();
+        return true;
+      }
+    } else {
+      // Restore all chats by clicking "All" button
+      const allBtn = candidates.find((el) => {
+        const text = (el.innerText || "").trim().toLowerCase();
+        const label = (el.getAttribute("aria-label") || el.getAttribute("title") || "").trim().toLowerCase();
+        return text === "all" || text.startsWith("all") || label === "all" || label.startsWith("all");
+      });
+      if (allBtn) {
+        allBtn.click();
+        return true;
+      }
     }
     return false;
   }, enable);
 }
 
 async function scrapeChats(limit = 50, days = 3) {
-  const rawChats = await page.evaluate((max) => {
-    const items = [...document.querySelectorAll(
-      '#pane-side [role="listitem"], #pane-side [data-testid="cell-frame-container"]'
-    )].slice(0, max);
-    return items.map((el) => {
-      const titleEl = el.querySelector("span[title]");
-      const name = titleEl ? (titleEl.getAttribute("title") || titleEl.textContent.trim()) : null;
-      if (!name) return null;
-      const lines = el.innerText.split("\n").map((s) => s.trim()).filter(Boolean);
+  // Reset scroll to top so top chats (Today/Yesterday) are in DOM view
+  await page.evaluate(() => {
+    const pane = document.querySelector("#pane-side");
+    if (pane) pane.scrollTop = 0;
+  });
+  await sleep(400);
 
-      // Search for time/date string
+  const rawChats = await page.evaluate((max) => {
+    const pane = document.querySelector("#pane-side");
+    if (!pane) return [];
+
+    // Target individual chat cell containers only (no parent list containers)
+    let rows = [...pane.querySelectorAll('[data-testid="cell-frame-container"]')];
+    if (rows.length === 0) {
+      rows = [...pane.querySelectorAll('div[role="listitem"]')];
+    }
+    if (rows.length === 0) {
+      // Fallback to direct cell children
+      rows = [...pane.querySelectorAll('div[tabindex="-1"] > div')].filter((el) => {
+        return !!el.querySelector('span[title]');
+      });
+    }
+
+    const seenNames = new Set();
+    const chats = [];
+
+    for (const el of rows) {
+      // Chat title is strictly inside the cell's header span
+      const titleEl = el.querySelector('span[title]');
+      let name = titleEl ? (titleEl.getAttribute('title') || titleEl.innerText || "").trim() : null;
+
+      if (!name) {
+        const autoSpan = el.querySelector('div[class*="_ak8q"] span, span[dir="auto"]');
+        if (autoSpan) name = autoSpan.innerText.trim();
+      }
+
+      if (!name || seenNames.has(name)) continue;
+
+      // Extract time / date label
       let timeStr = null;
-      const timeRegex = /^(\d{1,2}:\d{2}(\s*[AP]M)?|yesterday|\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}|monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/i;
-      for (const line of lines) {
-        if (timeRegex.test(line)) {
-          timeStr = line;
+      const timeRegex = /^(\d{1,2}:\d{2}(\s*[ap]m)?|yesterday|today|monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})$/i;
+      
+      const allSpans = [...el.querySelectorAll('span, div')];
+      for (const sp of allSpans) {
+        const txt = sp.innerText ? sp.innerText.trim() : "";
+        if (txt && timeRegex.test(txt) && txt !== name) {
+          timeStr = txt;
           break;
         }
       }
 
-      // Search unread badge
+      // Extract unread badge
       const unreadEl = el.querySelector('[data-testid="icon-unread-count"], [aria-label*="unread" i], span[aria-label*="unread"]');
       let unread = 0;
       if (unreadEl) {
         const m = (unreadEl.getAttribute("aria-label") || unreadEl.innerText || "").match(/\d+/);
         unread = m ? parseInt(m[0], 10) : 1;
-      } else {
-        const lastLine = lines[lines.length - 1];
-        if (/^\d{1,4}$/.test(lastLine) && lines.length > 2 && lastLine !== timeStr && lastLine !== name) {
-          unread = parseInt(lastLine, 10);
-        }
       }
 
-      // Filter preview lines
-      const previewLines = lines.filter((l) => l !== name && l !== timeStr && l !== String(unread));
-      const preview = previewLines.join(" ");
+      // Extract preview (subtitle)
+      let preview = "";
+      const previewEl = el.querySelector('div[class*="_ak8k"], div[class*="_ak8l"], span[data-testid="last-msg-status"]');
+      if (previewEl) {
+        preview = previewEl.innerText.trim();
+      } else {
+        const lines = el.innerText.split("\n").map((s) => s.trim()).filter((s) => s && s !== name && s !== timeStr && s !== String(unread));
+        preview = lines.join(" ");
+      }
 
       const hasGroupIcon = !!el.querySelector('[data-testid="group"], [data-icon*="group"], [data-icon*="community"]');
-      const isGroup = hasGroupIcon || preview.includes(":");
+      const isGroup = hasGroupIcon || preview.includes(":") || name.includes("(") || name.includes("Batch") || name.includes("2026");
 
-      return {
-        id: name, // DOM driver identifies chats by name
+      seenNames.add(name);
+      chats.push({
+        id: name,
         name,
-        preview: preview || (lines.length > 1 ? lines.slice(1, 3).join(" ") : ""),
+        preview: preview.slice(0, 150),
         unread,
         isGroup,
         pinned: !!el.querySelector('[data-testid="pinned"], [data-icon="pinned"]'),
         timestamp: timeStr,
-      };
-    }).filter(Boolean);
+      });
+
+      if (chats.length >= max) break;
+    }
+
+    return chats;
   }, limit);
 
   return rawChats.map((c) => {
