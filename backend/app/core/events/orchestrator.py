@@ -364,9 +364,10 @@ class TaskOrchestrator:
 
         # 3. Infer file_path / path / name for drive upload
         if tool_name == "upload_drive_file" or "drive" in tool_name:
-            curr_fp = str(resolved.get("file_path", "")).strip()
+            curr_fp = str(resolved.get("path") or resolved.get("file_path", "")).strip()
             if not curr_fp or curr_fp in ("{worker.artifact}", "{worker.artifact_path}", "None"):
                 if artifact_path:
+                    resolved["path"] = str(artifact_path)
                     resolved["file_path"] = str(artifact_path)
             if artifact_path and not resolved.get("name") and not resolved.get("file_name"):
                 resolved["name"] = Path(artifact_path).name

@@ -39,9 +39,9 @@ class UploadDriveFileTool(BaseTool):
     }
 
     async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        file_path_str = params.get("path")
+        file_path_str = params.get("path") or params.get("file_path")
         folder_id = params.get("folder_id")
-        target_name = params.get("name")
+        target_name = params.get("name") or params.get("file_name")
 
         if not file_path_str:
             return {"success": False, "error": "path parameter is required"}
