@@ -47,6 +47,10 @@ class WorkerEngine:
         self._loop_task: Optional[asyncio.Task] = None
         self._cancelled = False
         self._interventions: List[str] = []
+        self._plan_approved_event = asyncio.Event()
+        self._awaiting_plan_approval = False
+        self._implementation_plan: Optional[str] = None
+        self._test_results: Dict[str, Any] = {}
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -84,6 +88,9 @@ class WorkerEngine:
                 "objective": None,
                 "fs_scope": None,
                 "allowed_tools": [],
+                "plan_status": "pending",
+                "implementation_plan": None,
+                "test_results": {},
             }
         state = self._session.read_state()
         running = self._loop_task is not None and not self._loop_task.done()
@@ -94,14 +101,24 @@ class WorkerEngine:
                 "fs_scope": self._contract.fs_scope,
                 "allowed_tools": self._contract.allowed_tools,
                 "max_steps": self._contract.max_steps,
+                "plan_status": self._contract.plan_status,
             }
+        
+        status = "cancelled" if self._cancelled else (
+            "awaiting_plan_approval" if self._awaiting_plan_approval else (
+                "running" if running else "completed"
+            )
+        )
+
         return {
-            "status": "cancelled" if self._cancelled else ("running" if running else "completed"),
+            "status": status,
             "progress_percent": state.get("progress_percent", 0),
             "current_step": state.get("current_step"),
             "completed": state.get("completed", []),
             "remaining": state.get("remaining", []),
             "errors": state.get("errors", []),
+            "implementation_plan": self._implementation_plan or self._session.read_plan(),
+            "test_results": self._test_results or self._session.read_test_results(),
             **contract_info,
         }
 
@@ -127,9 +144,42 @@ class WorkerEngine:
         """Queue a parent guidance message for the worker loop."""
         self._interventions.append(message)
 
+    def approve_plan(self, approved_plan: Optional[str] = None) -> bool:
+        """Approve the implementation plan and resume worker execution."""
+        if approved_plan:
+            self._implementation_plan = approved_plan
+            if self._contract:
+                self._contract.implementation_plan = approved_plan
+            if self._session:
+                self._session.write_plan(approved_plan)
+
+        if self._contract:
+            self._contract.plan_status = "approved"
+
+        if self._session:
+            self._session.append_event("PLAN_APPROVED", {"plan": self._implementation_plan or ""})
+
+        self._awaiting_plan_approval = False
+        self._plan_approved_event.set()
+        return True
+
+    def reject_plan(self, feedback: str) -> bool:
+        """Reject or request changes to the implementation plan with feedback."""
+        if self._contract:
+            self._contract.plan_status = "rejected"
+
+        if self._session:
+            self._session.append_event("PLAN_REJECTED", {"feedback": feedback})
+
+        self.intervene(f"Plan revision request: {feedback}")
+        self._awaiting_plan_approval = False
+        self._plan_approved_event.set()
+        return True
+
     def cancel(self) -> None:
         """Request cooperative cancellation of the worker loop."""
         self._cancelled = True
+        self._plan_approved_event.set()
         if self._loop_task and not self._loop_task.done():
             self._loop_task.cancel()
 
@@ -151,6 +201,8 @@ class WorkerEngine:
         if agent is not None:
             if hasattr(agent, "worker_session_id") and not getattr(agent, "worker_session_id", None):
                 agent.worker_session_id = self._session_id
+            if hasattr(agent, "requires_plan_approval"):
+                agent.requires_plan_approval = contract.requires_plan_approval
             binary_check = None
             try:
                 from app.workers.antigravity_worker.agent import config as agy_config
@@ -204,11 +256,57 @@ class WorkerEngine:
                     summary = decision.get("summary", "")
                     break
 
+                # Handle Plan Ready & Review Gate
+                if action == "plan_ready":
+                    plan_text = decision.get("plan") or ""
+                    self._implementation_plan = plan_text
+                    self._session.write_plan(plan_text)
+                    if self._contract:
+                        self._contract.implementation_plan = plan_text
+                        self._contract.plan_status = "awaiting_approval"
+
+                    step_name = decision.get("params", {}).get("step", "Job 1: Author Implementation Plan")
+                    completed.append(step_name)
+                    ev.step_completed(step_name, step_index, output={"plan": plan_text[:500]})
+                    self._session.append_event("PLAN_READY", {"step": step_name, "plan": plan_text})
+
+                    if contract.requires_plan_approval:
+                        self._awaiting_plan_approval = True
+                        self._plan_approved_event.clear()
+                        self._session.write_state({
+                            "status": "awaiting_plan_approval",
+                            "current_step": "Awaiting Plan Approval",
+                            "completed": completed,
+                            "remaining": [contract.objective],
+                            "errors": [e["message"] for e in errors],
+                            "progress_percent": 33,
+                            "plan_status": "awaiting_approval",
+                            "implementation_plan": plan_text,
+                        })
+                        logger.info("Worker session %s is awaiting plan approval", self._session_id)
+                        await self._plan_approved_event.wait()
+
+                        if self._cancelled:
+                            break
+
+                        if hasattr(agent, "set_approved_plan") and self._implementation_plan:
+                            agent.set_approved_plan(self._implementation_plan)
+
+                    continue
+
                 # action == "tool"
                 step_index += 1
                 tool_name = decision["tool"]
                 params = decision.get("params", {})
                 step_name = params.get("step") or tool_name
+
+                # Capture test results if this was the testing phase
+                if tool_name == "self_testing" or "test_results" in params:
+                    test_data = params.get("test_results") or {}
+                    self._test_results = test_data
+                    self._session.write_test_results(test_data)
+                    if self._contract:
+                        self._contract.test_results = test_data
 
                 # Update live state
                 self._session.write_state({
@@ -218,6 +316,9 @@ class WorkerEngine:
                     "remaining": [contract.objective] if not completed else [],
                     "errors": [e["message"] for e in errors],
                     "progress_percent": int(step_index / max(max_steps, 1) * 100),
+                    "plan_status": self._contract.plan_status if self._contract else "approved",
+                    "implementation_plan": self._implementation_plan or self._session.read_plan(),
+                    "test_results": self._test_results or self._session.read_test_results(),
                 })
                 ev.step_started(step_name, step_index - 1)
                 self._session.append_event(
@@ -257,6 +358,8 @@ class WorkerEngine:
             "errors": errors,
             "cancelled": self._cancelled,
             "summary": summary,
+            "implementation_plan": self._implementation_plan or self._session.read_plan(),
+            "test_results": self._test_results or self._session.read_test_results(),
         }
         self._finalize(ev, completed, errors, result_data)
         return result_data

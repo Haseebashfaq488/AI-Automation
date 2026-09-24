@@ -34,10 +34,19 @@ class ForkRequest(BaseModel):
     fs_scope: str = Field(default_factory=_default_scope)
     allowed_tools: List[str] = []
     max_steps: int = 20
+    requires_plan_approval: bool = True
 
 
 class InterveneRequest(BaseModel):
     message: str
+
+
+class ApprovePlanRequest(BaseModel):
+    plan: Optional[str] = None
+
+
+class RejectPlanRequest(BaseModel):
+    feedback: str
 
 
 class OpenTerminalRequest(BaseModel):
@@ -210,6 +219,7 @@ async def fork_worker(payload: ForkRequest):
             allowed_tools=payload.allowed_tools,
             max_steps=payload.max_steps,
             model=payload.model,
+            requires_plan_approval=payload.requires_plan_approval,
         )
     except Exception as exc:
         raise HTTPException(status_code=422, detail=f"Invalid contract: {exc}")
@@ -252,6 +262,7 @@ def _disk_sessions() -> Dict[str, Dict]:
                 "fs_scope": task_data.fs_scope,
                 "allowed_tools": task_data.allowed_tools,
                 "max_steps": task_data.max_steps,
+                "plan_status": task_data.plan_status,
             }
         except Exception:
             pass
@@ -263,6 +274,8 @@ def _disk_sessions() -> Dict[str, Dict]:
             "completed": state.get("completed", []),
             "remaining": state.get("remaining", []),
             "errors": state.get("errors", []),
+            "implementation_plan": session.read_plan(),
+            "test_results": session.read_test_results(),
             **contract_info,
         }
     return found
@@ -299,6 +312,7 @@ def _agent_factory_for(worker_type: str):
                 model=contract.model,
                 master_prompt=contract.master_prompt,
                 worker_session_id=contract.task_id,
+                requires_plan_approval=contract.requires_plan_approval,
             )
 
         return factory
@@ -363,6 +377,61 @@ async def get_worker_result(session_id: str):
     if not (session.path / "result.json").is_file():
         raise HTTPException(status_code=404, detail="Worker session not found")
     return {"session_id": session_id, "result": session.read_result()}
+
+
+@router.post("/{session_id}/approve-plan")
+async def approve_worker_plan(session_id: str, payload: Optional[ApprovePlanRequest] = None):
+    """Approve the worker's implementation plan and trigger execution."""
+    eng = _engines.get(session_id)
+    if not eng:
+        raise HTTPException(status_code=404, detail="Worker session not found")
+    plan_override = payload.plan if payload else None
+    eng.approve_plan(plan_override)
+    return {"status": "plan approved", "session_id": session_id}
+
+
+@router.post("/{session_id}/reject-plan")
+async def reject_worker_plan(session_id: str, payload: RejectPlanRequest):
+    """Reject or request revisions to the worker's implementation plan."""
+    eng = _engines.get(session_id)
+    if not eng:
+        raise HTTPException(status_code=404, detail="Worker session not found")
+    eng.reject_plan(payload.feedback)
+    return {"status": "plan rejected with feedback", "session_id": session_id}
+
+
+@router.get("/{session_id}/plan")
+async def get_worker_plan(session_id: str):
+    """Retrieve the worker's implementation plan."""
+    from app.workers.base.session import WorkerSession
+
+    eng = _engines.get(session_id)
+    if eng:
+        plan = eng._implementation_plan or (eng._session.read_plan() if eng._session else "")
+        return {"session_id": session_id, "plan": plan}
+
+    session = WorkerSession(session_id)
+    plan = session.read_plan()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found for session")
+    return {"session_id": session_id, "plan": plan}
+
+
+@router.get("/{session_id}/test-results")
+async def get_worker_test_results(session_id: str):
+    """Retrieve the worker's automated self-testing results."""
+    from app.workers.base.session import WorkerSession
+
+    eng = _engines.get(session_id)
+    if eng:
+        results = eng._test_results or (eng._session.read_test_results() if eng._session else {})
+        return {"session_id": session_id, "test_results": results}
+
+    session = WorkerSession(session_id)
+    results = session.read_test_results()
+    if not results:
+        raise HTTPException(status_code=404, detail="Test results not found for session")
+    return {"session_id": session_id, "test_results": results}
 
 
 @router.post("/{session_id}/intervene")

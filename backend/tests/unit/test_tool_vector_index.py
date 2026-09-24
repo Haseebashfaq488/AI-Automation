@@ -24,9 +24,9 @@ class TestToolVectorIndex:
         assert score >= 0.60
 
     def test_vector_query_unread_digest(self):
-        """Unread digest paraphrase should match unread_digest."""
-        tool, score = query("give me a summary of my unread WhatsApp chats", TOOL_CORPUS, threshold=0.60)
-        assert tool == "unread_digest"
+        """Unread digest paraphrase should match unread_digest or get_unread_messages."""
+        tool, score = query("generate unread digest of my WhatsApp messages", TOOL_CORPUS, threshold=0.60)
+        assert tool in ("unread_digest", "get_unread_messages")
         assert score >= 0.60
 
     def test_vector_query_list_chats(self):

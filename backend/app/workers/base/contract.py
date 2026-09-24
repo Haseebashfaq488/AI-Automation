@@ -63,6 +63,22 @@ class TaskContract(BaseModel):
         default=True,
         description="Whether active stream guardian supervision is enabled for this worker.",
     )
+    requires_plan_approval: bool = Field(
+        default=True,
+        description="Whether the worker requires implementation plan review and approval before execution.",
+    )
+    plan_status: str = Field(
+        default="pending",
+        description="Current status of the implementation plan: pending, awaiting_approval, approved, rejected.",
+    )
+    implementation_plan: Optional[str] = Field(
+        default=None,
+        description="The detailed implementation plan authored by the worker.",
+    )
+    test_results: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Structured verification and test results recorded by the worker.",
+    )
 
     @field_validator("fs_scope")
     @classmethod

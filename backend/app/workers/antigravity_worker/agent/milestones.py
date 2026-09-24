@@ -194,6 +194,151 @@ def build_prompt(milestone: Milestone, fs_scope: str, intervention: str | None =
     return "\n\n".join(parts)
 
 
+def build_planning_prompt(
+    objective: str,
+    fs_scope: str,
+    requirements: List[str] | None = None,
+    constraints: List[str] | None = None,
+    success_criteria: List[str] | None = None,
+    intervention: str | None = None,
+) -> str:
+    """Build the prompt for Job 1: Implementation Planning & Architecture Blueprint."""
+    reqs = list(requirements or [])
+    cons = list(constraints or [])
+    crit = list(success_criteria or [])
+
+    reqs_text = "\n".join(f"- {r}" for r in reqs) if reqs else "- Follow standard software engineering best practices"
+    cons_text = "\n".join(f"- {c}" for c in cons) if cons else f"- Stay strictly within workspace boundary: {fs_scope}"
+    crit_text = "\n".join(f"- [ ] {s}" for s in crit) if crit else "- [ ] Plan accurately reflects all requirements"
+
+    parts: List[str] = []
+
+    if intervention:
+        parts.append(
+            "# ⚠️ PRIORITY MANAGER INTERVENTION (MANDATORY OVERRIDE)\n"
+            f"The user/manager has provided the following guidance/feedback:\n"
+            f"> \"{intervention}\"\n\n"
+            "CRITICAL DIRECTIVE: Incorporate this guidance into the revised implementation plan."
+        )
+
+    parts.append(
+        f"# 📋 WORKER JOB 1: IMPLEMENTATION PLANNING & BLUEPRINT\n\n"
+        f"## 1. Primary Objective\n{objective}\n\n"
+        f"## 2. Workspace Scope & Boundaries\n"
+        f"- Target Root: `{fs_scope}`\n\n"
+        f"## 3. Requirements & Constraints\n"
+        f"### Requirements:\n{reqs_text}\n\n"
+        f"### Constraints:\n{cons_text}\n\n"
+        f"### Target Success Criteria:\n{crit_text}\n\n"
+        f"## 4. Mandatory Instructions for Planning Phase\n"
+        f"You are currently in **PLANNING MODE** (Job 1 of 3).\n"
+        f"- **DO NOT** write or modify application/production code yet.\n"
+        f"- You MAY inspect existing files, read directories, or check environment configurations to ground your plan.\n"
+        f"- Author a comprehensive, step-by-step implementation plan and save it to `{fs_scope}/implementation_plan.md`.\n\n"
+        f"## 5. Required Plan Structure (`implementation_plan.md`)\n"
+        f"Your plan must contain the following sections:\n"
+        f"1. **Architecture & Design Overview**: Summary of approach, tech stack, and module structure.\n"
+        f"2. **Target Files**: List of all files to create, modify, or delete with their exact relative paths.\n"
+        f"3. **Step-by-Step Implementation Roadmap**: Ordered list of execution steps (Job 2).\n"
+        f"4. **Self-Testing & Verification Plan**: Explicit testing strategy (unit tests, integration checks, test commands) for Job 3.\n"
+        f"5. **Edge Cases & Failure Handling**: Identified risks and mitigations.\n\n"
+        f"Write `{fs_scope}/implementation_plan.md` and output the complete markdown plan."
+    )
+
+    return "\n\n".join(parts)
+
+
+def build_execution_prompt(
+    objective: str,
+    fs_scope: str,
+    approved_plan: str,
+    requirements: List[str] | None = None,
+    constraints: List[str] | None = None,
+    intervention: str | None = None,
+) -> str:
+    """Build the prompt for Job 2: Executing the Approved Implementation Plan."""
+    reqs = list(requirements or [])
+    cons = list(constraints or [])
+
+    reqs_text = "\n".join(f"- {r}" for r in reqs) if reqs else "- Follow standard software engineering best practices"
+    cons_text = "\n".join(f"- {c}" for c in cons) if cons else f"- Stay strictly within workspace boundary: {fs_scope}"
+
+    parts: List[str] = []
+
+    if intervention:
+        parts.append(
+            "# ⚠️ PRIORITY MANAGER INTERVENTION (MANDATORY OVERRIDE)\n"
+            f"The user/manager has provided the following instruction:\n"
+            f"> \"{intervention}\"\n\n"
+            "CRITICAL DIRECTIVE: Adapt execution immediately to satisfy this guidance."
+        )
+
+    parts.append(
+        f"# ⚡ WORKER JOB 2: PLAN EXECUTION\n\n"
+        f"## 1. Primary Objective\n{objective}\n\n"
+        f"## 2. Workspace Scope\n`{fs_scope}`\n\n"
+        f"## 3. Requirements & Constraints\n"
+        f"### Requirements:\n{reqs_text}\n\n"
+        f"### Constraints:\n{cons_text}\n\n"
+        f"## 4. Approved Implementation Plan\n"
+        f"```markdown\n{approved_plan.strip()}\n```\n\n"
+        f"## 5. Execution Directives\n"
+        f"- Execute all steps outlined in the approved implementation plan.\n"
+        f"- Author complete, production-ready, modular code.\n"
+        f"- Create and update all target files in `{fs_scope}`.\n"
+        f"- Conclude with a summary of files created and modified."
+    )
+
+    return "\n\n".join(parts)
+
+
+def build_testing_prompt(
+    objective: str,
+    fs_scope: str,
+    success_criteria: List[str] | None = None,
+    testing_spec: Dict[str, Any] | None = None,
+    intervention: str | None = None,
+) -> str:
+    """Build the prompt for Job 3: Automated Self-Testing & Verification."""
+    crit = list(success_criteria or [])
+    crit_text = "\n".join(f"- [ ] {s}" for s in crit) if crit else "- [ ] Unit tests passing\n- [ ] Dataflow verification successful\n- [ ] Edge cases handled"
+
+    parts: List[str] = []
+
+    if intervention:
+        parts.append(
+            "# ⚠️ PRIORITY MANAGER INTERVENTION (MANDATORY OVERRIDE)\n"
+            f"The user/manager has provided the following instruction:\n"
+            f"> \"{intervention}\"\n\n"
+            "CRITICAL DIRECTIVE: Verify this guidance during testing."
+        )
+
+    parts.append(
+        f"# 🧪 WORKER JOB 3: MANDATORY SELF-TESTING & VERIFICATION\n\n"
+        f"## 1. Objective Being Verified\n{objective}\n\n"
+        f"## 2. Target Workspace\n`{fs_scope}`\n\n"
+        f"## 3. Success Criteria Checklist\n{crit_text}\n\n"
+        f"## 4. Mandatory Testing Protocol\n"
+        f"As an autonomous engineer, verify your implementation independently:\n"
+        f"1. **Create / Run Test Suites**: Write and execute automated test scripts (e.g. `pytest`, unit test scripts, or command assertions) in `{fs_scope}`.\n"
+        f"2. **Dataflow & Edge Case Verification**: Verify valid outputs for normal and edge-case inputs.\n"
+        f"3. **Self-Correction**: If ANY test or check fails, inspect the error output, modify the code to fix the root cause, and re-run tests until ALL pass.\n"
+        f"4. **Output Test Artifact**: Write `{fs_scope}/test_results.json` with the following schema:\n"
+        f"```json\n"
+        f"{{\n"
+        f'  "status": "PASSED",\n'
+        f'  "total_tests": 3,\n'
+        f'  "passed": 3,\n'
+        f'  "failed": 0,\n'
+        f'  "verification_summary": "Detailed explanation of tests run and results."\n'
+        f"}}\n"
+        f"```\n\n"
+        f"Conclude with a clear report of test results."
+    )
+
+    return "\n\n".join(parts)
+
+
 def build_master_task_prompt(
     objective: str,
     fs_scope: str,

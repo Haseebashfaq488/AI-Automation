@@ -117,6 +117,30 @@ class WorkerSession:
     def write_result(self, result: dict) -> None:
         (self.path / "result.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
 
+    def read_plan(self) -> str:
+        plan_path = self.path / "plan.md"
+        if plan_path.exists():
+            try:
+                return plan_path.read_text(encoding="utf-8")
+            except Exception:
+                pass
+        return ""
+
+    def write_plan(self, plan_text: str) -> None:
+        (self.path / "plan.md").write_text(plan_text, encoding="utf-8")
+
+    def read_test_results(self) -> dict:
+        results_path = self.path / "test_results.json"
+        if results_path.exists():
+            try:
+                return json.loads(results_path.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+        return {}
+
+    def write_test_results(self, results: dict) -> None:
+        (self.path / "test_results.json").write_text(json.dumps(results, indent=2), encoding="utf-8")
+
     @property
     def completed(self) -> list:
         return self.read_state().get("completed", [])

@@ -196,3 +196,36 @@ class TestWorkersAPI:
         assert resp_stream.status_code == 200
         assert "result" in resp_stream.text
 
+    def test_plan_approval_and_test_results_lifecycle(self, client):
+        resp = client.post("/workers/fork", json={
+            "objective": "Build automated math utility",
+            "requirements": ["Create math_utils.py", "Include factorial and fibonacci"],
+            "constraints": ["No third-party math libraries"],
+            "success_criteria": ["All tests pass"],
+            "fs_scope": SCOPE,
+            "requires_plan_approval": True,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        session_id = data["session_id"]
+
+        # Approve the plan
+        resp_approve = client.post(f"/workers/{session_id}/approve-plan", json={
+            "plan": "# Implementation Plan\n1. Create math_utils.py\n2. Run tests"
+        })
+        assert resp_approve.status_code == 200
+        assert resp_approve.json()["status"] == "plan approved"
+
+        # Check plan retrieval
+        resp_plan = client.get(f"/workers/{session_id}/plan")
+        assert resp_plan.status_code == 200
+        assert "Implementation Plan" in resp_plan.json()["plan"]
+
+        # Check reject plan endpoint
+        resp_reject = client.post(f"/workers/{session_id}/reject-plan", json={
+            "feedback": "Please add prime number check as well."
+        })
+        assert resp_reject.status_code == 200
+        assert resp_reject.json()["status"] == "plan rejected with feedback"
+
+

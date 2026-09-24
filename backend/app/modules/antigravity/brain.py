@@ -55,8 +55,12 @@ class JarvisBrainManager:
         # 4. Autonomous Task Delegation & Worker Forking
         "fork": {
             "objective": "Clear description of the engineering, coding, file, or multi-step task to delegate to the worker",
+            "requirements": "optional list of functional and architectural requirements",
+            "constraints": "optional list of constraints or boundaries",
+            "success_criteria": "optional list of verifiable success criteria",
             "fs_scope": "Target workspace directory (default 'D:/workspace')",
             "worker_type": "Worker engine type ('antigravity_worker')",
+            "requires_plan_approval": "optional boolean, default true (worker plans and waits for approval before coding)",
             "max_steps": "Maximum execution steps (default 20)",
         },
     }
@@ -283,7 +287,7 @@ class JarvisBrainManager:
             "You are Jarvis, a personal AI executive manager and task coordinator for Haseeb (Phone: +923098956995, Workspace: D:/workspace).\n\n"
             "### CORE RESPONSIBILITIES & DECISION RULES:\n"
             "1. ORCHESTRATION & TASK DELEGATION: You never write raw code, create files, edit directories, or execute engineering tasks directly in chat text. You coordinate, manage tasks, and plan.\n"
-            "2. AUTONOMOUS TASK FORKING (`fork`): Whenever the user asks to create files, write code, build apps, develop scripts, scrape web data, refactor, run terminal commands, test, analyze, or perform ANY local file/directory operations, ALWAYS return a plan using the `fork` tool with `objective` set to the task description, `fs_scope` set to 'D:/workspace', and `worker_type` set to 'antigravity_worker'. The forked worker has the full native Antigravity toolkit (write_to_file, replace_file_content, run_command, view_file, list_dir, grep_search, search_web, etc.).\n"
+            "2. AUTONOMOUS TASK FORKING (`fork`): Whenever the user asks to create files, write code, build apps, develop scripts, scrape web data, refactor, run terminal commands, test, analyze, or perform ANY local file/directory operations, ALWAYS return a plan using the `fork` tool. Synthesize a detailed `objective`, list of explicit `requirements`, list of `constraints`, and list of `success_criteria`. Set `fs_scope` to 'D:/workspace' and `worker_type` to 'antigravity_worker'. The worker executes in 3 jobs: Job 1 (Implementation Planning & Review), Job 2 (Plan Execution), Job 3 (Self-Testing & Verification).\n"
             "3. GOOGLE DRIVE TOOLS: When the user asks to list files from Google Drive, search Drive, download/read Drive files, or upload files to Drive, use `list_drive_files`, `search_drive`, `read_drive_file`, or `upload_drive_file` directly with the extracted parameters.\n"
             "4. MULTI-STEP & CHAINED WORKFLOWS: When the user asks for a compound task such as 'Create a file and send it to me on WhatsApp' or 'Generate a summary and email it', produce a multi-step plan where Step 1 is `fork` (generating the artifact) and Step 2 is the communication tool (`send_file`, `send_message`, or `send_email`). For file paths produced by the worker, use '{worker.artifact}'. The system automatically chains Step 2 to execute reactively when the worker completes.\n"
             "5. ATOMIC COMMUNICATION TOOLS: When the user requests an explicit single-step communication operation (WhatsApp send message/file or read chats, Gmail send email with attachments or search inbox), return a plan with that exact tool and the extracted parameters.\n"
@@ -353,6 +357,7 @@ class JarvisBrainManager:
             "max_results", "permanent", "extension", "start_index",
             "objective", "fs_scope", "allowed_tools", "worker_type", "max_steps",
             "model", "attachments", "subject", "limit",
+            "requirements", "constraints", "success_criteria", "requires_plan_approval",
         }
         spec = self._KNOWN_TOOLS.get(tool_name, {})
         return [k for k in spec if k not in optional]

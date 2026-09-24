@@ -2,6 +2,22 @@
 
 ---
 
+### Module 13 – Autonomous Worker 3-Job Workflow (Planning, Execution & Self-Testing)
+- **Step 1: Jarvis Task Prompt & Spec Synthesizer**:
+  - `JarvisBrainManager` automatically synthesizes rich Master Task Specifications including primary objectives, acceptance criteria, filesystem boundary scopes, and engineering execution protocols.
+- **Step 2 - Job 1: Implementation Planning & Review Gate**:
+  - Worker enters dedicated Planning Mode on turn 1 (`build_planning_prompt`), inspects existing code, and authors `implementation_plan.md`.
+  - Worker engine halts execution in `awaiting_plan_approval` status until user or Jarvis approves or revises the plan.
+  - Endpoints: `POST /workers/{session_id}/approve-plan`, `POST /workers/{session_id}/reject-plan`, `GET /workers/{session_id}/plan`.
+- **Step 2 - Job 2: Plan Execution**:
+  - Worker executes the approved plan step-by-step (`build_execution_prompt`), creating and modifying files in the bounded workspace scope.
+- **Step 2 - Job 3: Automated Self-Testing & Self-Correction**:
+  - Worker enters verification phase (`build_testing_prompt`), executes unit tests/verification scripts, self-corrects bugs on failure, and outputs `test_results.json`.
+  - Endpoint: `GET /workers/{session_id}/test-results`.
+- **Testing**: 42 unit and integration tests passing in `tests/unit/test_antigravity_brain.py`, `test_antigravity_worker.py`, `test_workers.py`, and `test_workers_api.py`.
+
+---
+
 ### Module 12 – 7-Day Ambient Multi-Service Memory & 24-Hour Hot Activity Feed
 - **3-Layer Memory Architecture**:
   - **Layer 1 (24-Hour Hot Activity Stream)**: SQLite `service_events` table tracking WhatsApp, Gmail, and Google Drive interactions with deduplication, sender/snippet extraction, and unread flags.

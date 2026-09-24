@@ -77,15 +77,31 @@ class TestAntigravityWorkerAgent:
         )
 
         with patch("app.workers.antigravity_worker.agent.worker_agent.run_antigravity_cli", new=AsyncMock(return_value=mock_result)):
+            # Job 1: Planning
             step1 = await agent.decide_next_step()
-            assert step1["action"] == "tool"
-            assert step1["tool"] == "task_execution"
-            assert step1["params"]["step"] == "Execute & Verify Task"
+            assert step1["action"] == "plan_ready"
+            assert step1["params"]["step"] == "Job 1: Author Implementation Plan"
             assert step1["params"]["session_id"] == "agy_ses_123"
 
+            # Approve plan -> advance to Job 2
+            agent.set_approved_plan(step1["plan"])
+
+            # Job 2: Execution
             step2 = await agent.decide_next_step()
-            assert step2["action"] == "done"
-            assert "Created test file" in step2["summary"]
+            assert step2["action"] == "tool"
+            assert step2["tool"] == "task_execution"
+            assert step2["params"]["step"] == "Job 2: Execute Implementation Plan"
+
+            # Job 3: Self-Testing & Verification
+            step3 = await agent.decide_next_step()
+            assert step3["action"] == "tool"
+            assert step3["tool"] == "self_testing"
+            assert step3["params"]["step"] == "Job 3: Self-Testing & Verification"
+
+            # Conclude
+            step4 = await agent.decide_next_step()
+            assert step4["action"] == "done"
+            assert "Created test file" in step4["summary"]
 
     @pytest.mark.asyncio
     async def test_intervention_injection_executes_intervention(self):
@@ -117,6 +133,7 @@ class TestAntigravityEngineIntegration:
             fs_scope=str(tmp_path),
             allowed_tools=[],
             model="gemini-3.8-flash-low",
+            requires_plan_approval=True,
         )
 
         def factory(c: TaskContract):
@@ -124,6 +141,7 @@ class TestAntigravityEngineIntegration:
                 objective=c.objective,
                 fs_scope=c.fs_scope,
                 model=c.model,
+                requires_plan_approval=c.requires_plan_approval,
             )
             ag.available = True
             ag.cli_binary = "agy.exe"
@@ -133,7 +151,18 @@ class TestAntigravityEngineIntegration:
         with patch("app.workers.antigravity_worker.agent.worker_agent.run_antigravity_cli", new=mock_run):
             eng = WorkerEngine(registry, agent_factory=factory)
             res = await eng.run(contract)
-            assert res["status"] in ("completed", "running")
+            assert res["status"] in ("completed", "running", "awaiting_plan_approval")
+
+            # Let planning complete and wait for approval state
+            for _ in range(20):
+                if eng.get_state()["status"] == "awaiting_plan_approval":
+                    break
+                await asyncio.sleep(0.05)
+
+            assert eng.get_state()["status"] == "awaiting_plan_approval"
+
+            # Approve plan to trigger execution and self-testing
+            eng.approve_plan("# Approved Plan\n1. Do it.")
 
             if eng._loop_task:
                 await eng._loop_task
