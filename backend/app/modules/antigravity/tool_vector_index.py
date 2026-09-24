@@ -93,6 +93,28 @@ TOOL_CORPUS: Dict[str, List[str]] = {
         "search chat history for invoice",
         "look for keyphrase in messages",
     ],
+    "get_unread_messages": [
+        "check my unread WhatsApp messages",
+        "what are my unread chats on WhatsApp",
+        "show unread messages using WhatsApp unread filter",
+        "do I have any new unread WhatsApp messages",
+        "filter unread WhatsApp messages",
+        "fetch unread WhatsApp conversations",
+    ],
+    "get_recent_whatsapp_activity": [
+        "what happened on WhatsApp over the past 3 days",
+        "show recent WhatsApp activity for Today, Yesterday, and Tuesday",
+        "summarize active WhatsApp chats and groups",
+        "what was the activity in my WhatsApp conversations recently",
+        "get recent WhatsApp activity across all groups",
+    ],
+    "get_whatsapp_chat_messages": [
+        "get WhatsApp messages from FAST CFD ALL BATCHES",
+        "fetch chat messages from Rao Waleed",
+        "show conversation dialogue from FYP Ki Chussein",
+        "what did they say in Ahmad Fiaz chat",
+        "get recent chat dialogue for contact",
+    ],
     "send_report": [
         "send project report to Zahida",
         "summarize folder and WhatsApp to Ahmed",

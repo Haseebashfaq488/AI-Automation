@@ -32,10 +32,13 @@ class JarvisBrainManager:
     """Central orchestrator for Jarvis's persistent Antigravity Brain."""
 
     _KNOWN_TOOLS = {
-        # 1. WhatsApp Module (Communication)
+        # 1. WhatsApp Module (Communication & Activity)
+        "get_unread_messages": {"chat_limit": "optional maximum chats to check", "messages_per_chat": "optional messages per unread chat"},
+        "get_recent_whatsapp_activity": {"chat_limit": "optional maximum active chats to inspect", "messages_per_chat": "optional messages to fetch per active chat", "days": "optional days window (default 3: Today, Yesterday, Day Before Yesterday)"},
+        "get_whatsapp_chat_messages": {"chat": "WhatsApp contact or group name", "limit": "optional number of messages", "days": "optional days window (default 3)"},
         "send_message": {"to": "WhatsApp chat name or phone number", "message": "text to send"},
         "send_file": {"to": "WhatsApp chat name or phone number", "path": "absolute path of the local file to send"},
-        "list_chats": {},
+        "list_chats": {"limit": "optional maximum number of chats to list (default 50)", "unread_only": "optional boolean to list only unread chats"},
         "get_messages": {"chat": "WhatsApp chat name or id", "limit": "optional number of messages"},
         "search_messages": {"chat": "WhatsApp chat name or id", "query": "text to search for"},
 
