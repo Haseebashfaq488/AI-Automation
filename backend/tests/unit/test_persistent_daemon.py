@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 from app.workers.antigravity_worker.agent.cli_client import PersistentAgyDaemon, RunResult
 
 
@@ -8,32 +8,31 @@ async def test_persistent_daemon_ensure_running():
     daemon = PersistentAgyDaemon(session_id="test-daemon-ses")
     
     with patch("app.workers.antigravity_worker.agent.config.get_agy_binary", return_value="C:/bin/agy.exe"), \
-         patch("asyncio.create_subprocess_exec", new_callable=AsyncMock) as mock_subproc:
+         patch("subprocess.Popen") as mock_popen:
         
         mock_proc = MagicMock()
-        mock_proc.returncode = None
-        mock_subproc.return_value = mock_proc
+        mock_proc.poll.return_value = None
+        mock_popen.return_value = mock_proc
 
         started = await daemon.ensure_running()
         assert started is True
         assert daemon.proc == mock_proc
-        assert mock_subproc.called
+        assert mock_popen.called
 
 
 @pytest.mark.asyncio
 async def test_persistent_daemon_send_turn_success():
     daemon = PersistentAgyDaemon(session_id="test-daemon-ses")
     daemon.proc = MagicMock()
-    daemon.proc.returncode = None
+    daemon.proc.poll.return_value = None
     daemon.proc.stdin = MagicMock()
-    daemon.proc.stdin.drain = AsyncMock()
-    daemon.proc.stdout = AsyncMock()
+    daemon.proc.stdout = MagicMock()
 
-    # Simulate verified NDJSON stdout line
+    # Simulate verified NDJSON stdout line (synchronous readline)
     daemon.proc.stdout.readline.side_effect = [
-        b'{"event": "step_update", "step_update": {"text_delta": "Hello from warm daemon"}}\n',
-        b'{"event": "result", "result": {"status": "SUCCESS", "response": "Hello from warm daemon"}}\n',
-        b'',
+        '{"event": "step_update", "step_update": {"text_delta": "Hello from warm daemon"}}\n',
+        '{"event": "result", "result": {"status": "SUCCESS", "response": "Hello from warm daemon"}}\n',
+        '',
     ]
 
     with patch.object(daemon, "ensure_running", return_value=True):
@@ -49,7 +48,7 @@ async def test_persistent_daemon_stop():
     mock_proc = MagicMock()
     mock_proc.stdin = MagicMock()
     mock_proc.terminate = MagicMock()
-    mock_proc.wait = AsyncMock()
+    mock_proc.wait = MagicMock()
     daemon.proc = mock_proc
 
     await daemon.stop()

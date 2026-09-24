@@ -90,7 +90,7 @@ def test_skills_list_only_skills(client: TestClient):
     resp = client.get("/skills/list")
     assert resp.status_code == 200
     skills = {s["name"] for s in resp.json()["skills"]}
-    assert skills == {"organize_downloads", "send_report", "unread_digest", "list_recent_emails"}
+    assert skills == {"organize_downloads", "send_report", "unread_digest", "list_recent_emails", "search_drive"}
 
 
 def test_pipelines_list_and_404(client: TestClient):
