@@ -45,6 +45,7 @@ class TaskOrchestrator:
                     for hook in pending_hooks:
                         hook.executed = True
                         logger.info("Self-healing: triggering unexecuted hook %s for completed session %s", hook.id, session_id)
+                        art_list = result_data.get("artifacts") or []
                         try:
                             loop = asyncio.get_running_loop()
                             loop.create_task(
@@ -60,6 +61,7 @@ class TaskOrchestrator:
                                         summary=f"Executing hook {hook.id}",
                                         data={"session_id": session_id, **result_data},
                                     ),
+                                    all_artifacts=art_list,
                                 )
                             )
                         except RuntimeError:
@@ -78,6 +80,7 @@ class TaskOrchestrator:
                                             summary=f"Executing hook {hook.id}",
                                             data={"session_id": session_id, **result_data},
                                         ),
+                                        all_artifacts=art_list,
                                     ),
                                     bus._loop,
                                 )
@@ -186,7 +189,6 @@ class TaskOrchestrator:
             return
 
         artifacts = event.data.get("artifacts") or []
-        first_artifact = artifacts[0] if artifacts else ""
         output_data = event.data.get("output") or {}
 
         for hook in hooks:
@@ -194,7 +196,118 @@ class TaskOrchestrator:
                 continue
 
             hook.executed = True
-            await self._execute_hook(hook, session_id, first_artifact, output_data, event)
+            selected_artifact = self._select_artifact_for_hook(hook, session_id, artifacts, output_data)
+            await self._execute_hook(hook, session_id, selected_artifact, output_data, event, artifacts)
+
+    def _select_artifact_for_hook(
+        self,
+        hook: ReactiveHook,
+        session_id: str,
+        artifacts: List[str],
+        output_data: Any,
+    ) -> str:
+        """Select the most relevant non-test business artifact for this specific hook."""
+        from pathlib import Path
+        import json, re
+
+        def _is_test_file(p_str: str) -> bool:
+            if not p_str:
+                return True
+            p = Path(p_str)
+            name_lower = p.name.lower()
+            return (
+                name_lower.startswith(("test_", "verify_", "conftest"))
+                or name_lower.endswith(("_test.py", "test.py"))
+                or name_lower in ("implementation_plan.md", "task.json", "state.json", "result.json", "test_results.json")
+            )
+
+        search_context = f"{hook.description} {json.dumps(hook.action_params)}"
+
+        # 1. Match explicit filenames mentioned in hook description / params from available artifacts
+        for art in artifacts:
+            if art and not _is_test_file(art):
+                art_name = Path(art).name
+                if art_name and art_name.lower() in search_context.lower():
+                    return art
+
+        # 2. Pick first non-test file from artifacts list
+        for art in artifacts:
+            if art and not _is_test_file(art):
+                return art
+
+        # 3. Fallback disk lookup
+        from app.workers.base.session import WorkerSession
+        session_dir = WorkerSession.SESSIONS_ROOT / session_id
+        scope_dir = Path("D:/workspace")
+
+        # 3a. Read objective from task.json
+        obj = ""
+        try:
+            task_path = session_dir / "task.json"
+            if task_path.is_file():
+                task_data = json.loads(task_path.read_text(encoding="utf-8"))
+                obj = task_data.get("objective", "")
+                scope_str = task_data.get("fs_scope")
+                if scope_str:
+                    scope_dir = Path(scope_str)
+        except Exception:
+            pass
+
+        full_context = f"{obj} {search_context}"
+
+        # 3b. Match filenames mentioned in task objective or hook
+        try:
+            matches = re.findall(r"['\"]?([\w\-\.\\]+\.[a-zA-Z0-9]{1,8})['\"]?", full_context)
+            for m in matches:
+                if not _is_test_file(m):
+                    cand = scope_dir / m
+                    if cand.is_file():
+                        return str(cand.resolve())
+                    cand_raw = Path(m)
+                    if cand_raw.is_file():
+                        return str(cand_raw.resolve())
+        except Exception:
+            pass
+
+        # 3c. Inspect worker session artifacts folder
+        try:
+            art_dir = session_dir / "artifacts"
+            if art_dir.is_dir():
+                art_files = [f for f in art_dir.iterdir() if f.is_file() and not _is_test_file(str(f))]
+                if art_files:
+                    art_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+                    return str(art_files[0].resolve())
+        except Exception:
+            pass
+
+        # 3d. Scan events.jsonl
+        try:
+            events_path = session_dir / "events.jsonl"
+            if events_path.is_file():
+                for line in reversed(events_path.read_text(encoding="utf-8").splitlines()):
+                    if not line.strip():
+                        continue
+                    ev_data = json.loads(line)
+                    d_str = json.dumps(ev_data)
+                    f_matches = re.findall(r"([A-Za-z]:(?:\\\\|/|\\)[\w\-\.\s\\/]+\.[a-zA-Z0-9]{1,8})", d_str)
+                    for fm in f_matches:
+                        fp = Path(fm.replace("\\\\", "\\"))
+                        if fp.is_file() and not _is_test_file(str(fp)):
+                            return str(fp.resolve())
+        except Exception:
+            pass
+
+        # 3e. Pick most recently modified non-test file in workspace
+        try:
+            if scope_dir.is_dir():
+                ws_files = [f for f in scope_dir.iterdir() if f.is_file() and not _is_test_file(str(f))]
+                if ws_files:
+                    ws_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+                    return str(ws_files[0].resolve())
+        except Exception:
+            pass
+
+        return ""
 
     def _resolve_step_params(
         self,
@@ -267,90 +380,13 @@ class TaskOrchestrator:
         artifact_path: str,
         output_data: Any,
         trigger_event: JarvisEvent,
+        all_artifacts: Optional[List[str]] = None,
     ) -> None:
         bus = get_event_bus()
+        all_artifacts = all_artifacts or []
 
-        # Smart artifact resolution if artifact_path was not explicitly provided in the event
-        if not artifact_path or str(artifact_path).strip() in ("", "{worker.artifact}", "{worker.artifact_path}", "None"):
-            artifact_path = ""
-            from pathlib import Path
-            import json, re, time
-            from app.workers.base.session import WorkerSession
-
-            session_dir = WorkerSession.SESSIONS_ROOT / session_id
-            scope_dir = Path("D:/workspace")
-
-            # 1. Check worker session artifacts folder
-            try:
-                artifacts_dir = session_dir / "artifacts"
-                if artifacts_dir.is_dir():
-                    art_files = [f for f in artifacts_dir.iterdir() if f.is_file()]
-                    if art_files:
-                        art_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
-                        artifact_path = str(art_files[0].resolve())
-            except Exception:
-                pass
-
-            # 2. Extract objective & fs_scope from task.json
-            obj = ""
-            if not artifact_path:
-                try:
-                    task_path = session_dir / "task.json"
-                    if task_path.is_file():
-                        task_data = json.loads(task_path.read_text(encoding="utf-8"))
-                        obj = task_data.get("objective", "")
-                        scope_str = task_data.get("fs_scope")
-                        if scope_str:
-                            scope_dir = Path(scope_str)
-                except Exception:
-                    pass
-
-            # 3. Check events.jsonl for file paths touched by worker tools
-            if not artifact_path:
-                try:
-                    events_path = session_dir / "events.jsonl"
-                    if events_path.is_file():
-                        for line in reversed(events_path.read_text(encoding="utf-8").splitlines()):
-                            if not line.strip():
-                                continue
-                            ev_data = json.loads(line)
-                            d_str = json.dumps(ev_data)
-                            f_matches = re.findall(r"([A-Za-z]:(?:\\\\|/|\\)[\w\-\.\s\\/]+\.[a-zA-Z0-9]{1,8})", d_str)
-                            for fm in f_matches:
-                                fp = Path(fm.replace("\\\\", "\\"))
-                                if fp.is_file() and not str(fp).endswith((".json", ".jsonl", ".tmp")):
-                                    artifact_path = str(fp.resolve())
-                                    break
-                            if artifact_path:
-                                break
-                except Exception:
-                    pass
-
-            # 4. Check workspace scope and match filenames mentioned in contract objective or hook
-            if not artifact_path:
-                try:
-                    matches = re.findall(r"['\"]?([\w\-\.\\]+\.[a-zA-Z0-9]{1,8})['\"]?", f"{obj} {hook.description}")
-                    for m in matches:
-                        cand = scope_dir / m
-                        if cand.is_file():
-                            artifact_path = str(cand.resolve())
-                            break
-                        cand_raw = Path(m)
-                        if cand_raw.is_file():
-                            artifact_path = str(cand_raw.resolve())
-                            break
-                except Exception:
-                    pass
-
-            # 5. Fallback: pick the most recently created/modified file in the workspace
-            if not artifact_path and scope_dir.is_dir():
-                try:
-                    ws_files = [f for f in scope_dir.iterdir() if f.is_file() and not f.name.startswith((".", "implementation_plan.md", "task.json"))]
-                    if ws_files:
-                        ws_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
-                        artifact_path = str(ws_files[0].resolve())
-                except Exception:
-                    pass
+        if not artifact_path:
+            artifact_path = self._select_artifact_for_hook(hook, session_id, all_artifacts, output_data)
 
         tool_name = hook.action_tool
         resolved_params = self._resolve_step_params(tool_name, hook.action_params, artifact_path, session_id, output_data)

@@ -440,7 +440,7 @@ class WorkerEngine:
         return result_data
 
     def _collect_artifacts(self, agent: Any = None) -> List[str]:
-        """Discover and collect absolute paths of generated files/artifacts."""
+        """Discover and collect absolute paths of generated files/artifacts in priority order."""
         from pathlib import Path
         import json
         import re
@@ -448,7 +448,15 @@ class WorkerEngine:
         artifacts: List[str] = []
         seen = set()
 
-        def _add(path_str: Any):
+        def _is_test_script(p: Path) -> bool:
+            name_lower = p.name.lower()
+            return (
+                name_lower.startswith(("test_", "verify_", "conftest"))
+                or name_lower.endswith(("_test.py", "test.py"))
+                or name_lower in ("implementation_plan.md", "task.json", "state.json", "result.json", "test_results.json")
+            )
+
+        def _add(path_str: Any, is_priority: bool = False):
             if not path_str or not isinstance(path_str, str):
                 return
             cleaned = path_str.strip().strip("'\"")
@@ -461,64 +469,75 @@ class WorkerEngine:
             p = Path(cleaned)
             try:
                 if p.is_file() and str(p.resolve()) not in seen:
-                    # Ignore internal logs/state json files
-                    if not p.name.endswith((".json", ".jsonl", ".log", ".tmp")):
+                    # Ignore internal logs/state json files and test scripts
+                    if not p.name.endswith((".json", ".jsonl", ".log", ".tmp")) and not _is_test_script(p):
                         resolved = str(p.resolve())
                         seen.add(resolved)
-                        artifacts.append(resolved)
+                        if is_priority:
+                            artifacts.insert(0, resolved)
+                        else:
+                            artifacts.append(resolved)
             except Exception:
                 pass
 
-        # 1. Inspect session.path / "artifacts"
+        scope_dir = Path(self._contract.fs_scope) if self._contract and self._contract.fs_scope else Path(".")
+
+        # 1. High Priority: Files explicitly mentioned in the contract objective or requirements
+        text_priority_sources = []
+        if self._contract:
+            if self._contract.objective:
+                text_priority_sources.append(self._contract.objective)
+            if self._contract.requirements:
+                text_priority_sources.extend(self._contract.requirements)
+            if self._contract.success_criteria:
+                text_priority_sources.extend(self._contract.success_criteria)
+
+        for txt in text_priority_sources:
+            if not txt:
+                continue
+            win_matches = re.findall(r"([A-Za-z]:(?:\\\\|/|\\)[\w\-\.\s\\/]+\.[a-zA-Z0-9]{1,8})", txt)
+            for wm in win_matches:
+                _add(wm.replace("\\\\", "\\"), is_priority=True)
+            rel_matches = re.findall(r"['\"]?([\w\-\.]+\.[a-zA-Z0-9]{1,8})['\"]?", txt)
+            for rm in rel_matches:
+                cand = scope_dir / rm
+                if cand.is_file():
+                    _add(str(cand), is_priority=True)
+
+        # 2. Inspect session.path / "artifacts"
         try:
             if self._session and self._session.path:
                 art_dir = self._session.path / "artifacts"
                 if art_dir.is_dir():
                     for f in sorted(art_dir.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True):
                         if f.is_file():
-                            _add(str(f))
+                            _add(str(f), is_priority=True)
         except Exception:
             pass
 
-        # 2. Inspect fs_scope directory
-        scope_dir = Path(self._contract.fs_scope) if self._contract and self._contract.fs_scope else Path(".")
+        # 3. Target Files table from Implementation Plan
+        if agent and hasattr(agent, "implementation_plan") and agent.implementation_plan:
+            win_matches = re.findall(r"([A-Za-z]:(?:\\\\|/|\\)[\w\-\.\s\\/]+\.[a-zA-Z0-9]{1,8})", agent.implementation_plan)
+            for wm in win_matches:
+                _add(wm.replace("\\\\", "\\"), is_priority=True)
+
+        # 4. Extract paths mentioned in agent's execution summary
+        if agent and hasattr(agent, "_execution_summary") and agent._execution_summary:
+            win_matches = re.findall(r"([A-Za-z]:(?:\\\\|/|\\)[\w\-\.\s\\/]+\.[a-zA-Z0-9]{1,8})", agent._execution_summary)
+            for wm in win_matches:
+                _add(wm.replace("\\\\", "\\"), is_priority=True)
+            rel_matches = re.findall(r"(?:created|written|saved|file|path|to)\s+['\"]?([\w\-\.]+\.[a-zA-Z0-9]{1,8})['\"]?", agent._execution_summary, re.IGNORECASE)
+            for rm in rel_matches:
+                _add(str(scope_dir / rm), is_priority=True)
+
+        # 5. Inspect fs_scope directory for recently created/modified non-test files
         try:
             if scope_dir.is_dir():
-                # Look for recently modified non-hidden files in workspace
                 for f in sorted(scope_dir.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True):
-                    if f.is_file() and not f.name.startswith((".", "implementation_plan.md", "task.json")):
+                    if f.is_file():
                         _add(str(f))
         except Exception:
             pass
-
-        # 3. Extract paths mentioned in agent's execution summary, test results, or implementation plan
-        text_sources = []
-        if agent:
-            if hasattr(agent, "_execution_summary") and agent._execution_summary:
-                text_sources.append(agent._execution_summary)
-            if hasattr(agent, "implementation_plan") and agent.implementation_plan:
-                text_sources.append(agent.implementation_plan)
-            if hasattr(agent, "test_results") and agent.test_results:
-                try:
-                    text_sources.append(json.dumps(agent.test_results))
-                except Exception:
-                    pass
-
-        # Also check objective
-        if self._contract and self._contract.objective:
-            text_sources.append(self._contract.objective)
-
-        for txt in text_sources:
-            if not txt:
-                continue
-            # Regex for Windows / Unix absolute paths
-            win_matches = re.findall(r"([A-Za-z]:(?:\\\\|/|\\)[\w\-\.\s\\/]+\.[a-zA-Z0-9]{1,8})", txt)
-            for wm in win_matches:
-                _add(wm.replace("\\\\", "\\"))
-            # Regex for relative filenames in scope
-            rel_matches = re.findall(r"(?:created|written|saved|file|path|to)\s+['\"]?([\w\-\.]+\.[a-zA-Z0-9]{1,8})['\"]?", txt, re.IGNORECASE)
-            for rm in rel_matches:
-                _add(str(scope_dir / rm))
 
         return artifacts
 

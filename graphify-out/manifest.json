@@ -582,9 +582,9 @@
     "semantic_hash": ""
   },
   "backend/app/workers/base/engine.py": {
-    "mtime": 1790256050.976743,
-    "seen": 1790256236.6741073,
-    "ast_hash": "9828c6e39f4b7b49ca1c9c331024921f",
+    "mtime": 1790257049.351547,
+    "seen": 1790257195.2193596,
+    "ast_hash": "d7d95deb8ecbfc87866481f5ccf504c8",
     "semantic_hash": ""
   },
   "backend/app/workers/base/scoped_registry.py": {
@@ -1062,9 +1062,9 @@
     "semantic_hash": "9675c08c369fd6b91f05707fd4460303"
   },
   "backend/app/core/events/orchestrator.py": {
-    "mtime": 1790256186.9103878,
-    "seen": 1790256236.673934,
-    "ast_hash": "9d539c20a3283fb3afab327f04909bdf",
+    "mtime": 1790257156.2874434,
+    "seen": 1790257195.2191882,
+    "ast_hash": "f40750bc5ea5a27d9eebdb0c30fa02f9",
     "semantic_hash": ""
   },
   "backend/app/core/events/schema.py": {
@@ -1128,9 +1128,9 @@
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/components/TaskChainTracker.js": {
-    "mtime": 1790255342.4428813,
-    "seen": 1790255380.2997184,
-    "ast_hash": "5703c5202e949a142e27bacd1d8f0f58",
+    "mtime": 1790257133.1134222,
+    "seen": 1790257195.219139,
+    "ast_hash": "b8d9f65eda485b070ab31944086f3219",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/components/ToolOutputViewer.js": {
