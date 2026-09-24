@@ -105,15 +105,42 @@ class ServiceMemoryManager:
                 lines.append(f"- ✉️{status} **{evt['title']}** (From: {evt['sender']}) — {evt['snippet'][:120]}")
 
         lines.append("")
-        lines.append("#### 💬 Recent WhatsApp & Drive Activity (Past 24 Hours):")
-        other_events = [e for e in hot_events if e["service"] != "gmail"]
-        if not other_events:
-            lines.append("- No recent WhatsApp or Google Drive updates recorded.")
+        lines.append("#### 💬 Recent WhatsApp Activity (Past 3 Days / Active Chats):")
+        wa_events = [e for e in hot_events if e["service"] == "whatsapp"]
+        if not wa_events:
+            lines.append("- No recent WhatsApp chat activity recorded.")
         else:
-            for evt in other_events[:15]:
-                svc_icon = "💬" if evt["service"] == "whatsapp" else "📁"
+            for evt in wa_events[:15]:
                 status = " [UNREAD]" if evt["is_unread"] else ""
-                lines.append(f"- {svc_icon} [{evt['service'].upper()}]{status} {evt['sender'] or 'Unknown'}: {evt['snippet'] or evt['title'] or ''}")
+                chat_name = evt["sender"] or "Unknown"
+                full_raw = evt.get("full_content")
+                msg_summary = ""
+                if full_raw:
+                    try:
+                        p = json.loads(full_raw)
+                        msgs = p.get("messages", [])
+                        if msgs:
+                            recent_texts = []
+                            for m in msgs[-3:]:
+                                a = m.get("author") or m.get("from") or "User"
+                                b = m.get("body") or ("[Media]" if m.get("hasMedia") else "")
+                                if b:
+                                    recent_texts.append(f"{a}: {b[:60]}")
+                            if recent_texts:
+                                msg_summary = " | Recent msgs: " + " → ".join(recent_texts)
+                    except Exception:
+                        pass
+
+                lines.append(f"- 💬{status} **{chat_name}**: {evt['snippet'] or ''}{msg_summary}")
+
+        lines.append("")
+        lines.append("#### 📁 Google Drive Updates (Past 24 Hours):")
+        drive_events = [e for e in hot_events if e["service"] == "drive"]
+        if not drive_events:
+            lines.append("- No recent Google Drive file updates recorded.")
+        else:
+            for evt in drive_events[:10]:
+                lines.append(f"- 📁 {evt['sender'] or 'Drive'}: {evt['title']} — {evt['snippet'] or ''}")
 
         lines.append("")
         lines.append("#### 📅 7-Day Contextual Digests & History:")
