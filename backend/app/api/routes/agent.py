@@ -290,6 +290,9 @@ async def _fork_task(params: Dict[str, Any], prompt: str) -> Dict[str, Any]:
     except Exception as exc:
         logger.warning("Could not persist Task to database: %s", exc)
 
+    prior_handover = params.get("prior_handover")
+    is_refinement = bool(params.get("is_refinement", False))
+
     try:
         contract = TaskContract(
             objective=objective,
@@ -301,6 +304,8 @@ async def _fork_task(params: Dict[str, Any], prompt: str) -> Dict[str, Any]:
             max_steps=int(params.get("max_steps", 20)),
             master_prompt=params.get("master_prompt"),
             model=params.get("model"),
+            prior_handover=prior_handover,
+            is_refinement=is_refinement,
         )
     except Exception as exc:
         if db_task_id:

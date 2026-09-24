@@ -141,6 +141,20 @@ class WorkerSession:
     def write_test_results(self, results: dict) -> None:
         (self.path / "test_results.json").write_text(json.dumps(results, indent=2), encoding="utf-8")
 
+    def read_handover(self) -> dict:
+        """Read structured session handover brief."""
+        handover_path = self.path / "handover.json"
+        if handover_path.exists():
+            try:
+                return json.loads(handover_path.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+        return {}
+
+    def write_handover(self, data: dict) -> None:
+        """Write structured session handover brief."""
+        (self.path / "handover.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
+
     @property
     def completed(self) -> list:
         return self.read_state().get("completed", [])

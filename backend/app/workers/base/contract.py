@@ -79,6 +79,18 @@ class TaskContract(BaseModel):
         default_factory=dict,
         description="Structured verification and test results recorded by the worker.",
     )
+    prior_handover: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Compact session handover brief from prior worker run in this workspace.",
+    )
+    is_refinement: bool = Field(
+        default=False,
+        description="Whether this task is an iterative refinement of an existing codebase.",
+    )
+    folder_manifests: List[str] = Field(
+        default_factory=list,
+        description="Paths of discovered folder-level README.md living documentation files.",
+    )
 
     @field_validator("fs_scope")
     @classmethod

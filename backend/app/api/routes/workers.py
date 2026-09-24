@@ -233,6 +233,36 @@ async def launch_worker(contract: TaskContract, worker_type: str = "antigravity_
     Shared by the /fork route and the agent's `fork` tool so both produce
     identically queryable sessions.
     """
+    # Auto-detect existing handover in workspace if not explicitly provided
+    if not contract.prior_handover:
+        try:
+            scope_dir = Path(contract.fs_scope)
+            handover_file = scope_dir / "handover.json"
+            if handover_file.is_file():
+                contract.prior_handover = json.loads(handover_file.read_text(encoding="utf-8"))
+                contract.is_refinement = True
+            elif (scope_dir / "SESSION_HANDOVER.md").is_file():
+                contract.prior_handover = {"summary": (scope_dir / "SESSION_HANDOVER.md").read_text(encoding="utf-8")}
+                contract.is_refinement = True
+        except Exception:
+            pass
+
+    # Discover living documentation (subfolder README.md files)
+    if not contract.folder_manifests:
+        try:
+            scope_dir = Path(contract.fs_scope)
+            if scope_dir.is_dir():
+                manifests = []
+                for p in scope_dir.rglob("README.md"):
+                    if p.is_file():
+                        try:
+                            manifests.append(str(p.relative_to(scope_dir)))
+                        except Exception:
+                            manifests.append(str(p))
+                contract.folder_manifests = manifests
+        except Exception:
+            pass
+
     eng = WorkerEngine(registry, agent_factory=_agent_factory_for(worker_type))
     _engines[eng.session_id()] = eng
     state = await eng.run(contract)
@@ -313,6 +343,9 @@ def _agent_factory_for(worker_type: str):
                 master_prompt=contract.master_prompt,
                 worker_session_id=contract.task_id,
                 requires_plan_approval=contract.requires_plan_approval,
+                prior_handover=contract.prior_handover,
+                is_refinement=contract.is_refinement,
+                folder_manifests=contract.folder_manifests,
             )
 
         return factory

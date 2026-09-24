@@ -52,6 +52,8 @@
 ---
 
 ## 📝 Scratchpad & Temporary Notes
+- [2026-09-24 19:01] User maintains a project named 'AI Project' on local disk D.
+- [2026-09-24 18:56] User frequently chains existing file dispatch with subsequent worker creation and dual-channel distribution (Google Drive and Gmail).
 - [2026-09-24 18:42] Worker [ws_c6963728a1a7] resolved: Create a simple text file named 'document.txt' in D:/workspace with clean, representative placeholder content.
 - [2026-09-24 18:12] Worker [ws_046b286356f9] resolved: Create a file named 'document.txt' on local disk D (in 'D:/workspace') populated with clean, representative content.
 - [2026-09-24 18:11] User frequently combines file generation workflows with multi-channel distribution across Email and Google Drive.

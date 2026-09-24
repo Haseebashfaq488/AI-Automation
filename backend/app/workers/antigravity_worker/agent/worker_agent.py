@@ -43,6 +43,9 @@ class AntigravityWorkerAgent:
         master_prompt: Optional[str] = None,
         worker_session_id: Optional[str] = None,
         requires_plan_approval: bool = True,
+        prior_handover: Optional[Dict[str, Any]] = None,
+        is_refinement: bool = False,
+        folder_manifests: Optional[List[str]] = None,
     ):
         self.objective = objective
         self.fs_scope = fs_scope
@@ -53,6 +56,9 @@ class AntigravityWorkerAgent:
         self.master_prompt = master_prompt
         self.worker_session_id = worker_session_id
         self.requires_plan_approval = requires_plan_approval
+        self.prior_handover = prior_handover
+        self.is_refinement = is_refinement
+        self.folder_manifests = folder_manifests or []
 
         # Check binary availability for CLI
         self.cli_binary = config.get_agy_binary()
@@ -185,6 +191,9 @@ class AntigravityWorkerAgent:
                 requirements=self.requirements,
                 constraints=self.constraints,
                 success_criteria=self.success_criteria,
+                prior_handover=self.prior_handover,
+                folder_manifests=self.folder_manifests,
+                is_refinement=self.is_refinement,
             )
             logger.info("Antigravity Worker executing master task: %s", self.objective[:80])
             res = await run_antigravity_cli(
@@ -228,6 +237,9 @@ class AntigravityWorkerAgent:
                 requirements=self.requirements,
                 constraints=self.constraints,
                 success_criteria=self.success_criteria,
+                prior_handover=self.prior_handover,
+                folder_manifests=self.folder_manifests,
+                is_refinement=self.is_refinement,
             )
             logger.info("Antigravity Worker Job 1: Planning for '%s'", self.objective[:80])
             res = await run_antigravity_cli(
@@ -276,6 +288,9 @@ class AntigravityWorkerAgent:
                 approved_plan=plan_to_run,
                 requirements=self.requirements,
                 constraints=self.constraints,
+                prior_handover=self.prior_handover,
+                folder_manifests=self.folder_manifests,
+                is_refinement=self.is_refinement,
             )
             logger.info("Antigravity Worker Job 2: Executing Plan for '%s'", self.objective[:80])
             res = await run_antigravity_cli(

@@ -194,6 +194,55 @@ def build_prompt(milestone: Milestone, fs_scope: str, intervention: str | None =
     return "\n\n".join(parts)
 
 
+def _living_docs_section() -> str:
+    return (
+        "## 📂 Mandatory Living Documentation Protocol (Tier 1)\n"
+        "Whenever you create or modify files inside any subdirectory (e.g. `components/`, `styles/`, `api/`, `utils/`, `tests/`):\n"
+        "1. Check if a `README.md` exists in that directory. If so, read it to follow established patterns.\n"
+        "2. If `README.md` does not exist, create it with:\n"
+        "   - **Purpose**: What this folder/module is for.\n"
+        "   - **Key Files & Roles**: 1-line description of each file.\n"
+        "   - **Design Patterns & Conventions**: CSS variables, styling patterns, dependencies, or exported symbols.\n"
+        "3. Keep every touched folder's `README.md` updated as files are added or modified."
+    )
+
+
+def _format_handover_section(
+    prior_handover: Dict[str, Any] | None = None,
+    folder_manifests: List[str] | None = None,
+    is_refinement: bool = False,
+) -> str:
+    if not prior_handover and not is_refinement:
+        return ""
+
+    lines = [
+        "# 🔄 SESSION CONTINUATION & PRIOR HANDOVER",
+        "You are working on an EXISTING project in this workspace.",
+    ]
+    if prior_handover:
+        prev_obj = prior_handover.get("objective")
+        if prev_obj:
+            lines.append(f"- **Prior Goal**: {prev_obj}")
+        decisions = prior_handover.get("architecture_decisions") or []
+        if decisions:
+            lines.append("- **Established Architecture & Decisions**:")
+            for d in decisions[:5]:
+                lines.append(f"  • {d}")
+
+    if folder_manifests:
+        lines.append(f"- **Discovered Subfolder Docs**: {', '.join(folder_manifests)}")
+
+    lines.extend([
+        "",
+        "### ⚠️ NON-DESTRUCTIVE REFINEMENT RULES:",
+        "1. DO NOT wipe, delete, or rewrite the codebase from scratch.",
+        "2. Review existing files and subfolder `README.md` docs before editing.",
+        "3. Make targeted, clean delta edits that preserve the established architecture.",
+        "4. Update the relevant subfolder `README.md` docs to document your changes.",
+    ])
+    return "\n".join(lines)
+
+
 def build_planning_prompt(
     objective: str,
     fs_scope: str,
@@ -201,6 +250,9 @@ def build_planning_prompt(
     constraints: List[str] | None = None,
     success_criteria: List[str] | None = None,
     intervention: str | None = None,
+    prior_handover: Dict[str, Any] | None = None,
+    folder_manifests: List[str] | None = None,
+    is_refinement: bool = False,
 ) -> str:
     """Build the prompt for Job 1: Implementation Planning & Architecture Blueprint."""
     reqs = list(requirements or [])
@@ -212,6 +264,10 @@ def build_planning_prompt(
     crit_text = "\n".join(f"- [ ] {s}" for s in crit) if crit else "- [ ] Plan accurately reflects all requirements"
 
     parts: List[str] = []
+
+    handover_banner = _format_handover_section(prior_handover, folder_manifests, is_refinement)
+    if handover_banner:
+        parts.append(handover_banner)
 
     if intervention:
         parts.append(
@@ -233,15 +289,17 @@ def build_planning_prompt(
         f"## 4. Mandatory Instructions for Planning Phase\n"
         f"You are currently in **PLANNING MODE** (Job 1 of 3).\n"
         f"- **DO NOT** write or modify application/production code yet.\n"
-        f"- You MAY inspect existing files, read directories, or check environment configurations to ground your plan.\n"
+        f"- Inspect existing files, read directories, and check existing `README.md` / `SESSION_HANDOVER.md` files to ground your plan.\n"
         f"- Author a comprehensive, step-by-step implementation plan and save it to `{fs_scope}/implementation_plan.md`.\n\n"
+        f"{_living_docs_section()}\n\n"
         f"## 5. Required Plan Structure (`implementation_plan.md`)\n"
         f"Your plan must contain the following sections:\n"
         f"1. **Architecture & Design Overview**: Summary of approach, tech stack, and module structure.\n"
         f"2. **Target Files**: List of all files to create, modify, or delete with their exact relative paths.\n"
-        f"3. **Step-by-Step Implementation Roadmap**: Ordered list of execution steps (Job 2).\n"
-        f"4. **Self-Testing & Verification Plan**: Explicit testing strategy (unit tests, integration checks, test commands) for Job 3.\n"
-        f"5. **Edge Cases & Failure Handling**: Identified risks and mitigations.\n\n"
+        f"3. **Living Documentation Plan**: What subfolder `README.md` files will be created/updated.\n"
+        f"4. **Step-by-Step Implementation Roadmap**: Ordered list of execution steps (Job 2).\n"
+        f"5. **Self-Testing & Verification Plan**: Explicit testing strategy (unit tests, integration checks, test commands) for Job 3.\n"
+        f"6. **Edge Cases & Failure Handling**: Identified risks and mitigations.\n\n"
         f"Write `{fs_scope}/implementation_plan.md` and output the complete markdown plan."
     )
 
@@ -255,6 +313,9 @@ def build_execution_prompt(
     requirements: List[str] | None = None,
     constraints: List[str] | None = None,
     intervention: str | None = None,
+    prior_handover: Dict[str, Any] | None = None,
+    folder_manifests: List[str] | None = None,
+    is_refinement: bool = False,
 ) -> str:
     """Build the prompt for Job 2: Executing the Approved Implementation Plan."""
     reqs = list(requirements or [])
@@ -264,6 +325,10 @@ def build_execution_prompt(
     cons_text = "\n".join(f"- {c}" for c in cons) if cons else f"- Stay strictly within workspace boundary: {fs_scope}"
 
     parts: List[str] = []
+
+    handover_banner = _format_handover_section(prior_handover, folder_manifests, is_refinement)
+    if handover_banner:
+        parts.append(handover_banner)
 
     if intervention:
         parts.append(
@@ -282,10 +347,12 @@ def build_execution_prompt(
         f"### Constraints:\n{cons_text}\n\n"
         f"## 4. Approved Implementation Plan\n"
         f"```markdown\n{approved_plan.strip()}\n```\n\n"
+        f"{_living_docs_section()}\n\n"
         f"## 5. Execution Directives\n"
         f"- Execute all steps outlined in the approved implementation plan.\n"
         f"- Author complete, production-ready, modular code.\n"
         f"- Create and update all target files in `{fs_scope}`.\n"
+        f"- Keep subfolder `README.md` files updated for each folder touched.\n"
         f"- Conclude with a summary of files created and modified."
     )
 
@@ -346,6 +413,9 @@ def build_master_task_prompt(
     constraints: List[str] | None = None,
     success_criteria: List[str] | None = None,
     intervention: str | None = None,
+    prior_handover: Dict[str, Any] | None = None,
+    folder_manifests: List[str] | None = None,
+    is_refinement: bool = False,
 ) -> str:
     """Build the master task specification prompt for fully autonomous worker execution."""
     reqs = list(requirements or [])
@@ -357,6 +427,10 @@ def build_master_task_prompt(
     crit_text = "\n".join(f"- [ ] {s}" for s in crit) if crit else "- [ ] Objective fully achieved\n- [ ] Unit tests pass\n- [ ] Dataflow verification complete"
 
     parts: List[str] = []
+
+    handover_banner = _format_handover_section(prior_handover, folder_manifests, is_refinement)
+    if handover_banner:
+        parts.append(handover_banner)
 
     if intervention:
         parts.append(
@@ -375,15 +449,17 @@ def build_master_task_prompt(
         f"## 3. Requirements & Constraints\n"
         f"### Requirements:\n{reqs_text}\n\n"
         f"### Constraints:\n{cons_text}\n\n"
+        f"{_living_docs_section()}\n\n"
         f"## 4. Mandatory Engineering Execution Protocol\n"
         f"As an autonomous engineer, execute your work in the following structured manner:\n"
         f"1. **Exploration**: Inspect existing code, dependencies, and environment in `{fs_scope}`.\n"
         f"2. **Implementation**: Author clean, resilient, modular code with proper error handling.\n"
-        f"3. **Mandatory Testing Protocol**:\n"
+        f"3. **Living Documentation**: Ensure every created/modified directory has a concise `README.md`.\n"
+        f"4. **Mandatory Testing Protocol**:\n"
         f"   - **Unit Testing**: Create and run test suites covering all isolated functions, classes, and components.\n"
         f"   - **Dataflow & Pipeline Testing**: Verify end-to-end data pipelines, inputs/outputs, and contract boundaries.\n"
         f"   - **Edge Case Validation**: Ensure graceful handling of empty inputs, missing data, and invalid states.\n"
-        f"4. **Self-Correction**: Execute the test commands, inspect failures, and resolve any bugs in-place.\n\n"
+        f"5. **Self-Correction**: Execute the test commands, inspect failures, and resolve any bugs in-place.\n\n"
         f"## 5. Finishing Criteria Checklist\n{crit_text}\n\n"
         f"## 6. Mandatory Final Summary Format\n"
         f"When concluding your execution, emit the following summary block:\n"
@@ -391,6 +467,7 @@ def build_master_task_prompt(
         f"STATUS: RESOLVED  # [RESOLVED | PARTIALLY_RESOLVED | BLOCKED]\n"
         f"FILES_MODIFIED: []\n"
         f"FILES_CREATED: []\n"
+        f"FOLDER_DOCS_UPDATED: []\n"
         f"UNIT_TESTS: {{ total: 0, passed: 0, failed: 0 }}\n"
         f"DATAFLOW_TESTS: {{ status: PASSED, details: '...' }}\n"
         f"SUMMARY: 'Detailed explanation of what was achieved and verified.'\n"

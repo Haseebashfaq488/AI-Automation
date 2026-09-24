@@ -644,9 +644,113 @@ class WorkerEngine:
             "errors": [e["message"] for e in errors],
             "progress_percent": 100 if not self._cancelled else self._session.progress_percent,
         })
+        try:
+            handover = self._synthesize_handover(result_data)
+            result_data["handover"] = handover
+        except Exception as exc:
+            logger.warning("Could not synthesize session handover: %s", exc)
         self._session.write_result(result_data)
         self._session.append_event("WORK_COMPLETED", result_data)
         ev.work_completed(result_data)
+
+    def _synthesize_handover(self, result_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Synthesize a compact session handover brief and folder manifests."""
+        import datetime
+        from pathlib import Path
+        import json
+
+        scope_dir = Path(self._contract.fs_scope) if self._contract else Path(".")
+        manifests: List[str] = []
+        try:
+            if scope_dir.is_dir():
+                for p in scope_dir.rglob("README.md"):
+                    if p.is_file():
+                        try:
+                            rel_p = str(p.relative_to(scope_dir))
+                            manifests.append(rel_p)
+                        except Exception:
+                            manifests.append(str(p))
+        except Exception:
+            pass
+
+        artifacts = result_data.get("artifacts") or []
+        summary = result_data.get("summary") or ""
+        test_res = result_data.get("test_results") or {}
+        plan_txt = result_data.get("implementation_plan") or ""
+
+        # Extract architectural decisions or key items from plan/summary
+        decisions: List[str] = []
+        if plan_txt:
+            for line in plan_txt.splitlines():
+                line_str = line.strip()
+                if line_str.startswith(("-", "*", "•")) and len(line_str) > 10:
+                    decisions.append(line_str.lstrip("-*• "))
+                if len(decisions) >= 5:
+                    break
+
+        handover = {
+            "session_id": self._session_id,
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "objective": self._contract.objective if self._contract else "",
+            "status": "completed" if result_data.get("success") else "failed",
+            "artifacts": artifacts,
+            "folder_manifests": manifests,
+            "architecture_decisions": decisions,
+            "test_summary": test_res,
+            "summary": summary,
+        }
+
+        # Format human-readable markdown
+        md_lines = [
+            "# 📋 Project Handover Brief",
+            f"**Session ID**: `{self._session_id}` | **Date**: `{handover['timestamp']}`  ",
+            f"**Goal**: {handover['objective']}  ",
+            f"**Status**: {handover['status'].upper()}",
+            "",
+            "## 📁 Key Files & Artifacts",
+        ]
+        if artifacts:
+            for a in artifacts:
+                md_lines.append(f"- `{Path(a).name}` (`{a}`)")
+        else:
+            md_lines.append("- None generated")
+
+        md_lines.extend(["", "## 📂 Folder-Level Documentation"])
+        if manifests:
+            for m in manifests:
+                md_lines.append(f"- `{m}`")
+        else:
+            md_lines.append("- No subfolder README.md files detected")
+
+        if decisions:
+            md_lines.extend(["", "## ⚙️ Architecture & Decisions"])
+            for d in decisions:
+                md_lines.append(f"- {d}")
+
+        if test_res:
+            md_lines.extend(["", "## 🧪 Verification & Test Results", f"```json\n{json.dumps(test_res, indent=2)}\n```"])
+
+        if summary:
+            md_lines.extend(["", "## 📝 Execution Summary", summary])
+
+        handover_md = "\n".join(md_lines) + "\n"
+
+        # Write to session dir
+        try:
+            self._session.write_handover(handover)
+            (self._session.path / "SESSION_HANDOVER.md").write_text(handover_md, encoding="utf-8")
+        except Exception as exc:
+            logger.debug("Failed writing handover to session dir: %s", exc)
+
+        # Write to workspace scope dir
+        try:
+            if scope_dir.is_dir():
+                (scope_dir / "handover.json").write_text(json.dumps(handover, indent=2), encoding="utf-8")
+                (scope_dir / "SESSION_HANDOVER.md").write_text(handover_md, encoding="utf-8")
+        except Exception as exc:
+            logger.debug("Failed writing handover to scope_dir: %s", exc)
+
+        return handover
 
     def _placeholder_params(self, tool_name: str) -> Dict[str, Any]:
         scope = self._contract.fs_scope if self._contract else "."
