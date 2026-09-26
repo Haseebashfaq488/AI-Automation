@@ -29,26 +29,39 @@ class TTSRequest(BaseModel):
     pitch: Optional[str] = Field(default="+0Hz", description="Pitch adjustment (e.g. +5Hz, -5Hz)")
 
 
+EMOJI_PATTERN = re.compile(
+    r"[\U00010000-\U0010ffff]"  # Supplementary planes (standard emojis, symbols, pictographs)
+    r"|[\u2600-\u27bf]"          # Misc symbols, dingbats (⚡, ✉, 📁, ✈, ✌, etc.)
+    r"|[\ufe00-\ufe0f]"          # Variation selectors (emoji vs text rendering)
+    r"|[\u200d]"                 # Zero-width joiners
+    r"|[\u2300-\u23ff]"          # Misc technical symbols
+    r"|[\u2b50\u2b55\u2934\u2935\u25aa\u25ab\u25b6\u25c0]"
+)
+
+
 def clean_text_for_speech(text: str) -> str:
-    """Strip delimiters, code fences, markdown, and emojis before passing to TTS."""
+    """Strip delimiters, emojis, code fences, and markdown formatting before passing to TTS."""
     if not text:
         return ""
 
     # 1. Strip inline avatar gesture & expression delimiters (e.g. <<<gesture: ...>>>)
     cleaned = re.sub(r"<<<[^>]+>>>", "", text)
 
-    # 2. Strip markdown code fences (```...```) and inline code (`...`)
+    # 2. Strip all emojis and special pictograph symbols so TTS never speaks emoji names aloud
+    cleaned = EMOJI_PATTERN.sub("", cleaned)
+
+    # 3. Strip markdown code fences (```...```) and inline code (`...`)
     cleaned = re.sub(r"```[\s\S]*?```", "", cleaned)
     cleaned = re.sub(r"`[^`]*`", "", cleaned)
 
-    # 3. Clean markdown links [label](url) -> label
+    # 4. Clean markdown links [label](url) -> label
     cleaned = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", cleaned)
 
-    # 4. Clean bold, italics, headers, bullets
+    # 5. Clean bold, italics, headers, bullets
     cleaned = re.sub(r"[*_~#]", "", cleaned)
     cleaned = re.sub(r"^\s*[-*+]\s+", "", cleaned, flags=re.MULTILINE)
 
-    # 5. Remove excessive whitespace
+    # 6. Remove excessive whitespace
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
 
     return cleaned

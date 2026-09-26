@@ -32,3 +32,15 @@ def test_tts_empty_text_returns_400(client):
     res = client.post("/agent/tts", json={"text": "<<<gesture: waving>>>   "})
     assert res.status_code == 400
     assert "speakable content" in res.json()["detail"]
+
+
+def test_clean_text_strips_emojis():
+    from app.api.routes.tts import clean_text_for_speech
+    raw = "🤖 Hello! 📁 I found 3 files ⚡ fast ✉️ and sent an email 👍! <<<gesture: greeting>>>"
+    cleaned = clean_text_for_speech(raw)
+    assert cleaned == "Hello! I found 3 files fast and sent an email !"
+    assert "🤖" not in cleaned
+    assert "📁" not in cleaned
+    assert "⚡" not in cleaned
+    assert "✉" not in cleaned
+    assert "👍" not in cleaned
