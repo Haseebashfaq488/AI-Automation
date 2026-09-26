@@ -1,9 +1,9 @@
 # Graph Report - AI-Automation  (2026-09-26)
 
 ## Corpus Check
-- 265 files · ~171,962 words
+- 265 files · ~171,967 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 58 file(s) not represented in the graph (top: .vrma 41, (none) 5, .bat 5)
+- Unclassified: 59 file(s) not represented in the graph (top: .vrma 41, (none) 5, .bat 5)
 
 ## Summary
 - 2438 nodes · 4604 edges · 196 communities (143 shown, 36 thin omitted)
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d65aefb6`
+- Built from commit: `02f012f2`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
