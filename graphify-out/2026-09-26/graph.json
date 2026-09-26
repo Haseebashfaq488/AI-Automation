@@ -3577,7 +3577,7 @@
       "file_type": "code",
       "norm_label": ".stop()",
       "source_file": "AI-Automation Frontend/app/components/avatar/AvatarChoreographer.js",
-      "source_location": "L253"
+      "source_location": "L263"
     },
     {
       "id": "ai_automation_frontend_app_components_avatar_avatarscene_avatarscene_constructor",
@@ -11521,7 +11521,7 @@
       "file_type": "code",
       "norm_label": "pollvolume()",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L192"
+      "source_location": "L193"
     },
     {
       "id": "ai_automation_frontend_app_avatar_studio_page_avatarstudiopage_runchoreography",
@@ -11533,7 +11533,7 @@
       "file_type": "code",
       "norm_label": "runchoreography()",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L276"
+      "source_location": "L284"
     },
     {
       "id": "ai_automation_frontend_app_avatar_studio_page_avatarstudiopage_setcamerapreset",
@@ -11545,7 +11545,7 @@
       "file_type": "code",
       "norm_label": "setcamerapreset()",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L213"
+      "source_location": "L215"
     },
     {
       "id": "ai_automation_frontend_app_avatar_studio_page_avatarstudiopage_stopmotion",
@@ -11557,7 +11557,7 @@
       "file_type": "code",
       "norm_label": "stopmotion()",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L239"
+      "source_location": "L241"
     },
     {
       "id": "ai_automation_frontend_app_avatar_studio_page_avatarstudiopage_testviseme",
@@ -11569,7 +11569,7 @@
       "file_type": "code",
       "norm_label": "testviseme()",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L264"
+      "source_location": "L272"
     },
     {
       "id": "ai_automation_frontend_app_avatar_studio_page_avatarstudiopage_triggerassistantmode",
@@ -11581,7 +11581,7 @@
       "file_type": "code",
       "norm_label": "triggerassistantmode()",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L256"
+      "source_location": "L264"
     },
     {
       "id": "ai_automation_frontend_app_avatar_studio_page_avatarstudiopage_triggeremotion",
@@ -11593,7 +11593,7 @@
       "file_type": "code",
       "norm_label": "triggeremotion()",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L248"
+      "source_location": "L256"
     },
     {
       "id": "ai_automation_frontend_app_avatar_studio_page_avatarstudiopage_triggergesture",
@@ -11605,7 +11605,7 @@
       "file_type": "code",
       "norm_label": "triggergesture()",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L230"
+      "source_location": "L232"
     },
     {
       "id": "ai_automation_frontend_app_lib_ttsplayer_cleantextforspeech",
@@ -26420,7 +26420,7 @@
       "node_kind": "heading",
       "norm_label": "4. critical invariants & gotchas",
       "source_file": "AI-Automation Frontend/app/avatar-studio/README.md",
-      "source_location": "L46"
+      "source_location": "L50"
     },
     {
       "id": "ai_automation_frontend_app_avatar_studio_readme_app_avatar_studio_3d_avatar_testing_studio",
@@ -29243,7 +29243,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L183",
+      "source_location": "L184",
       "weight": 1.0
     },
     {
@@ -29255,7 +29255,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L185",
+      "source_location": "L186",
       "weight": 1.0
     },
     {
@@ -29267,7 +29267,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L193",
+      "source_location": "L194",
       "weight": 1.0
     },
     {
@@ -29279,7 +29279,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L242",
+      "source_location": "L243",
       "weight": 1.0
     },
     {
@@ -29291,7 +29291,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L284",
+      "source_location": "L297",
       "weight": 1.0
     },
     {
@@ -29303,7 +29303,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L347",
+      "source_location": "L386",
       "weight": 1.0
     },
     {
@@ -29315,7 +29315,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L687",
+      "source_location": "L726",
       "weight": 1.0
     },
     {
@@ -29327,7 +29327,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L193",
+      "source_location": "L194",
       "weight": 1.0
     },
     {
@@ -29339,7 +29339,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L282",
+      "source_location": "L292",
       "weight": 1.0
     },
     {
@@ -29351,7 +29351,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L284",
+      "source_location": "L297",
       "weight": 1.0
     },
     {
@@ -29363,7 +29363,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L242",
+      "source_location": "L243",
       "weight": 1.0
     },
     {
@@ -29615,7 +29615,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/components/avatar/AvatarChoreographer.js",
-      "source_location": "L150",
+      "source_location": "L151",
       "weight": 1.0
     },
     {
@@ -29627,7 +29627,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/components/avatar/AvatarChoreographer.js",
-      "source_location": "L281",
+      "source_location": "L291",
       "weight": 1.0
     },
     {
@@ -38531,7 +38531,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L213",
+      "source_location": "L215",
       "weight": 1.0
     },
     {
@@ -38543,7 +38543,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L230",
+      "source_location": "L232",
       "weight": 1.0
     },
     {
@@ -38555,7 +38555,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L248",
+      "source_location": "L256",
       "weight": 1.0
     },
     {
@@ -38567,7 +38567,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L256",
+      "source_location": "L264",
       "weight": 1.0
     },
     {
@@ -38579,7 +38579,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L264",
+      "source_location": "L272",
       "weight": 1.0
     },
     {
@@ -38591,7 +38591,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L276",
+      "source_location": "L284",
       "weight": 1.0
     },
     {
@@ -57605,7 +57605,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L239",
+      "source_location": "L241",
       "weight": 1.0
     },
     {
@@ -57704,7 +57704,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "AI-Automation Frontend/app/avatar-studio/README.md",
-      "source_location": "L46",
+      "source_location": "L50",
       "weight": 1.0
     },
     {
@@ -69919,7 +69919,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "AI-Automation Frontend/app/components/avatar/AvatarChoreographer.js",
-      "source_location": "L253",
+      "source_location": "L263",
       "weight": 1.0
     },
     {
@@ -78324,7 +78324,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "AI-Automation Frontend/app/avatar-studio/page.js",
-      "source_location": "L203",
+      "source_location": "L204",
       "weight": 1.0
     },
     {
@@ -82956,5 +82956,5 @@
       "source_file": "backend/ADDING_MODULES.md"
     }
   ],
-  "built_at_commit": "ce9b5e0034a2f23dc3d329ce46de18e97063f00a"
+  "built_at_commit": "01cd49e3676161ec69a7121ab2d00ae9b7a58d47"
 }
