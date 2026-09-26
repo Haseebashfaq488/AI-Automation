@@ -1158,9 +1158,9 @@
     "semantic_hash": "a8a9e6b1d4ce651b3d08fabfe2df47e4"
   },
   "AI-Automation Frontend/app/page.js": {
-    "mtime": 1790400586.8576329,
-    "seen": 1790400652.8479528,
-    "ast_hash": "410bd70d4faed00736e02fff8a7a9097",
+    "mtime": 1790400954.888658,
+    "seen": 1790400996.843015,
+    "ast_hash": "26d3fa1c63e14416a680ff9ca262e22c",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/worker/[id]/page.js": {
@@ -1536,9 +1536,9 @@
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/components/avatar/AvatarCanvas.js": {
-    "mtime": 1790400571.8828547,
-    "seen": 1790400652.8479114,
-    "ast_hash": "37dde05b2356935d066250578ee6ef8d",
+    "mtime": 1790400871.8073542,
+    "seen": 1790400996.8429859,
+    "ast_hash": "8346f391b1848ac9d61f1ee6b0427155",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/components/avatar/AvatarExpression.js": {
@@ -1629,6 +1629,12 @@
     "mtime": 1790400185.3845222,
     "seen": 1790400228.6966987,
     "ast_hash": "226cd7cb0c6fabd96d4a0cd73a2c584a",
+    "semantic_hash": ""
+  },
+  "AI-Automation Frontend/app/avatar-studio/page.js": {
+    "mtime": 1790400902.452589,
+    "seen": 1790400996.8429625,
+    "ast_hash": "7c209773fec5bd6b393a86b940e069a8",
     "semantic_hash": ""
   }
 }

@@ -1,17 +1,17 @@
 # Graph Report - AI-Automation  (2026-09-26)
 
 ## Corpus Check
-- 266 files · ~174,484 words
+- 266 files · ~174,548 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 59 file(s) not represented in the graph (top: .vrma 41, (none) 5, .bat 5)
 
 ## Summary
-- 2453 nodes · 4642 edges · 193 communities (140 shown, 36 thin omitted)
-- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 345 edges (avg confidence: 0.93)
+- 2452 nodes · 4641 edges · 199 communities (145 shown, 37 thin omitted)
+- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 346 edges (avg confidence: 0.93)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `786decf4`
+- Built from commit: `5199827c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -19,16 +19,16 @@
 - test_opencode_worker.py
 - test_whatsapp.py
 - get_drive_service
+- _agent_factory_for
 - workers.py
-- get
 - VRMAvatar.js
 - server.js
 - TaskOrchestrator
-- WhatsAppClient
+- OpenCodeWorkerAgent
 - roadmap_phase_2.md
 - test_tts_api.py
-- .build_brain_context_prompt
-- test_file_tools_v2.py
+- ServiceMemoryManager
+- OrganizeDownloadsSkill
 - AvatarCanvas.js
 - AntigravityWorkerAgent
 - JarvisEvent
@@ -39,38 +39,38 @@
 - AI-Automation Frontend/package.json
 - JarvisBrainManager
 - query
-- LongTermMemory
-- resolve_path
+- test_memory.py
+- ensure_exists
 - TaskContract
 - test_agent_fork.py
-- get_service_memory_manager
-- launch_worker
+- service_memory.py
+- test_launch_worker_autodetects_handover
 - WorkerSession
 - ChatMemory
 - Jarvis + OpenCode CLI Worker Architecture.md
 - ToolOutputViewer.js
 - agent.py
-- RuntimeError
+- FakeWhatsAppClient
 - Adding New Modules to the Jarvis Backend
-- BaseTool
+- test_file_tools_v2.py
 - opencode_worker/agent/milestones.py
 - IMPLEMENTATION_LOG.md
 - /graphify skill
 - [id]/page.js
 - MemoryVectorIndex
 - .inspect_event
-- verify_content
+- resolve_path
 - PersistentAgyDaemon
 - EventBus
 - _contract
-- test_tools_and_routes.py
+- TestClient
 - 📦 Jarvis Direct Tool Catalog
-- delete_file.py
+- ensure_is_file
 - manage_chat.py
 - get_onnx_embedder
 - ToolRegistry
 - patch
-- brain.py
+- test_session_handover.py
 - ScopedToolRegistry
 - 20. The Final Desired Experience
 - 36. Development Order
@@ -97,23 +97,23 @@
 - devDependencies
 - skills.py
 - tools.py
-- test_memory.py
+- FakeAdapter
 - system.py
 - run_tunnel.py
 - Read operations
-- app/page.js
+- brain.py
 - TaskChainTracker.js
 - 🧠 JARVIS LIVING MEMORY & SYSTEM CONTEXT
 - OpenCodeAdapter
 - graphify reference: query, path, explain
 - `app/workers/` — Worker Management & Launch Dashboard
 - lifecycle.py
-- _disk_sessions
+- DriveInboundListener
 - layout.js
-- execution_engine.py
+- Milestone
 - `app/core/` — Core Engine, Tool Contracts & Reactive Orchestration
 - gmail/helpers/validation.py
-- antigravity_worker/agent/cli_client.py
+- test_antigravity_worker.py
 - Repository
 - AvatarGestures
 - Worker Session
@@ -124,7 +124,7 @@
 - graphify reference: incremental update and cluster-only
 - setup_drive_oauth.py
 - Jarvis AI Automation — Frontend Architecture & Agent Guide
-- OrganizeDownloadsPipeline
+- ._persist_to_db
 - graphify.js
 - 7. Tool vs Skill vs Pipeline
 - graphify reference: GitHub clone and cross-repo merge
@@ -133,7 +133,7 @@
 - compilerOptions
 - next.config.mjs
 - setup_gmail_oauth.py
-- registry/__init__.py
+- BaseTool
 - Jarvis + OpenCode CLI Worker Architecture
 - 3. OpenCode Has Two Different Ways of Being Used
 - opencode.json
@@ -165,33 +165,39 @@
 - `app/api/` — HTTP & SSE API Gateway
 - `app/lib/` — Networking & Shared Utilities
 - AvatarBlink
-- .__init__
+- normalize_phone
 - `app/modules/` — Domain Capabilities & Integrations
 - Jarvis AI Automation — Backend Engine
-- WhatsAppInboundListener
+- EventType
 - 📦 Bubbles Historical Memory & Worker Receipt Archive
 - `tests/` — Backend Automated Test Suite
 - 📋 Project Handover Brief
 - core/config.py
 - TestAntigravityConfig
 - _get_shared_embedder
-- _load_token_path
+- DailyDigestPipeline
 - .constructor
 - ._make_on_event
-- clear_all_workers
+- post
 - scripts
 - tool_vector_index.py
 - Session: Optimizing the WhatsApp DOM Feature (2026-09-11)
 - memory_vector_index.py
 - AvatarPose
-- .subscribe_sse
+- Session: Fork UX — agent `fork` tool, manual fork form, chat persistence (2026-09-12)
 - AvatarGaze
 - SemanticCueEngine
-- .__init__
-- .set_loop
+- Session: Worker / Orchestrator Architecture — Steps 0–1 (2026-09-12)
+- 7. Write unit tests
 - .execute
-- .model_dump_json
-- test_frontend_integration.py
+- metadata.py
+- SendReportSkill
+- DownloadsNotifierPipeline
+- PhotoBackupPipeline
+- engine
+- Phase 2 — Backend + File System Module
+- 39. Instructions to the Implementing LLM
+- 3. Technology Stack
 
 ## God Nodes (most connected - your core abstractions)
 1. `BaseTool` - 105 edges
@@ -228,67 +234,67 @@
 - **Jarvis Manager / OpenCode Worker Orchestration** — jarvis___opencode_cli_worker_architecture_jarvis_supervisor, jarvis___opencode_cli_worker_architecture_opencode_sessions, jarvis___opencode_cli_worker_architecture_milestone_decomposition, backend_implementation_log_opencode_worker_session [INFERRED 0.85]
 - **Tool/Skill/Pipeline Module Architecture** — backend_adding_modules_basetool, backend_adding_modules_toolregistry, backend_adding_modules_executionengine, phases_roadmap_phase_2_tool_skill_pipeline_distinction [INFERRED 0.85]
 
-## Communities (193 total, 36 thin omitted)
+## Communities (199 total, 37 thin omitted)
 
 ### Community 0 - "test_opencode_worker.py"
-Cohesion: 0.06
-Nodes (40): _build_args(), _extract_session_id(), Any, Non-interactive OpenCode CLI client. Wraps ``opencode run`` as an async…, Try to extract the OpenCode session ID from events or raw output., Result of a single ``opencode run`` invocation., Execute ``opencode run`` and collect structured results. Parameters ----------…, Build the ``opencode run`` argument list. (+32 more)
+Cohesion: 0.09
+Nodes (28): _build_args(), _extract_session_id(), Any, Non-interactive OpenCode CLI client. Wraps ``opencode run`` as an async…, Try to extract the OpenCode session ID from events or raw output., Result of a single ``opencode run`` invocation., Execute ``opencode run`` and collect structured results. Parameters ----------…, Build the ``opencode run`` argument list. (+20 more)
 
 ### Community 1 - "test_whatsapp.py"
-Cohesion: 0.05
-Nodes (42): normalize_phone(), Normalize a phone number to bare digits (no +, spaces, or dashes)., Convert a phone number or bare number to a WhatsApp chat id ('<digits>@c.us')., to_chat_id(), DailyDigestPipeline, Any, Run the unread digest and send it to the given chat (run on a schedule or on…, Summarize a file or folder and send the summary as a WhatsApp message. (+34 more)
+Cohesion: 0.16
+Nodes (21): asyncio, Tests for the WhatsApp module using a fake sidecar client., test_download_media_tool(), test_get_messages_tool(), test_get_recent_whatsapp_activity_tool(), test_get_unread_messages_tool(), test_get_whatsapp_chat_messages_tool(), test_list_chats_tool() (+13 more)
 
 ### Community 2 - "get_drive_service"
-Cohesion: 0.07
-Nodes (31): format_file_size(), get_drive_creds(), get_drive_service(), get_token_path(), is_mock_mode(), Credentials, Path, Find drive_token.json or fallback token.json in project paths. (+23 more)
+Cohesion: 0.10
+Nodes (26): format_file_size(), get_drive_creds(), get_drive_service(), get_token_path(), is_mock_mode(), Credentials, Path, Find drive_token.json or fallback token.json in project paths. (+18 more)
 
-### Community 3 - "workers.py"
+### Community 3 - "_agent_factory_for"
+Cohesion: 0.15
+Nodes (15): _agent_factory_for(), factory(), approve_worker_plan(), ApprovePlanRequest, fork_worker(), ForkRequest, launch_worker(), BaseModel (+7 more)
+
+### Community 4 - "workers.py"
 Cohesion: 0.11
-Nodes (27): _agent_factory_for(), factory(), approve_worker_plan(), ApprovePlanRequest, cancel_worker(), fork_worker(), ForkRequest, intervene_worker() (+19 more)
-
-### Community 4 - "get"
-Cohesion: 0.12
-Nodes (16): get_worker_artifact_file(), get_worker_handover(), get_worker_plan(), get_worker_resolution(), get_worker_result(), get_worker_supervisor_status(), get_worker_test_results(), list_worker_artifacts() (+8 more)
+Nodes (24): _disk_sessions(), get_worker(), get_worker_artifact_file(), get_worker_handover(), get_worker_plan(), get_worker_resolution(), get_worker_result(), get_worker_supervisor_status() (+16 more)
 
 ### Community 6 - "server.js"
 Cohesion: 0.07
 Nodes (31): dependencies, express, qrcode-terminal, venom-bot, description, main, name, scripts (+23 more)
 
 ### Community 7 - "TaskOrchestrator"
-Cohesion: 0.17
-Nodes (11): get_orchestrator(), Any, Reactive Event-Driven Task Orchestrator. Allows Jarvis to chain dependent tasks…, Handle worker completion and trigger all registered hooks., Select the most relevant non-test business artifact for this specific hook., Interpolate placeholders and infer missing file/attachment arguments., Self-healing check: if worker is already finished on disk, trigger pending…, Register a follow-up action to execute as soon as target_session_id completes. (+3 more)
+Cohesion: 0.14
+Nodes (12): Any, Reactive Event-Driven Task Orchestrator. Allows Jarvis to chain dependent tasks…, Handle worker failure and abort registered hooks., Handle worker completion and trigger all registered hooks., Select the most relevant non-test business artifact for this specific hook., Attach listener to the global event bus., Interpolate placeholders and infer missing file/attachment arguments., Self-healing check: if worker is already finished on disk, trigger pending… (+4 more)
 
-### Community 8 - "WhatsAppClient"
-Cohesion: 0.18
-Nodes (7): Any, Async HTTP client for the local WhatsApp sidecar (whatsapp_service)., Raised when the WhatsApp sidecar is not reachable or not connected., Thin async wrapper around the sidecar's REST API., WhatsAppClient, WhatsAppUnavailableError, Response
+### Community 8 - "OpenCodeWorkerAgent"
+Cohesion: 0.15
+Nodes (12): OpenCodeWorkerAgent, Any, Autonomous agent driving OpenCode CLI execution for a background worker., Append a compact result the next decision will see., Queue guidance from the parent (user / Jarvis) for the next turn., Return the next action for the engine loop., asyncio, Verify WorkerEngine._agent_loop runs task execution steps and completes. (+4 more)
 
 ### Community 9 - "roadmap_phase_2.md"
-Cohesion: 0.05
-Nodes (37): 10. Risk Levels, 11. Never Use Shell Commands for Normal File Operations, 12. Structured Tool Contract, 13. Verification, 14. Dry Run, 15. Idempotency, 16. Execution Engine, 17. Tool Registry (+29 more)
+Cohesion: 0.06
+Nodes (31): 10. Risk Levels, 11. Never Use Shell Commands for Normal File Operations, 12. Structured Tool Contract, 13. Verification, 14. Dry Run, 15. Idempotency, 16. Execution Engine, 17. Tool Registry (+23 more)
 
 ### Community 10 - "test_tts_api.py"
 Cohesion: 0.11
 Nodes (16): clean_text_for_speech(), list_recommended_voices(), BaseModel, get, post, Edge TTS (Text-to-Speech) streaming endpoint powered by Microsoft Edge Neural…, Returns curated list of recommended voices for Jarvis / Bubbles., Strip delimiters, emojis, code fences, and markdown formatting before passing… (+8 more)
 
-### Community 11 - ".build_brain_context_prompt"
-Cohesion: 0.28
-Nodes (5): Any, Retrieve recent activity events within the hot window (e.g., 24h)., Return unread counts per service within the hot window., Retrieve structured daily digests for the past N days (default 7)., Construct a high-density, structured ambient memory block for Jarvis's prompt.
+### Community 11 - "ServiceMemoryManager"
+Cohesion: 0.17
+Nodes (9): Any, Compile raw events for a given day into structured daily digests., Execute rolling cleanup according to retention policies., Manages ambient multi-service memory across WhatsApp, Gmail, and Google Drive., Retrieve recent activity events within the hot window (e.g., 24h)., Return unread counts per service within the hot window., Retrieve structured daily digests for the past N days (default 7)., Construct a high-density, structured ambient memory block for Jarvis's prompt. (+1 more)
 
-### Community 12 - "test_file_tools_v2.py"
-Cohesion: 0.15
-Nodes (18): OrganizeDownloadsSkill, Any, Path, Organize files in a download directory into subfolders by file extension.…, asyncio, test_append_file_creates_and_appends(), test_archive_folder_and_extract_roundtrip(), test_bulk_rename_dry_run() (+10 more)
+### Community 12 - "OrganizeDownloadsSkill"
+Cohesion: 0.22
+Nodes (6): OrganizeDownloadsPipeline, Any, Pipeline that runs the OrganizeDownloadsSkill. It demonstrates how higher‑level…, OrganizeDownloadsSkill, Path, Organize files in a download directory into subfolders by file extension.…
 
 ### Community 13 - "AvatarCanvas.js"
 Cohesion: 0.10
 Nodes (9): AvatarCanvas, AvatarCanvas(), loadModel(), AvatarChoreographer, AvatarLoader, AvatarScene, getCurrentAudio(), AvatarCanvas (+1 more)
 
 ### Community 14 - "AntigravityWorkerAgent"
-Cohesion: 0.12
-Nodes (21): Result of a single `agy run` invocation., RunResult, Antigravity Agent components., AntigravityWorkerAgent, Antigravity Worker Agent implementation. Drives direct autonomous execution via…, Queue parent/manager guidance for the next turn., Autonomous agent driver powered by Antigravity CLI (`agy`) with 3-Job…, Set or update the approved implementation plan and advance to execution. (+13 more)
+Cohesion: 0.17
+Nodes (13): Result of a single `agy run` invocation., RunResult, AntigravityWorkerAgent, Queue parent/manager guidance for the next turn., Autonomous agent driver powered by Antigravity CLI (`agy`) with 3-Job…, Set or update the approved implementation plan and advance to execution., Receive plan rejection with feedback and reset to planning phase., asyncio (+5 more)
 
 ### Community 15 - "JarvisEvent"
-Cohesion: 0.13
-Nodes (18): GlobalEventBus, Central Async Event Spine for Jarvis. Supports: - Multi-subscriber SSE queue…, Return a snapshot of recently published events in chronological order., Register a callback for a specific event type (or '*' for all events)., Unregister a callback., Publish an event to all SSE streams and registered topic listeners (thread-…, EventType, JarvisEvent (+10 more)
+Cohesion: 0.11
+Nodes (17): AbstractEventLoop, GlobalEventBus, Queue, Central Async Event Spine for Jarvis. Supports: - Multi-subscriber SSE queue…, Explicitly set or update the main asyncio loop for cross-thread calls., Return a snapshot of recently published events in chronological order., Subscribe a new asyncio.Queue to receive live streaming events., Remove an asyncio.Queue from active SSE subscribers. (+9 more)
 
 ### Community 16 - "tasks.py"
 Cohesion: 0.36
@@ -311,36 +317,36 @@ Cohesion: 0.17
 Nodes (11): name, private, version, eslint, eslint-config-next, next, @pixiv/three-vrm-animation, react-dom (+3 more)
 
 ### Community 21 - "JarvisBrainManager"
-Cohesion: 0.08
-Nodes (31): get_brain_manager(), JarvisBrainManager, Any, Read the full content of JARVIS_MEMORY.md., Append an entry to the scratchpad section in JARVIS_MEMORY.md. Deduplicates…, Record activity timestamp to reset idle timer., Evaluate instant conversational intents (<5ms response time)., Build lean, structured planning prompt with on-demand semantic memory. (+23 more)
+Cohesion: 0.07
+Nodes (33): JarvisBrainManager, Any, Path, Ensure JARVIS_MEMORY.md exists on disk., Read the full content of JARVIS_MEMORY.md., Append an entry to the scratchpad section in JARVIS_MEMORY.md. Deduplicates…, Record activity timestamp to reset idle timer., Evaluate instant conversational intents (<5ms response time). (+25 more)
 
 ### Community 22 - "query"
 Cohesion: 0.17
 Nodes (9): query(), Return (best_tool_name, confidence_score) for the given prompt using ONNX dot…, Paraphrased WhatsApp message prompt should match send_message with high…, Complex generative/coding task prompt should match fork with high confidence., Unread digest paraphrase should match unread_digest or get_unread_messages., Listing chats paraphrase should match list_chats., Completely unrelated text should score below threshold or return None., Vector index should build and return a valid ONNX embedding matrix with labels. (+1 more)
 
-### Community 23 - "LongTermMemory"
-Cohesion: 0.10
-Nodes (12): Memory, Long-term agent memory: durable facts about the user and their preferences., LongTermMemory, Remove all facts. Returns how many were deleted., SQLite-backed store of durable facts (deduplicated, capped)., Add a fact. Returns False if empty or already known., Return up to ``limit`` most recent facts (oldest first)., Case-insensitive substring search over stored facts. (+4 more)
+### Community 23 - "test_memory.py"
+Cohesion: 0.08
+Nodes (14): LongTermMemory, Remove all facts. Returns how many were deleted., SQLite-backed store of durable facts (deduplicated, capped)., Add a fact. Returns False if empty or already known., Return up to ``limit`` most recent facts (oldest first)., Case-insensitive substring search over stored facts., Remove a specific fact by exact content match., fake_agent_env() (+6 more)
 
-### Community 24 - "resolve_path"
-Cohesion: 0.05
-Nodes (55): Path, Resolve a user-provided path string to an absolute Path. - Rejects empty…, resolve_path(), ensure_exists(), ensure_is_dir(), ensure_is_file(), is_protected(), Path (+47 more)
+### Community 24 - "ensure_exists"
+Cohesion: 0.07
+Nodes (35): ensure_exists(), ensure_is_dir(), is_protected(), Path, Return True if the path is within a protected location., ArchiveOldFilesPipeline, Any, Zip files that have not been modified in the last N months, then remove the… (+27 more)
 
 ### Community 25 - "TaskContract"
-Cohesion: 0.14
-Nodes (16): BaseModel, Ensure default allowed_tools is never None., The task contract defines what a worker is expected to do, with strict…, TaskContract, Create the on‑disk worker session from a contract., ActiveStreamGuardian, Active Stream Guardian for Worker Supervision. Monitors real-time worker…, Supervises a single worker session's real-time event stream. (+8 more)
+Cohesion: 0.10
+Nodes (24): ExistsTool, Any, ReadFileTool, TouchTool, BaseModel, Ensure default allowed_tools is never None., Serialize to JSON for transport (parent ↔ worker session init)., The task contract defines what a worker is expected to do, with strict… (+16 more)
 
 ### Community 26 - "test_agent_fork.py"
-Cohesion: 0.21
-Nodes (15): _execute_plan(), _fork_task(), Execute plan steps sequentially and return collected results., Fork a background worker session via the workers module and record a tracked…, get_engine(), Used by the agent route to look up engines after delegation., isolated_sessions(), asyncio (+7 more)
+Cohesion: 0.18
+Nodes (15): _fork_task(), Fork a background worker session via the workers module and record a tracked…, get_engine(), Used by the agent route to look up engines after delegation., Any, Execute a worker fork via the workers router / engine., isolated_sessions(), asyncio (+7 more)
 
-### Community 27 - "get_service_memory_manager"
+### Community 27 - "service_memory.py"
+Cohesion: 0.15
+Nodes (8): Memory, Long-term agent memory: durable facts about the user and their preferences., Long-term memory: durable facts persisted in SQLite. These survive restarts and…, 7-Day Temporal Multi-Service Memory & 24-Hour Hot Activity Feed Manager. This…, fixture, repo(), test_events_feed_and_digest_routes(), test_service_memory_manager_prompt_builder()
+
+### Community 28 - "test_launch_worker_autodetects_handover"
 Cohesion: 0.14
-Nodes (10): Long-term memory: durable facts persisted in SQLite. These survive restarts and…, get_service_memory_manager(), 7-Day Temporal Multi-Service Memory & 24-Hour Hot Activity Feed Manager. This…, Compile raw events for a given day into structured daily digests., Execute rolling cleanup according to retention policies., Manages ambient multi-service memory across WhatsApp, Gmail, and Google Drive., ServiceMemoryManager, fixture (+2 more)
-
-### Community 28 - "launch_worker"
-Cohesion: 0.12
-Nodes (17): launch_worker(), Create + start a worker engine and register it for polling/SSE. Shared by the…, asyncio, Path, Test launch_worker automatically detects existing handover in workspace., Test that _fork_task respects explicit fs_scope or extracts directory from…, Test the GET /workers/{session_id}/handover API endpoint., Test that TaskContract properly validates and retains handover fields. (+9 more)
+Nodes (15): asyncio, Path, Test launch_worker automatically detects existing handover in workspace., Test that _fork_task respects explicit fs_scope or extracts directory from…, Test the GET /workers/{session_id}/handover API endpoint., Test that TaskContract properly validates and retains handover fields., Test WorkerSession write_handover and read_handover., Test WorkerEngine._synthesize_handover creates SESSION_HANDOVER.md and… (+7 more)
 
 ### Community 29 - "WorkerSession"
 Cohesion: 0.08
@@ -355,24 +361,20 @@ Cohesion: 0.10
 Nodes (20): 10. Why Milestones Are Better Than One Huge Prompt, 12. Jarvis Is the Supervisor, 14. OpenCode JSON Output, 15. Headless OpenCode Server, 18. Future Worker Architecture, 19. Why OpenCode Is a Good First Worker, 21. Core Principle, 22. First Implementation Goal (+12 more)
 
 ### Community 32 - "ToolOutputViewer.js"
-Cohesion: 0.12
-Nodes (13): CopyButton(), DRIVE_LIST_TOOLS, DriveFilesView(), EMAIL_TOOLS, FILE_ACTION_TOOLS, FILE_CONTENT_TOOLS, FILE_LIST_TOOLS, FileContentView() (+5 more)
+Cohesion: 0.09
+Nodes (16): BotMessage(), UserBubble(), CopyButton(), DRIVE_LIST_TOOLS, DriveFilesView(), EMAIL_TOOLS, FILE_ACTION_TOOLS, FILE_CONTENT_TOOLS (+8 more)
 
 ### Community 33 - "agent.py"
-Cohesion: 0.16
-Nodes (19): clear_history(), clear_memory(), _get_adapter(), get_history(), get_memory(), _learn_from_turn(), PromptRequest, Any (+11 more)
-
-### Community 34 - "RuntimeError"
-Cohesion: 0.13
-Nodes (11): _get_creds(), _load_token_path(), Any, Credentials, Path, Return a path to a ``token.json`` if one exists next to the tool or at the…, Any, Any (+3 more)
+Cohesion: 0.12
+Nodes (24): clear_history(), clear_memory(), _execute_plan(), _get_adapter(), get_history(), get_memory(), _learn_from_turn(), PromptRequest (+16 more)
 
 ### Community 35 - "Adding New Modules to the Jarvis Backend"
-Cohesion: 0.09
-Nodes (22): 1. Module skeleton, 2. Register the new components, 2b. Make the tool available to the AGENT (essential!), 3.1 Tools endpoint, 3.2 Pipelines endpoint, 3. Expose the module via the API, 4. Optional: Add helper imports, 5. Quick checklist (+14 more)
+Cohesion: 0.11
+Nodes (18): 1. Module skeleton, 2. Register the new components, 2b. Make the tool available to the AGENT (essential!), 3.1 Tools endpoint, 3.2 Pipelines endpoint, 3. Expose the module via the API, 4. Optional: Add helper imports, 5. Quick checklist (+10 more)
 
-### Community 36 - "BaseTool"
-Cohesion: 0.09
-Nodes (40): ABC, BaseTool, Enum, str, Abstract base class for all filesystem tools. Subclasses must define ``name``,…, RiskLevel, Return a verification dict confirming existence of the path., verify_exists() (+32 more)
+### Community 36 - "test_file_tools_v2.py"
+Cohesion: 0.14
+Nodes (29): CopyTool, CreateFileTool, CreateFolderTool, MoveTool, RenameTool, WriteFileTool, engine(), asyncio (+21 more)
 
 ### Community 37 - "opencode_worker/agent/milestones.py"
 Cohesion: 0.17
@@ -387,8 +389,8 @@ Cohesion: 0.18
 Nodes (15): graphify always-on agent rule, Add URL and watch folder reference, Extra exports and benchmark reference, Extraction subagent prompt spec, GitHub clone and cross-repo merge reference, Commit hook and CLAUDE.md integration reference, Query, path, explain reference, Video/audio transcription reference (+7 more)
 
 ### Community 40 - "[id]/page.js"
-Cohesion: 0.12
-Nodes (9): ToolOutputViewer(), ArtifactsPanel(), EVENT_STYLE, formatBytes(), formatEventsToTerminal(), HandoverAndGraphPanel(), STATUS_STYLE, WorkerPage() (+1 more)
+Cohesion: 0.10
+Nodes (12): playAudioCue(), SUPPORTED_LANGUAGES, useSpeechRecognition(), VoiceInput(), ArtifactsPanel(), EVENT_STYLE, formatBytes(), formatEventsToTerminal() (+4 more)
 
 ### Community 41 - "MemoryVectorIndex"
 Cohesion: 0.22
@@ -398,9 +400,9 @@ Nodes (12): MemoryVectorIndex, Compute keyword overlap and path boosting score.,
 Cohesion: 0.21
 Nodes (8): json_dump_safe(), Any, Identify execution of unit testing and dataflow testing suites., Return guardian health and observation status., Safe serializer to string for inspection., Inspect a stream event and return an intervention message if deviation is…, Verify that file paths manipulated by the worker remain within fs_scope., Detect repeated consecutive failures on the same command/tool.
 
-### Community 43 - "verify_content"
-Cohesion: 0.39
-Nodes (6): Any, Path, verify_content(), verify_is_dir(), verify_is_file(), Any
+### Community 43 - "resolve_path"
+Cohesion: 0.07
+Nodes (27): Path, Resolve a user-provided path string to an absolute Path. - Rejects empty…, resolve_path(), Validate that a path is safe to operate on. Raises ``ValueError`` if the path…, validate_path(), Any, Path, Return a verification dict confirming existence of the path. (+19 more)
 
 ### Community 44 - "PersistentAgyDaemon"
 Cohesion: 0.20
@@ -414,37 +416,37 @@ Nodes (7): emit(), EventBus, Helper that gives the worker engine a clean ``await
 Cohesion: 0.22
 Nodes (6): Deserialize from JSON received from the parent., _contract(), asyncio, The worker must not be able to call tools outside allowed_tools., TestTaskContract, TestWorkerEngine
 
-### Community 47 - "test_tools_and_routes.py"
-Cohesion: 0.11
-Nodes (19): # NOTE: params must match each tool's ``input_schema`` exactly — the plan, client(), fixture, test_unknown_worker_still_404s(), client(), fixture, test_events_feed_and_digest_routes(), asyncio (+11 more)
+### Community 47 - "TestClient"
+Cohesion: 0.17
+Nodes (11): client(), fixture, test_unknown_worker_still_404s(), client(), fixture, test_agent_validation_errors(), test_pipelines_list_and_404(), test_skills_list_only_skills() (+3 more)
 
 ### Community 48 - "📦 Jarvis Direct Tool Catalog"
 Cohesion: 0.13
 Nodes (14): 1. 💬 WhatsApp Module Tools & Skills, 2. ✉️ Gmail Module Tools & Skills, 3. 📂 Google Drive Module Tools & Skills, 4. ⚡ Autonomous Antigravity Worker Delegation (`fork`), Antigravity Native Worker Capabilities:, 🧭 Core Architecture: Executive Orchestrator, Direct Conversational Response:, Executive Principles: (+6 more)
 
-### Community 49 - "delete_file.py"
-Cohesion: 0.22
-Nodes (6): move_to_trash(), Path, Recoverable-delete support: moves items into a backend-local trash folder., Move a file or folder into the trash directory and return its new path. The…, DeleteFileTool, Any
+### Community 49 - "ensure_is_file"
+Cohesion: 0.10
+Nodes (13): move_to_trash(), Path, Recoverable-delete support: moves items into a backend-local trash folder., Move a file or folder into the trash directory and return its new path. The…, ensure_is_file(), DeleteFileTool, Any, DeleteFolderTool (+5 more)
 
 ### Community 50 - "manage_chat.py"
-Cohesion: 0.18
-Nodes (6): Connection states of the WhatsApp sidecar and human-readable descriptions., validate_chat_action(), GetStatusTool, Any, ManageChatTool, Any
+Cohesion: 0.20
+Nodes (6): Connection states of the WhatsApp sidecar and human-readable descriptions., Validation helpers for WhatsApp tools., validate_chat_action(), validate_group_action(), ManageChatTool, Any
 
 ### Community 51 - "get_onnx_embedder"
 Cohesion: 0.20
 Nodes (11): get_onnx_embedder(), OnnxEmbedder, ONNX Runtime Embedder for ultra-fast, zero-overhead semantic memory retrieval.…, Singleton getter for OnnxEmbedder., Lightweight, CPU-optimized text embedder using ONNX Runtime and Fast Tokenizers., Encode text(s) into 384-dimensional dense vectors. Returns 1D array if single…, test_onnx_embedder_batch_encoding(), test_onnx_embedder_empty_input() (+3 more)
 
 ### Community 52 - "ToolRegistry"
-Cohesion: 0.13
-Nodes (11): AgentFactory, Registry that holds tool classes keyed by their name. Usage: registry =…, ToolRegistry, asyncio, test_execution_engine_list_directory(), engine(), asyncio, fixture (+3 more)
+Cohesion: 0.09
+Nodes (20): AgentFactory, ListDirectoryTool, SearchContentTool, # NOTE: params must match each tool's ``input_schema`` exactly — the plan, Registry that holds tool classes keyed by their name. Usage: registry =…, ToolRegistry, asyncio, test_execution_engine_list_directory() (+12 more)
 
 ### Community 53 - "patch"
 Cohesion: 0.36
 Nodes (8): asyncio, Unit tests for system power management endpoints., test_cancel_shutdown_endpoint(), test_cancel_shutdown_tool_execution(), test_restart_endpoint(), test_shutdown_endpoint(), test_shutdown_tool_execution(), patch
 
-### Community 54 - "brain.py"
-Cohesion: 0.10
-Nodes (31): Jarvis Central Brain Manager powered by Antigravity CLI (`agy.exe`). Features:…, build_execution_prompt(), build_master_task_prompt(), build_planning_prompt(), build_prompt(), build_testing_prompt(), _format_handover_section(), is_simple_task() (+23 more)
+### Community 54 - "test_session_handover.py"
+Cohesion: 0.16
+Nodes (24): build_execution_prompt(), build_master_task_prompt(), build_planning_prompt(), build_testing_prompt(), _format_handover_section(), _living_docs_section(), MilestonePhase, Any (+16 more)
 
 ### Community 55 - "ScopedToolRegistry"
 Cohesion: 0.16
@@ -460,23 +462,23 @@ Nodes (13): 36. Development Order, Step 10 — Pipelines, Step 11 — API exposu
 
 ### Community 58 - "apiFetch"
 Cohesion: 0.15
-Nodes (18): ActivityFeed(), loadFeed(), formatTimestamp(), PowerControls(), handleCancelShutdown(), handleLock(), handleShutdownConfirm(), API_URL (+10 more)
+Nodes (19): ActivityFeed(), loadFeed(), formatTimestamp(), PowerControls(), handleCancelShutdown(), handleLock(), handleShutdownConfirm(), API_URL (+11 more)
 
 ### Community 59 - "ExecutionEngine"
 Cohesion: 0.20
 Nodes (12): BaseTool Contract, ExecutionEngine, OpenCodeAdapter _KNOWN_TOOLS, Module Skeleton (skills/tools/pipelines/helpers), ToolRegistry, Session: Gmail Tools, OAuth & Agent Email Routing, Phase 2 Definition of Done, Dry Run Support (+4 more)
 
 ### Community 60 - "Jarvis Backend Implementation Log"
-Cohesion: 0.09
-Nodes (23): Addendum: attachments + agent robustness (same day), Agent can fork, Bug fixes along the way, Frontend, Jarvis Backend Implementation Log, Key Components Built, Not yet done (next sessions), Session: Fork UX — agent `fork` tool, manual fork form, chat persistence (2026-09-12) (+15 more)
+Cohesion: 0.18
+Nodes (11): Addendum: attachments + agent robustness (same day), Jarvis Backend Implementation Log, Key Components Built, Session: Gmail Tools, OAuth & Agent Email Routing (2026-09-12), Session: Jarvis + OpenCode CLI Worker Architecture & Word Worker Removal (2026-09-15), State, Summary, Tested & fixed end-to-end (all ✅) (+3 more)
 
 ### Community 61 - "start_service.py"
 Cohesion: 0.25
 Nodes (17): clean_stale_chrome_locks(), cleanup(), establish_tunnel(), is_backend_running(), is_tunnel_alive(), is_whatsapp_running(), kill_proc(), log() (+9 more)
 
 ### Community 62 - "events.py"
-Cohesion: 0.13
-Nodes (23): get_activity_feed(), get_feed_unread_counts(), get_recent_events(), get_seven_day_digests(), get_task_hooks(), HookRegistrationRequest, ManualEventRequest, publish_manual_event() (+15 more)
+Cohesion: 0.12
+Nodes (26): get_activity_feed(), get_feed_unread_counts(), get_recent_events(), get_seven_day_digests(), get_task_hooks(), HookRegistrationRequest, ManualEventRequest, publish_manual_event() (+18 more)
 
 ### Community 63 - "base/bus.py"
 Cohesion: 0.25
@@ -487,20 +489,20 @@ Cohesion: 0.18
 Nodes (10): 1. Directory Role & Boundary, 2. File Inventory, 3. The 7-Tab Inspection Architecture, 4. Key Sub-Components inside `page.js`, 5. Critical Invariants & Gotchas, A. `LiveWorkerTerminal`, `app/worker/[id]/` — Autonomous Worker Cockpit, B. `PlanApprovalCard` (+2 more)
 
 ### Community 66 - "ExecutionEngine"
-Cohesion: 0.19
-Nodes (20): ValidationError, ExecutionEngine, Any, Core engine that validates input, executes a tool, and returns a ToolResult.…, asyncio, test_list_drive_files_mock_mode(), test_list_drive_files_no_creds(), test_read_drive_file_missing_id() (+12 more)
+Cohesion: 0.12
+Nodes (28): ExecutionError, JarvisException, NotFoundError, Any, ValidationError, ExecutionEngine, Any, Core engine that validates input, executes a tool, and returns a ToolResult.… (+20 more)
 
 ### Community 67 - "main.py"
-Cohesion: 0.23
-Nodes (12): ExecutionError, jarvis_exception_handler(), JarvisException, NotFoundError, Request, create_app(), FastAPI, client() (+4 more)
+Cohesion: 0.22
+Nodes (10): jarvis_exception_handler(), Request, create_app(), FastAPI, asyncio, test_frontend_backend_integration_flow(), client(), fixture (+2 more)
 
 ### Community 68 - "GmailInboundListener"
 Cohesion: 0.19
 Nodes (8): GmailInboundListener, _load_creds(), Any, datetime, Persist email to SQLite service_events table., Load Google OAuth credentials with multiple fallback search paths., Synchronous fetch executed in worker thread., Continuous background listener that monitors Gmail for new unread messages and…
 
 ### Community 69 - "ListRecentEmailsSkill"
-Cohesion: 0.36
-Nodes (6): ListRecentEmailsSkill, List recent emails matching a query via Gmail API. Parameters ---------- query:…, asyncio, fixture, setup_skill(), test_list_recent_emails_pipeline_no_creds()
+Cohesion: 0.13
+Nodes (16): ListRecentEmailsPipeline, Any, Pipeline that runs the ListRecentEmailsSkill. Demonstrates how higher‑level…, _get_creds(), ListRecentEmailsSkill, _load_token_path(), Any, Credentials (+8 more)
 
 ### Community 70 - "poc.js"
 Cohesion: 0.29
@@ -542,10 +544,6 @@ Nodes (7): list_skills(), Any, get, post, Return a list of registered skills (ca
 Cohesion: 0.29
 Nodes (7): list_tools(), Any, get, post, Return a list of registered tool names and descriptions., Execute a tool by name with given parameters., run_tool()
 
-### Community 81 - "test_memory.py"
-Cohesion: 0.12
-Nodes (6): fake_agent_env(), FakeAdapter, mem_db_factory(), fixture, Tests for agent memory: short-term chat memory, long-term memory, and the…, Mock adapter that records calls and returns a fake plan or response.
-
 ### Community 82 - "system.py"
 Cohesion: 0.22
 Nodes (12): cancel_shutdown(), lock_workstation(), BaseModel, post, System control endpoints: Remote shutdown, restart, abort, and power management., Lock the Windows workstation immediately., Initiate a system shutdown with a safe countdown timer., Initiate a system restart with a countdown timer. (+4 more)
@@ -558,9 +556,9 @@ Nodes (6): log(), main(), trigger_vercel_redeploy(), update_vercel_env(), wait_f
 Cohesion: 0.25
 Nodes (8): 8. File System Tools, `exists`, `list_directory`, `metadata`, Mutation operations, `read_file`, Read operations, `search_files`
 
-### Community 85 - "app/page.js"
-Cohesion: 0.18
-Nodes (7): BotMessage(), UserBubble(), playAudioCue(), SUPPORTED_LANGUAGES, useSpeechRecognition(), VoiceInput(), SUGGESTIONS
+### Community 85 - "brain.py"
+Cohesion: 0.25
+Nodes (6): Jarvis Central Brain Manager powered by Antigravity CLI (`agy.exe`). Features:…, get_antigravity_model(), get_visible_console(), Configuration for the Antigravity CLI Worker (`agy`). Resolves the `agy` /…, Return the requested model or default to gemini-3.8-flash-low., Return whether to launch Antigravity CLI in a visible Windows terminal window.
 
 ### Community 86 - "TaskChainTracker.js"
 Cohesion: 0.58
@@ -571,8 +569,8 @@ Cohesion: 0.25
 Nodes (7): 💡 Active Preferences & Habits, 📁 Active Projects & Workspaces, 📜 Core Operational Rules (Manager Persona), 🧠 JARVIS LIVING MEMORY & SYSTEM CONTEXT, 📝 Recent Scratchpad (Rolling Active Notes), 📝 Scratchpad & Temporary Notes, 👤 User Profile & Invariants
 
 ### Community 88 - "OpenCodeAdapter"
-Cohesion: 0.13
-Nodes (14): OpenCodeAdapter, Any, Adapter to communicate with the Groq LLM and translate prompts into tool plans.…, Prompt used for single-step execution (legacy / fallback)., Send a chat-completion request from a full messages array and return content., Send a chat-completion request and return the raw content string., Parse the LLM's raw output as JSON, returning None on failure., Phase 1 — Analyze the user's prompt and return a plan or direct response. Args:… (+6 more)
+Cohesion: 0.06
+Nodes (30): _get_creds(), _load_token_path(), Any, Credentials, Path, Return a path to a ``token.json`` if one exists next to the tool or at the…, OpenCodeAdapter, Any (+22 more)
 
 ### Community 89 - "graphify reference: query, path, explain"
 Cohesion: 0.33
@@ -583,20 +581,20 @@ Cohesion: 0.22
 Nodes (8): 1. Directory Role & Boundary, 2. File Inventory, 3. Core Features & Sub-components in `page.js`, 4. External API Contracts, 5. Critical Invariants & Gotchas, A. ForkForm (Worker Provisioning), `app/workers/` — Worker Management & Launch Dashboard, B. Worker Session Card Grid
 
 ### Community 91 - "lifecycle.py"
-Cohesion: 0.27
-Nodes (11): lifespan(), _periodic_memory_maintenance(), FastAPI, Periodic background task to aggregate daily digests and prune expired 7-day…, prewarm_vector_embedder(), Pre-warm the ONNX embedder model in a background thread at startup., get_drive_listener(), get_gmail_listener() (+3 more)
+Cohesion: 0.31
+Nodes (10): get_orchestrator(), lifespan(), FastAPI, prewarm_vector_embedder(), Pre-warm the ONNX embedder model in a background thread at startup., get_drive_listener(), get_gmail_listener(), get_whatsapp_listener() (+2 more)
 
-### Community 92 - "_disk_sessions"
-Cohesion: 0.40
-Nodes (5): _disk_sessions(), get_worker(), list_workers(), Summary state of every known worker session (parent dashboard). Merges live…, Worker states recovered from disk (sessions whose engine is gone, e.g. after a…
+### Community 92 - "DriveInboundListener"
+Cohesion: 0.32
+Nodes (3): DriveInboundListener, Persist drive update to SQLite service_events table., Continuous background listener that monitors Google Drive for recently modified…
 
 ### Community 93 - "layout.js"
 Cohesion: 0.40
 Nodes (3): geistMono, geistSans, metadata
 
-### Community 94 - "execution_engine.py"
-Cohesion: 0.20
-Nodes (6): BaseModel, Standardized result returned by any tool execution., ToolResult, ListRecentEmailsPipeline, Any, Pipeline that runs the ListRecentEmailsSkill. Demonstrates how higher‑level…
+### Community 94 - "Milestone"
+Cohesion: 0.25
+Nodes (8): build_prompt(), is_simple_task(), Milestone, plan_milestones(), Build the prompt for the Antigravity agent milestone., A single discrete unit of work executed by the Antigravity worker., Detect if an objective is simple enough to complete in 1 execution step + 1…, Generate proportional milestone sequence with a fixed final test phase.
 
 ### Community 95 - "`app/core/` — Core Engine, Tool Contracts & Reactive Orchestration"
 Cohesion: 0.29
@@ -606,12 +604,12 @@ Nodes (6): 1. Directory Role & Boundary, 2. File Inventory, 3. Reactive Event Or
 Cohesion: 0.40
 Nodes (4): Validate that a search query string is non‑empty., Basic validation for an email address string. Returns True if the string looks…, validate_email_address(), validate_query()
 
-### Community 97 - "antigravity_worker/agent/cli_client.py"
-Cohesion: 0.11
-Nodes (21): _build_args(), _extract_session_id(), Any, Non-interactive Antigravity CLI client. Wraps `agy run` (or configured CLI) as…, Execute `agy` via stream-json stdin/stdout and collect structured results., Build the argument list for official Antigravity CLI (`agy.exe`)., Try to extract the Antigravity session/conversation ID from events or raw…, run_antigravity_cli() (+13 more)
+### Community 97 - "test_antigravity_worker.py"
+Cohesion: 0.13
+Nodes (16): _build_args(), _extract_session_id(), Any, Non-interactive Antigravity CLI client. Wraps `agy run` (or configured CLI) as…, Execute `agy` via stream-json stdin/stdout and collect structured results., Build the argument list for official Antigravity CLI (`agy.exe`)., Try to extract the Antigravity session/conversation ID from events or raw…, run_antigravity_cli() (+8 more)
 
 ### Community 98 - "Repository"
-Cohesion: 0.12
+Cohesion: 0.11
 Nodes (12): ExecutionLog, 24-Hour Hot Activity Feed event for WhatsApp, Gmail, and Google Drive., 7-Day Rolling Semantic Memory digests per service., ServiceDailyDigest, ServiceEvent, Task, Any, datetime (+4 more)
 
 ### Community 100 - "Worker Session"
@@ -646,9 +644,9 @@ Nodes (4): get_available_credentials(), main(), Setup script to run the Google D
 Cohesion: 0.12
 Nodes (14): 1. Overview & Separation of Concerns, 2. Key Pages & Routes, 3. Core Components, 4. Environment Variables, 5. Deployment on Vercel, Jarvis AI Automation — Frontend Architecture & Agent Guide, 1. Install Dependencies, 2. Configure Environment (+6 more)
 
-### Community 108 - "OrganizeDownloadsPipeline"
-Cohesion: 0.40
-Nodes (3): OrganizeDownloadsPipeline, Any, Pipeline that runs the OrganizeDownloadsSkill. It demonstrates how higher‑level…
+### Community 108 - "._persist_to_db"
+Cohesion: 0.29
+Nodes (3): Any, Persist incoming chat preview to SQLite service_events table., Fetch and persist recent WhatsApp chats and messages into SQLite service_events…
 
 ### Community 109 - "graphify.js"
 Cohesion: 0.67
@@ -662,9 +660,9 @@ Nodes (4): 7. Tool vs Skill vs Pipeline, Pipeline, Skill, Tool
 Cohesion: 0.29
 Nodes (7): list_pipelines(), Any, get, post, Return a list of available pipeline names., Execute a pipeline by name with given parameters., run_pipeline()
 
-### Community 117 - "registry/__init__.py"
-Cohesion: 0.05
-Nodes (43): Send an email via Gmail API. Parameters ---------- to: str Recipient email…, SendEmailTool, CancelShutdownTool, ShutdownTool, get_client(), Validation helpers for WhatsApp tools., Return a value the sidecar can resolve: a full chat id, or a name/number string., resolve_recipient() (+35 more)
+### Community 117 - "BaseTool"
+Cohesion: 0.07
+Nodes (49): ABC, BaseTool, Enum, str, Abstract base class for all filesystem tools. Subclasses must define ``name``,…, RiskLevel, Search Google Drive files by keyword, full-text content, and file type.…, SearchDriveSkill (+41 more)
 
 ### Community 118 - "Jarvis + OpenCode CLI Worker Architecture"
 Cohesion: 0.67
@@ -699,8 +697,8 @@ Cohesion: 0.29
 Nodes (6): 1. Directory Role & Boundary, 2. File Inventory, 3. Subdirectory Architecture, 4. Application Lifespan (`main.py`), 5. Critical Invariants, `app/` — FastAPI Application Shell & Lifespan
 
 ### Community 137 - "get_event_bus"
-Cohesion: 0.17
-Nodes (12): get_event_bus(), Handle worker failure and abort registered hooks., Attach listener to the global event bus., MockWhatsAppTool, asyncio, test_task_orchestrator_auto_discovers_workspace_file(), test_task_orchestrator_chains_worker_completion(), test_task_orchestrator_interpolates_email_attachments() (+4 more)
+Cohesion: 0.24
+Nodes (10): get_event_bus(), MockWhatsAppTool, asyncio, test_task_orchestrator_auto_discovers_workspace_file(), test_task_orchestrator_chains_worker_completion(), test_task_orchestrator_interpolates_email_attachments(), __init__(), test_task_orchestrator_multi_step_follower_pipeline() (+2 more)
 
 ### Community 140 - "`app/` — Application Shell & Home Chat Dashboard"
 Cohesion: 0.25
@@ -730,6 +728,10 @@ Nodes (5): 1. Directory Role & Boundary, 2. Route Inventory (`app/api/routes/`),
 Cohesion: 0.33
 Nodes (5): 1. Directory Role & Boundary, 2. File Inventory, 3. Communication Contract, 4. Critical Invariants & Gotchas, `app/lib/` — Networking & Shared Utilities
 
+### Community 166 - "normalize_phone"
+Cohesion: 0.33
+Nodes (6): normalize_phone(), Normalize a phone number to bare digits (no +, spaces, or dashes)., Convert a phone number or bare number to a WhatsApp chat id ('<digits>@c.us')., to_chat_id(), test_normalize_phone(), test_to_chat_id()
+
 ### Community 167 - "`app/modules/` — Domain Capabilities & Integrations"
 Cohesion: 0.33
 Nodes (5): 1. Directory Role & Boundary, 2. Module Inventory, 3. Module Internal Layout Convention, 4. Critical Invariants & Gotchas, `app/modules/` — Domain Capabilities & Integrations
@@ -738,9 +740,9 @@ Nodes (5): 1. Directory Role & Boundary, 2. Module Inventory, 3. Module Internal
 Cohesion: 0.33
 Nodes (6): 1. Overview & Architecture, 2. Directory Map, 3. Environment Variables & Configuration, 4. Runbook & Common Commands, 5. Critical Invariants, Jarvis AI Automation — Backend Engine
 
-### Community 169 - "WhatsAppInboundListener"
-Cohesion: 0.16
-Nodes (9): Any, Continuous background listener that monitors WhatsApp chats and emits digest…, Persist incoming chat preview to SQLite service_events table., Fetch and persist recent WhatsApp chats and messages into SQLite service_events…, WhatsAppInboundListener, asyncio, test_gmail_inbound_listener_emits_event(), test_whatsapp_inbound_listener_emits_event() (+1 more)
+### Community 169 - "EventType"
+Cohesion: 0.15
+Nodes (12): EventType, Enum, str, setup_logging(), Continuous background listener that monitors WhatsApp chats and emits digest…, WhatsAppInboundListener, test_events_recent_endpoint(), asyncio (+4 more)
 
 ### Community 171 - "`tests/` — Backend Automated Test Suite"
 Cohesion: 0.33
@@ -758,17 +760,17 @@ Nodes (6): get_health(), HealthResponse, BaseModel, get, Settings, BaseSettings
 Cohesion: 0.20
 Nodes (6): _get_shared_embedder(), Any, Path, Try loading ONNX embedder singleton., Re-read JARVIS_MEMORY.md and rebuild the semantic index., Extract bullet points from memory sections (skipping invariants & profile).
 
-### Community 176 - "_load_token_path"
-Cohesion: 0.25
-Nodes (7): _get_creds(), _load_token_path(), Any, Credentials, Path, Load Gmail API credentials from token file or return None. Looks for…, Return credentials if present, otherwise respect ``GMAIL_MOCK``.
+### Community 176 - "DailyDigestPipeline"
+Cohesion: 0.33
+Nodes (4): DailyDigestPipeline, Any, Run the unread digest and send it to the given chat (run on a schedule or on…, test_daily_digest_pipeline()
 
 ### Community 178 - "._make_on_event"
 Cohesion: 0.29
 Nodes (3): Any, Record step result into agent history., Create a real-time event forwarder for SSE consumers.
 
-### Community 179 - "clear_all_workers"
-Cohesion: 0.67
-Nodes (3): clear_all_workers(), delete, Purge all on-disk worker sessions and clear the in-memory engine cache.
+### Community 179 - "post"
+Cohesion: 0.13
+Nodes (16): cancel_worker(), clear_all_workers(), open_agy_terminal(), open_desktop(), open_terminal(), OpenTerminalRequest, delete, post (+8 more)
 
 ### Community 180 - "scripts"
 Cohesion: 0.40
@@ -786,24 +788,48 @@ Nodes (6): Context, Known limitations, Optimization plan (accepted next steps, n
 Cohesion: 0.33
 Nodes (4): Lazy-loaded MemoryVectorIndex for semantic on-demand retrieval., get_memory_vector_index(), Semantic memory retriever: Ultra-low latency ONNX + Keyword index over living…, Return the global MemoryVectorIndex instance.
 
-### Community 185 - ".subscribe_sse"
-Cohesion: 0.40
-Nodes (3): Queue, Subscribe a new asyncio.Queue to receive live streaming events., Remove an asyncio.Queue from active SSE subscribers.
+### Community 185 - "Session: Fork UX — agent `fork` tool, manual fork form, chat persistence (2026-09-12)"
+Cohesion: 0.33
+Nodes (6): Agent can fork, Frontend, Session: Fork UX — agent `fork` tool, manual fork form, chat persistence (2026-09-12), Verified live (temp uvicorn :8002, real OpenRouter key in `.env`), Worker LLM fix (found by live testing), Worker sessions survive restarts
+
+### Community 188 - "Session: Worker / Orchestrator Architecture — Steps 0–1 (2026-09-12)"
+Cohesion: 0.33
+Nodes (6): Bug fixes along the way, Not yet done (next sessions), Session: Worker / Orchestrator Architecture — Steps 0–1 (2026-09-12), Step 0 — plumbing (done earlier same day), Step 1 — Word worker + worker LLM (this session), Verification
+
+### Community 189 - "7. Write unit tests"
+Cohesion: 0.50
+Nodes (4): 7. Write unit tests, Running the tests, Testing a pipeline, Testing a tool
+
+### Community 192 - "SendReportSkill"
+Cohesion: 0.50
+Nodes (4): Summarize a file or folder and send the summary as a WhatsApp message., SendReportSkill, test_send_report_skill_file(), test_send_report_skill_folder()
+
+### Community 193 - "DownloadsNotifierPipeline"
+Cohesion: 0.67
+Nodes (3): DownloadsNotifierPipeline, Notify a WhatsApp chat about files that appeared in a folder recently (e.g.…, test_downloads_notifier_pipeline()
+
+### Community 194 - "PhotoBackupPipeline"
+Cohesion: 0.67
+Nodes (3): PhotoBackupPipeline, Download photos from a WhatsApp chat and store them in YYYY/MM folders., test_photo_backup_pipeline()
+
+### Community 195 - "engine"
+Cohesion: 0.67
+Nodes (3): engine(), fake_client(), fixture
 
 ## Knowledge Gaps
 - **412 isolated node(s):** `$schema`, `plugin`, `GESTURE_CATEGORIES`, `EMOTIONS`, `PRESET_SCRIPTS` (+407 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1105 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **36 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1104 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **37 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `ExecutionEngine` connect `ExecutionEngine` to `agent.py`, `test_whatsapp.py`, `main.py`, `BaseTool`, `TaskOrchestrator`, `test_file_tools_v2.py`, `OrganizeDownloadsPipeline`, `skills.py`, `tools.py`, `test_tools_and_routes.py`, `WorkerEngine`, `ToolRegistry`, `TaskContract`, `execution_engine.py`?**
-  _High betweenness centrality (0.041) - this node is a cross-community bridge._
-- **Why does `BaseTool` connect `BaseTool` to `test_whatsapp.py`, `ExecutionEngine`, `get_drive_service`, `ListRecentEmailsSkill`, `get_event_bus`, `test_file_tools_v2.py`, `delete_file.py`, `manage_chat.py`, `ToolRegistry`, `registry/__init__.py`, `resolve_path`, `execution_engine.py`, `.execute`?**
-  _High betweenness centrality (0.039) - this node is a cross-community bridge._
-- **Why does `ToolRegistry` connect `ToolRegistry` to `ExecutionEngine`, `RuntimeError`, `BaseTool`, `test_file_tools_v2.py`, `AntigravityWorkerAgent`, `test_tools_and_routes.py`, `WorkerEngine`, `JarvisBrainManager`, `brain.py`, `registry/__init__.py`, `OpenCodeAdapter`, `TaskContract`, `ScopedToolRegistry`, `.__init__`, `execution_engine.py`?**
-  _High betweenness centrality (0.037) - this node is a cross-community bridge._
+- **Why does `ExecutionEngine` connect `ExecutionEngine` to `agent.py`, `test_whatsapp.py`, `engine`, `test_file_tools_v2.py`, `ListRecentEmailsSkill`, `TaskOrchestrator`, `EventType`, `OrganizeDownloadsSkill`, `skills.py`, `tools.py`, `WorkerEngine`, `ToolRegistry`, `BaseTool`, `TaskContract`?**
+  _High betweenness centrality (0.043) - this node is a cross-community bridge._
+- **Why does `ToolRegistry` connect `ToolRegistry` to `agent.py`, `ExecutionEngine`, `test_file_tools_v2.py`, `WorkerEngine`, `JarvisBrainManager`, `brain.py`, `BaseTool`, `OpenCodeAdapter`, `TaskContract`, `ScopedToolRegistry`?**
+  _High betweenness centrality (0.038) - this node is a cross-community bridge._
+- **Why does `BaseTool` connect `BaseTool` to `SendReportSkill`, `ExecutionEngine`, `get_drive_service`, `test_file_tools_v2.py`, `ListRecentEmailsSkill`, `get_event_bus`, `resolve_path`, `OrganizeDownloadsSkill`, `ensure_is_file`, `manage_chat.py`, `ToolRegistry`, `ensure_exists`, `TaskContract`, `.execute`, `metadata.py`?**
+  _High betweenness centrality (0.035) - this node is a cross-community bridge._
 - **Are the 4 inferred relationships involving `BaseTool` (e.g. with `ExecutionEngine` and `ToolRegistry`) actually correct?**
   _`BaseTool` has 4 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 48 inferred relationships involving `RiskLevel` (e.g. with `SearchDriveSkill` and `ListDriveFilesTool`) actually correct?**
