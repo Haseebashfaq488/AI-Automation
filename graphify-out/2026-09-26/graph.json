@@ -515,6 +515,19 @@
       "source_location": "L6"
     },
     {
+      "id": "backend_app_workers_antigravity_worker_agent_milestones_milestone",
+      "label": "Milestone",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 166,
+      "community_name": "Milestone",
+      "file_type": "code",
+      "norm_label": "milestone",
+      "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
+      "source_location": "L23"
+    },
+    {
       "id": "ai_automation_frontend_app_components_avatar_avatarloader_avatarloader",
       "label": "AvatarLoader",
       "_callable": true,
@@ -1152,32 +1165,6 @@
       "source_location": "L62"
     },
     {
-      "id": "backend_app_api_routes_events_hookregistrationrequest",
-      "label": "HookRegistrationRequest",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 42,
-      "community_name": "EventType",
-      "file_type": "code",
-      "norm_label": "hookregistrationrequest",
-      "source_file": "backend/app/api/routes/events.py",
-      "source_location": "L17"
-    },
-    {
-      "id": "backend_app_api_routes_events_manualeventrequest",
-      "label": "ManualEventRequest",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 42,
-      "community_name": "EventType",
-      "file_type": "code",
-      "norm_label": "manualeventrequest",
-      "source_file": "backend/app/api/routes/events.py",
-      "source_location": "L24"
-    },
-    {
       "id": "backend_app_core_events_schema_eventtype",
       "label": "EventType",
       "_callable": true,
@@ -1189,6 +1176,19 @@
       "norm_label": "eventtype",
       "source_file": "backend/app/core/events/schema.py",
       "source_location": "L8"
+    },
+    {
+      "id": "backend_app_modules_whatsapp_helpers_listener_whatsappinboundlistener",
+      "label": "WhatsAppInboundListener",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 42,
+      "community_name": "EventType",
+      "file_type": "code",
+      "norm_label": "whatsappinboundlistener",
+      "source_file": "backend/app/modules/whatsapp/helpers/listener.py",
+      "source_location": "L13"
     },
     {
       "id": "backend_app_core_tool_basetool",
@@ -1451,19 +1451,6 @@
       "source_location": "L244"
     },
     {
-      "id": "backend_tests_unit_test_antigravity_worker_testantigravitycliclient",
-      "label": "TestAntigravityCLIClient",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 44,
-      "community_name": "antigravity_worker/agent/cli_client.py",
-      "file_type": "code",
-      "norm_label": "testantigravitycliclient",
-      "source_file": "backend/tests/unit/test_antigravity_worker.py",
-      "source_location": "L37"
-    },
-    {
       "id": "backend_app_workers_base_bus_eventbus",
       "label": "EventBus",
       "_callable": true,
@@ -1581,39 +1568,13 @@
       "source_location": "L5"
     },
     {
-      "id": "backend_app_modules_whatsapp_helpers_listener_whatsappinboundlistener",
-      "label": "WhatsAppInboundListener",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 53,
-      "community_name": "WhatsAppInboundListener",
-      "file_type": "code",
-      "norm_label": "whatsappinboundlistener",
-      "source_file": "backend/app/modules/whatsapp/helpers/listener.py",
-      "source_location": "L13"
-    },
-    {
-      "id": "backend_app_workers_antigravity_worker_agent_milestones_milestone",
-      "label": "Milestone",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 54,
-      "community_name": "test_session_handover.py",
-      "file_type": "code",
-      "norm_label": "milestone",
-      "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
-      "source_location": "L23"
-    },
-    {
       "id": "backend_app_workers_antigravity_worker_agent_milestones_milestonephase",
       "label": "MilestonePhase",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "code",
       "norm_label": "milestonephase",
       "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
@@ -1644,6 +1605,32 @@
       "norm_label": "testscopedregistry",
       "source_file": "backend/tests/unit/test_workers.py",
       "source_location": "L126"
+    },
+    {
+      "id": "backend_app_api_routes_events_hookregistrationrequest",
+      "label": "HookRegistrationRequest",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 62,
+      "community_name": "events.py",
+      "file_type": "code",
+      "norm_label": "hookregistrationrequest",
+      "source_file": "backend/app/api/routes/events.py",
+      "source_location": "L17"
+    },
+    {
+      "id": "backend_app_api_routes_events_manualeventrequest",
+      "label": "ManualEventRequest",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 62,
+      "community_name": "events.py",
+      "file_type": "code",
+      "norm_label": "manualeventrequest",
+      "source_file": "backend/app/api/routes/events.py",
+      "source_location": "L24"
     },
     {
       "id": "backend_tests_unit_test_whatsapp_fakewhatsappclient",
@@ -1904,6 +1891,19 @@
       "norm_label": "listrecentemailspipeline",
       "source_file": "backend/app/modules/gmail/pipelines/list_recent_emails_pipeline.py",
       "source_location": "L7"
+    },
+    {
+      "id": "backend_tests_unit_test_antigravity_worker_testantigravitycliclient",
+      "label": "TestAntigravityCLIClient",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 97,
+      "community_name": "run_antigravity_cli",
+      "file_type": "code",
+      "norm_label": "testantigravitycliclient",
+      "source_file": "backend/tests/unit/test_antigravity_worker.py",
+      "source_location": "L37"
     },
     {
       "id": "backend_app_modules_database_models_executionlog",
@@ -3580,18 +3580,6 @@
       "source_location": "L156"
     },
     {
-      "id": "backend_app_workers_antigravity_worker_agent_worker_agent_antigravityworkeragent_init",
-      "label": ".__init__()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 14,
-      "community_name": "AntigravityWorkerAgent",
-      "file_type": "code",
-      "norm_label": ".__init__()",
-      "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
-      "source_location": "L35"
-    },
-    {
       "id": "backend_app_workers_antigravity_worker_agent_worker_agent_antigravityworkeragent_inject_intervention",
       "label": ".inject_intervention()",
       "_callable": true,
@@ -3602,42 +3590,6 @@
       "norm_label": ".inject_intervention()",
       "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
       "source_location": "L125"
-    },
-    {
-      "id": "backend_app_workers_antigravity_worker_agent_worker_agent_antigravityworkeragent_make_on_event",
-      "label": "._make_on_event()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 14,
-      "community_name": "AntigravityWorkerAgent",
-      "file_type": "code",
-      "norm_label": "._make_on_event()",
-      "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
-      "source_location": "L95"
-    },
-    {
-      "id": "backend_app_workers_antigravity_worker_agent_worker_agent_antigravityworkeragent_make_on_event_on_event",
-      "label": "_on_event()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 14,
-      "community_name": "AntigravityWorkerAgent",
-      "file_type": "code",
-      "norm_label": "_on_event()",
-      "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
-      "source_location": "L103"
-    },
-    {
-      "id": "backend_app_workers_antigravity_worker_agent_worker_agent_antigravityworkeragent_record_step",
-      "label": ".record_step()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 14,
-      "community_name": "AntigravityWorkerAgent",
-      "file_type": "code",
-      "norm_label": ".record_step()",
-      "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
-      "source_location": "L114"
     },
     {
       "id": "backend_app_workers_antigravity_worker_agent_worker_agent_antigravityworkeragent_reject_plan",
@@ -3854,30 +3806,6 @@
       "norm_label": "on()",
       "source_file": "backend/app/workers/base/bus.py",
       "source_location": "L61"
-    },
-    {
-      "id": "backend_app_workers_base_bus_subscribe",
-      "label": "subscribe()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 142,
-      "community_name": "worker_events",
-      "file_type": "code",
-      "norm_label": "subscribe()",
-      "source_file": "backend/app/workers/base/bus.py",
-      "source_location": "L16"
-    },
-    {
-      "id": "backend_app_workers_base_bus_unsubscribe",
-      "label": "unsubscribe()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 142,
-      "community_name": "worker_events",
-      "file_type": "code",
-      "norm_label": "unsubscribe()",
-      "source_file": "backend/app/workers/base/bus.py",
-      "source_location": "L28"
     },
     {
       "id": "backend_app_workers_base_engine_workerengine_session_id",
@@ -4324,112 +4252,40 @@
       "source_location": "L57"
     },
     {
-      "id": "backend_app_modules_antigravity_brain_get_brain_manager",
-      "label": "get_brain_manager()",
+      "id": "backend_app_workers_antigravity_worker_agent_milestones_build_prompt",
+      "label": "build_prompt()",
       "_callable": true,
       "_origin": "ast",
       "community": 166,
-      "community_name": "brain.py",
+      "community_name": "Milestone",
       "file_type": "code",
-      "norm_label": "get_brain_manager()",
-      "source_file": "backend/app/modules/antigravity/brain.py",
-      "source_location": "L629"
+      "norm_label": "build_prompt()",
+      "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
+      "source_location": "L167"
     },
     {
-      "id": "backend_tests_unit_test_antigravity_brain_temp_memory_file",
-      "label": "temp_memory_file()",
+      "id": "backend_app_workers_antigravity_worker_agent_milestones_is_simple_task",
+      "label": "is_simple_task()",
       "_callable": true,
       "_origin": "ast",
       "community": 166,
-      "community_name": "brain.py",
+      "community_name": "Milestone",
       "file_type": "code",
-      "norm_label": "temp_memory_file()",
-      "source_file": "backend/tests/unit/test_antigravity_brain.py",
-      "source_location": "L11"
+      "norm_label": "is_simple_task()",
+      "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
+      "source_location": "L34"
     },
     {
-      "id": "backend_tests_unit_test_antigravity_brain_test_brain_manager_analyze_prompt_conversational",
-      "label": "test_brain_manager_analyze_prompt_conversational()",
+      "id": "backend_app_workers_antigravity_worker_agent_milestones_plan_milestones",
+      "label": "plan_milestones()",
       "_callable": true,
       "_origin": "ast",
       "community": 166,
-      "community_name": "brain.py",
+      "community_name": "Milestone",
       "file_type": "code",
-      "norm_label": "test_brain_manager_analyze_prompt_conversational()",
-      "source_file": "backend/tests/unit/test_antigravity_brain.py",
-      "source_location": "L56"
-    },
-    {
-      "id": "backend_tests_unit_test_antigravity_brain_test_brain_manager_analyze_prompt_plan",
-      "label": "test_brain_manager_analyze_prompt_plan()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 166,
-      "community_name": "brain.py",
-      "file_type": "code",
-      "norm_label": "test_brain_manager_analyze_prompt_plan()",
-      "source_file": "backend/tests/unit/test_antigravity_brain.py",
-      "source_location": "L66"
-    },
-    {
-      "id": "backend_tests_unit_test_antigravity_brain_test_brain_manager_appends_scratchpad",
-      "label": "test_brain_manager_appends_scratchpad()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 166,
-      "community_name": "brain.py",
-      "file_type": "code",
-      "norm_label": "test_brain_manager_appends_scratchpad()",
-      "source_file": "backend/tests/unit/test_antigravity_brain.py",
-      "source_location": "L29"
-    },
-    {
-      "id": "backend_tests_unit_test_antigravity_brain_test_brain_manager_auto_records_explicit_remember",
-      "label": "test_brain_manager_auto_records_explicit_remember()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 166,
-      "community_name": "brain.py",
-      "file_type": "code",
-      "norm_label": "test_brain_manager_auto_records_explicit_remember()",
-      "source_file": "backend/tests/unit/test_antigravity_brain.py",
-      "source_location": "L92"
-    },
-    {
-      "id": "backend_tests_unit_test_antigravity_brain_test_brain_manager_reads_memory",
-      "label": "test_brain_manager_reads_memory()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 166,
-      "community_name": "brain.py",
-      "file_type": "code",
-      "norm_label": "test_brain_manager_reads_memory()",
-      "source_file": "backend/tests/unit/test_antigravity_brain.py",
-      "source_location": "L22"
-    },
-    {
-      "id": "backend_tests_unit_test_antigravity_brain_test_brain_manager_validates_plan_steps",
-      "label": "test_brain_manager_validates_plan_steps()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 166,
-      "community_name": "brain.py",
-      "file_type": "code",
-      "norm_label": "test_brain_manager_validates_plan_steps()",
-      "source_file": "backend/tests/unit/test_antigravity_brain.py",
-      "source_location": "L38"
-    },
-    {
-      "id": "backend_tests_unit_test_antigravity_brain_test_brain_manager_worker_fork_llm_plan",
-      "label": "test_brain_manager_worker_fork_llm_plan()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 166,
-      "community_name": "brain.py",
-      "file_type": "code",
-      "norm_label": "test_brain_manager_worker_fork_llm_plan()",
-      "source_file": "backend/tests/unit/test_antigravity_brain.py",
-      "source_location": "L102"
+      "norm_label": "plan_milestones()",
+      "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
+      "source_location": "L59"
     },
     {
       "id": "ai_automation_frontend_app_components_avatar_avatarloader_avatarloader_constructor",
@@ -4490,18 +4346,6 @@
       "norm_label": "get_health()",
       "source_file": "backend/app/api/routes/health.py",
       "source_location": "L19"
-    },
-    {
-      "id": "backend_app_core_exceptions_jarvis_exception_handler",
-      "label": "jarvis_exception_handler()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 173,
-      "community_name": "main.py",
-      "file_type": "code",
-      "norm_label": "jarvis_exception_handler()",
-      "source_file": "backend/app/core/exceptions.py",
-      "source_location": "L51"
     },
     {
       "id": "backend_app_main_create_app",
@@ -4706,6 +4550,30 @@
       "norm_label": "emit_to_queues()",
       "source_file": "backend/app/workers/base/bus.py",
       "source_location": "L39"
+    },
+    {
+      "id": "backend_app_workers_base_bus_subscribe",
+      "label": "subscribe()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 177,
+      "community_name": "base/bus.py",
+      "file_type": "code",
+      "norm_label": "subscribe()",
+      "source_file": "backend/app/workers/base/bus.py",
+      "source_location": "L16"
+    },
+    {
+      "id": "backend_app_workers_base_bus_unsubscribe",
+      "label": "unsubscribe()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 177,
+      "community_name": "base/bus.py",
+      "file_type": "code",
+      "norm_label": "unsubscribe()",
+      "source_file": "backend/app/workers/base/bus.py",
+      "source_location": "L28"
     },
     {
       "id": "backend_tests_unit_test_gmail_tools_setup_registry",
@@ -5296,6 +5164,54 @@
       "source_location": "L122"
     },
     {
+      "id": "backend_app_workers_antigravity_worker_agent_worker_agent_antigravityworkeragent_init",
+      "label": ".__init__()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 189,
+      "community_name": "._make_on_event",
+      "file_type": "code",
+      "norm_label": ".__init__()",
+      "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
+      "source_location": "L35"
+    },
+    {
+      "id": "backend_app_workers_antigravity_worker_agent_worker_agent_antigravityworkeragent_make_on_event",
+      "label": "._make_on_event()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 189,
+      "community_name": "._make_on_event",
+      "file_type": "code",
+      "norm_label": "._make_on_event()",
+      "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
+      "source_location": "L95"
+    },
+    {
+      "id": "backend_app_workers_antigravity_worker_agent_worker_agent_antigravityworkeragent_make_on_event_on_event",
+      "label": "_on_event()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 189,
+      "community_name": "._make_on_event",
+      "file_type": "code",
+      "norm_label": "_on_event()",
+      "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
+      "source_location": "L103"
+    },
+    {
+      "id": "backend_app_workers_antigravity_worker_agent_worker_agent_antigravityworkeragent_record_step",
+      "label": ".record_step()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 189,
+      "community_name": "._make_on_event",
+      "file_type": "code",
+      "norm_label": ".record_step()",
+      "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
+      "source_location": "L114"
+    },
+    {
       "id": "backend_app_modules_drive_helpers_drive_client_format_file_size",
       "label": "format_file_size()",
       "_callable": true,
@@ -5414,6 +5330,18 @@
       "norm_label": ".execute()",
       "source_file": "backend/app/modules/drive/tools/upload_drive_file.py",
       "source_location": "L41"
+    },
+    {
+      "id": "backend_app_modules_antigravity_brain_get_brain_manager",
+      "label": "get_brain_manager()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "code",
+      "norm_label": "get_brain_manager()",
+      "source_file": "backend/app/modules/antigravity/brain.py",
+      "source_location": "L629"
     },
     {
       "id": "backend_app_modules_antigravity_brain_jarvisbrainmanager_analyze_prompt",
@@ -5606,6 +5534,102 @@
       "norm_label": "._validate_plan_steps()",
       "source_file": "backend/app/modules/antigravity/brain.py",
       "source_location": "L409"
+    },
+    {
+      "id": "backend_tests_unit_test_antigravity_brain_temp_memory_file",
+      "label": "temp_memory_file()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "code",
+      "norm_label": "temp_memory_file()",
+      "source_file": "backend/tests/unit/test_antigravity_brain.py",
+      "source_location": "L11"
+    },
+    {
+      "id": "backend_tests_unit_test_antigravity_brain_test_brain_manager_analyze_prompt_conversational",
+      "label": "test_brain_manager_analyze_prompt_conversational()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "code",
+      "norm_label": "test_brain_manager_analyze_prompt_conversational()",
+      "source_file": "backend/tests/unit/test_antigravity_brain.py",
+      "source_location": "L56"
+    },
+    {
+      "id": "backend_tests_unit_test_antigravity_brain_test_brain_manager_analyze_prompt_plan",
+      "label": "test_brain_manager_analyze_prompt_plan()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "code",
+      "norm_label": "test_brain_manager_analyze_prompt_plan()",
+      "source_file": "backend/tests/unit/test_antigravity_brain.py",
+      "source_location": "L66"
+    },
+    {
+      "id": "backend_tests_unit_test_antigravity_brain_test_brain_manager_appends_scratchpad",
+      "label": "test_brain_manager_appends_scratchpad()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "code",
+      "norm_label": "test_brain_manager_appends_scratchpad()",
+      "source_file": "backend/tests/unit/test_antigravity_brain.py",
+      "source_location": "L29"
+    },
+    {
+      "id": "backend_tests_unit_test_antigravity_brain_test_brain_manager_auto_records_explicit_remember",
+      "label": "test_brain_manager_auto_records_explicit_remember()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "code",
+      "norm_label": "test_brain_manager_auto_records_explicit_remember()",
+      "source_file": "backend/tests/unit/test_antigravity_brain.py",
+      "source_location": "L92"
+    },
+    {
+      "id": "backend_tests_unit_test_antigravity_brain_test_brain_manager_reads_memory",
+      "label": "test_brain_manager_reads_memory()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "code",
+      "norm_label": "test_brain_manager_reads_memory()",
+      "source_file": "backend/tests/unit/test_antigravity_brain.py",
+      "source_location": "L22"
+    },
+    {
+      "id": "backend_tests_unit_test_antigravity_brain_test_brain_manager_validates_plan_steps",
+      "label": "test_brain_manager_validates_plan_steps()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "code",
+      "norm_label": "test_brain_manager_validates_plan_steps()",
+      "source_file": "backend/tests/unit/test_antigravity_brain.py",
+      "source_location": "L38"
+    },
+    {
+      "id": "backend_tests_unit_test_antigravity_brain_test_brain_manager_worker_fork_llm_plan",
+      "label": "test_brain_manager_worker_fork_llm_plan()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "code",
+      "norm_label": "test_brain_manager_worker_fork_llm_plan()",
+      "source_file": "backend/tests/unit/test_antigravity_brain.py",
+      "source_location": "L102"
     },
     {
       "id": "backend_tests_unit_test_master_task_prompt_test_brain_manager_evaluate_completion",
@@ -6561,11 +6585,23 @@
       "_callable": true,
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "code",
       "norm_label": "launch_worker()",
       "source_file": "backend/app/api/routes/workers.py",
       "source_location": "L235"
+    },
+    {
+      "id": "backend_tests_unit_test_session_handover_isolated_sessions",
+      "label": "isolated_sessions()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 28,
+      "community_name": "test_session_handover.py",
+      "file_type": "code",
+      "norm_label": "isolated_sessions()",
+      "source_file": "backend/tests/unit/test_session_handover.py",
+      "source_location": "L21"
     },
     {
       "id": "backend_tests_unit_test_session_handover_test_contract_handover_fields",
@@ -6573,7 +6609,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "code",
       "norm_label": "test_contract_handover_fields()",
       "source_file": "backend/tests/unit/test_session_handover.py",
@@ -6585,7 +6621,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "code",
       "norm_label": "test_dynamic_fs_scope_resolution()",
       "source_file": "backend/tests/unit/test_session_handover.py",
@@ -6597,7 +6633,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "code",
       "norm_label": "test_engine_synthesize_handover()",
       "source_file": "backend/tests/unit/test_session_handover.py",
@@ -6609,11 +6645,23 @@
       "_callable": true,
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "code",
       "norm_label": "test_get_worker_handover_endpoint()",
       "source_file": "backend/tests/unit/test_session_handover.py",
       "source_location": "L234"
+    },
+    {
+      "id": "backend_tests_unit_test_session_handover_test_graphify_handover_integration",
+      "label": "test_graphify_handover_integration()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 28,
+      "community_name": "test_session_handover.py",
+      "file_type": "code",
+      "norm_label": "test_graphify_handover_integration()",
+      "source_file": "backend/tests/unit/test_session_handover.py",
+      "source_location": "L190"
     },
     {
       "id": "backend_tests_unit_test_session_handover_test_launch_worker_autodetects_handover",
@@ -6621,7 +6669,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "code",
       "norm_label": "test_launch_worker_autodetects_handover()",
       "source_file": "backend/tests/unit/test_session_handover.py",
@@ -6633,7 +6681,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "code",
       "norm_label": "test_session_handover_io()",
       "source_file": "backend/tests/unit/test_session_handover.py",
@@ -6645,7 +6693,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "code",
       "norm_label": "_wait_terminal()",
       "source_file": "backend/tests/unit/test_session_handover.py",
@@ -6657,7 +6705,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "code",
       "norm_label": "poll()",
       "source_file": "backend/tests/unit/test_session_handover.py",
@@ -8260,6 +8308,30 @@
       "source_location": "L6"
     },
     {
+      "id": "backend_app_modules_whatsapp_helpers_listener_whatsappinboundlistener_init",
+      "label": ".__init__()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 42,
+      "community_name": "EventType",
+      "file_type": "code",
+      "norm_label": ".__init__()",
+      "source_file": "backend/app/modules/whatsapp/helpers/listener.py",
+      "source_location": "L16"
+    },
+    {
+      "id": "backend_app_modules_whatsapp_helpers_listener_whatsappinboundlistener_stop",
+      "label": ".stop()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 42,
+      "community_name": "EventType",
+      "file_type": "code",
+      "norm_label": ".stop()",
+      "source_file": "backend/app/modules/whatsapp/helpers/listener.py",
+      "source_location": "L31"
+    },
+    {
       "id": "backend_tests_unit_test_events_route_test_events_hook_endpoint",
       "label": "test_events_hook_endpoint()",
       "_callable": true,
@@ -8294,6 +8366,66 @@
       "norm_label": "test_events_recent_endpoint()",
       "source_file": "backend/tests/unit/test_events_route.py",
       "source_location": "L13"
+    },
+    {
+      "id": "backend_tests_unit_test_inbound_listeners_test_gmail_inbound_listener_emits_event",
+      "label": "test_gmail_inbound_listener_emits_event()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 42,
+      "community_name": "EventType",
+      "file_type": "code",
+      "norm_label": "test_gmail_inbound_listener_emits_event()",
+      "source_file": "backend/tests/unit/test_inbound_listeners.py",
+      "source_location": "L48"
+    },
+    {
+      "id": "backend_tests_unit_test_inbound_listeners_test_gmail_inbound_listener_emits_event_mock_fetch",
+      "label": "mock_fetch()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 42,
+      "community_name": "EventType",
+      "file_type": "code",
+      "norm_label": "mock_fetch()",
+      "source_file": "backend/tests/unit/test_inbound_listeners.py",
+      "source_location": "L68"
+    },
+    {
+      "id": "backend_tests_unit_test_inbound_listeners_test_gmail_inbound_listener_emits_event_on_event",
+      "label": "on_event()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 42,
+      "community_name": "EventType",
+      "file_type": "code",
+      "norm_label": "on_event()",
+      "source_file": "backend/tests/unit/test_inbound_listeners.py",
+      "source_location": "L53"
+    },
+    {
+      "id": "backend_tests_unit_test_inbound_listeners_test_whatsapp_inbound_listener_emits_event",
+      "label": "test_whatsapp_inbound_listener_emits_event()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 42,
+      "community_name": "EventType",
+      "file_type": "code",
+      "norm_label": "test_whatsapp_inbound_listener_emits_event()",
+      "source_file": "backend/tests/unit/test_inbound_listeners.py",
+      "source_location": "L11"
+    },
+    {
+      "id": "backend_tests_unit_test_inbound_listeners_test_whatsapp_inbound_listener_emits_event_on_event",
+      "label": "on_event()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 42,
+      "community_name": "EventType",
+      "file_type": "code",
+      "norm_label": "on_event()",
+      "source_file": "backend/tests/unit/test_inbound_listeners.py",
+      "source_location": "L23"
     },
     {
       "id": "backend_app_core_tool_basetool_execute",
@@ -8368,18 +8500,6 @@
       "source_location": "L13"
     },
     {
-      "id": "backend_app_workers_antigravity_worker_agent_cli_client_extract_session_id",
-      "label": "_extract_session_id()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 44,
-      "community_name": "antigravity_worker/agent/cli_client.py",
-      "file_type": "code",
-      "norm_label": "_extract_session_id()",
-      "source_file": "backend/app/workers/antigravity_worker/agent/cli_client.py",
-      "source_location": "L78"
-    },
-    {
       "id": "backend_app_workers_antigravity_worker_agent_cli_client_persistentagydaemon_ensure_running",
       "label": ".ensure_running()",
       "_callable": true,
@@ -8438,54 +8558,6 @@
       "norm_label": ".stop()",
       "source_file": "backend/app/workers/antigravity_worker/agent/cli_client.py",
       "source_location": "L406"
-    },
-    {
-      "id": "backend_app_workers_antigravity_worker_agent_cli_client_run_antigravity_cli",
-      "label": "run_antigravity_cli()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 44,
-      "community_name": "antigravity_worker/agent/cli_client.py",
-      "file_type": "code",
-      "norm_label": "run_antigravity_cli()",
-      "source_file": "backend/app/workers/antigravity_worker/agent/cli_client.py",
-      "source_location": "L194"
-    },
-    {
-      "id": "backend_app_workers_antigravity_worker_agent_cli_client_run_subprocess_sync",
-      "label": "_run_subprocess_sync()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 44,
-      "community_name": "antigravity_worker/agent/cli_client.py",
-      "file_type": "code",
-      "norm_label": "_run_subprocess_sync()",
-      "source_file": "backend/app/workers/antigravity_worker/agent/cli_client.py",
-      "source_location": "L117"
-    },
-    {
-      "id": "backend_tests_unit_test_antigravity_worker_testantigravitycliclient_test_run_antigravity_cli_missing_binary",
-      "label": ".test_run_antigravity_cli_missing_binary()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 44,
-      "community_name": "antigravity_worker/agent/cli_client.py",
-      "file_type": "code",
-      "norm_label": ".test_run_antigravity_cli_missing_binary()",
-      "source_file": "backend/tests/unit/test_antigravity_worker.py",
-      "source_location": "L39"
-    },
-    {
-      "id": "backend_tests_unit_test_antigravity_worker_testantigravitycliclient_test_run_antigravity_cli_success",
-      "label": ".test_run_antigravity_cli_success()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 44,
-      "community_name": "antigravity_worker/agent/cli_client.py",
-      "file_type": "code",
-      "norm_label": ".test_run_antigravity_cli_success()",
-      "source_file": "backend/tests/unit/test_antigravity_worker.py",
-      "source_location": "L46"
     },
     {
       "id": "backend_tests_unit_test_persistent_daemon_test_persistent_daemon_ensure_running",
@@ -9316,24 +9388,12 @@
       "source_location": "L9"
     },
     {
-      "id": "backend_app_modules_whatsapp_helpers_listener_whatsappinboundlistener_init",
-      "label": ".__init__()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 53,
-      "community_name": "WhatsAppInboundListener",
-      "file_type": "code",
-      "norm_label": ".__init__()",
-      "source_file": "backend/app/modules/whatsapp/helpers/listener.py",
-      "source_location": "L16"
-    },
-    {
       "id": "backend_app_modules_whatsapp_helpers_listener_whatsappinboundlistener_persist_to_db",
       "label": "._persist_to_db()",
       "_callable": true,
       "_origin": "ast",
       "community": 53,
-      "community_name": "WhatsAppInboundListener",
+      "community_name": "._persist_to_db",
       "file_type": "code",
       "norm_label": "._persist_to_db()",
       "source_file": "backend/app/modules/whatsapp/helpers/listener.py",
@@ -9345,7 +9405,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 53,
-      "community_name": "WhatsAppInboundListener",
+      "community_name": "._persist_to_db",
       "file_type": "code",
       "norm_label": "._poll_loop()",
       "source_file": "backend/app/modules/whatsapp/helpers/listener.py",
@@ -9357,23 +9417,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 53,
-      "community_name": "WhatsAppInboundListener",
+      "community_name": "._persist_to_db",
       "file_type": "code",
       "norm_label": ".start()",
       "source_file": "backend/app/modules/whatsapp/helpers/listener.py",
       "source_location": "L24"
-    },
-    {
-      "id": "backend_app_modules_whatsapp_helpers_listener_whatsappinboundlistener_stop",
-      "label": ".stop()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 53,
-      "community_name": "WhatsAppInboundListener",
-      "file_type": "code",
-      "norm_label": ".stop()",
-      "source_file": "backend/app/modules/whatsapp/helpers/listener.py",
-      "source_location": "L31"
     },
     {
       "id": "backend_app_modules_whatsapp_helpers_listener_whatsappinboundlistener_sync_recent_chats",
@@ -9381,71 +9429,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 53,
-      "community_name": "WhatsAppInboundListener",
+      "community_name": "._persist_to_db",
       "file_type": "code",
       "norm_label": ".sync_recent_chats()",
       "source_file": "backend/app/modules/whatsapp/helpers/listener.py",
       "source_location": "L41"
-    },
-    {
-      "id": "backend_tests_unit_test_inbound_listeners_test_gmail_inbound_listener_emits_event",
-      "label": "test_gmail_inbound_listener_emits_event()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 53,
-      "community_name": "WhatsAppInboundListener",
-      "file_type": "code",
-      "norm_label": "test_gmail_inbound_listener_emits_event()",
-      "source_file": "backend/tests/unit/test_inbound_listeners.py",
-      "source_location": "L48"
-    },
-    {
-      "id": "backend_tests_unit_test_inbound_listeners_test_gmail_inbound_listener_emits_event_mock_fetch",
-      "label": "mock_fetch()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 53,
-      "community_name": "WhatsAppInboundListener",
-      "file_type": "code",
-      "norm_label": "mock_fetch()",
-      "source_file": "backend/tests/unit/test_inbound_listeners.py",
-      "source_location": "L68"
-    },
-    {
-      "id": "backend_tests_unit_test_inbound_listeners_test_gmail_inbound_listener_emits_event_on_event",
-      "label": "on_event()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 53,
-      "community_name": "WhatsAppInboundListener",
-      "file_type": "code",
-      "norm_label": "on_event()",
-      "source_file": "backend/tests/unit/test_inbound_listeners.py",
-      "source_location": "L53"
-    },
-    {
-      "id": "backend_tests_unit_test_inbound_listeners_test_whatsapp_inbound_listener_emits_event",
-      "label": "test_whatsapp_inbound_listener_emits_event()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 53,
-      "community_name": "WhatsAppInboundListener",
-      "file_type": "code",
-      "norm_label": "test_whatsapp_inbound_listener_emits_event()",
-      "source_file": "backend/tests/unit/test_inbound_listeners.py",
-      "source_location": "L11"
-    },
-    {
-      "id": "backend_tests_unit_test_inbound_listeners_test_whatsapp_inbound_listener_emits_event_on_event",
-      "label": "on_event()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 53,
-      "community_name": "WhatsAppInboundListener",
-      "file_type": "code",
-      "norm_label": "on_event()",
-      "source_file": "backend/tests/unit/test_inbound_listeners.py",
-      "source_location": "L23"
     },
     {
       "id": "backend_app_workers_antigravity_worker_agent_milestones_build_execution_prompt",
@@ -9453,7 +9441,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "code",
       "norm_label": "build_execution_prompt()",
       "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
@@ -9465,7 +9453,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "code",
       "norm_label": "build_master_task_prompt()",
       "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
@@ -9477,23 +9465,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "code",
       "norm_label": "build_planning_prompt()",
       "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
       "source_location": "L269"
-    },
-    {
-      "id": "backend_app_workers_antigravity_worker_agent_milestones_build_prompt",
-      "label": "build_prompt()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 54,
-      "community_name": "test_session_handover.py",
-      "file_type": "code",
-      "norm_label": "build_prompt()",
-      "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
-      "source_location": "L167"
     },
     {
       "id": "backend_app_workers_antigravity_worker_agent_milestones_build_testing_prompt",
@@ -9501,7 +9477,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "code",
       "norm_label": "build_testing_prompt()",
       "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
@@ -9513,23 +9489,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "code",
       "norm_label": "_format_handover_section()",
       "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
       "source_location": "L223"
-    },
-    {
-      "id": "backend_app_workers_antigravity_worker_agent_milestones_is_simple_task",
-      "label": "is_simple_task()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 54,
-      "community_name": "test_session_handover.py",
-      "file_type": "code",
-      "norm_label": "is_simple_task()",
-      "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
-      "source_location": "L34"
     },
     {
       "id": "backend_app_workers_antigravity_worker_agent_milestones_living_docs_section",
@@ -9537,23 +9501,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "code",
       "norm_label": "_living_docs_section()",
       "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
       "source_location": "L197"
-    },
-    {
-      "id": "backend_app_workers_antigravity_worker_agent_milestones_plan_milestones",
-      "label": "plan_milestones()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 54,
-      "community_name": "test_session_handover.py",
-      "file_type": "code",
-      "norm_label": "plan_milestones()",
-      "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
-      "source_location": "L59"
     },
     {
       "id": "backend_app_workers_antigravity_worker_agent_milestones_testing_safety_guardrails_section",
@@ -9561,7 +9513,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "code",
       "norm_label": "_testing_safety_guardrails_section()",
       "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
@@ -9573,35 +9525,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "code",
       "norm_label": ".decide_next_step()",
       "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
       "source_location": "L129"
-    },
-    {
-      "id": "backend_tests_unit_test_session_handover_isolated_sessions",
-      "label": "isolated_sessions()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 54,
-      "community_name": "test_session_handover.py",
-      "file_type": "code",
-      "norm_label": "isolated_sessions()",
-      "source_file": "backend/tests/unit/test_session_handover.py",
-      "source_location": "L21"
-    },
-    {
-      "id": "backend_tests_unit_test_session_handover_test_graphify_handover_integration",
-      "label": "test_graphify_handover_integration()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 54,
-      "community_name": "test_session_handover.py",
-      "file_type": "code",
-      "norm_label": "test_graphify_handover_integration()",
-      "source_file": "backend/tests/unit/test_session_handover.py",
-      "source_location": "L190"
     },
     {
       "id": "backend_tests_unit_test_session_handover_test_milestone_prompt_builders_incorporate_handover",
@@ -9609,7 +9537,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "code",
       "norm_label": "test_milestone_prompt_builders_incorporate_handover()",
       "source_file": "backend/tests/unit/test_session_handover.py",
@@ -9865,7 +9793,7 @@
       "file_type": "code",
       "norm_label": "checkhealth()",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L148"
+      "source_location": "L137"
     },
     {
       "id": "ai_automation_frontend_app_page_home_openopencodeterminal",
@@ -9877,7 +9805,7 @@
       "file_type": "code",
       "norm_label": "openopencodeterminal()",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L282"
+      "source_location": "L271"
     },
     {
       "id": "ai_automation_frontend_app_workers_page_forkform",
@@ -10353,7 +10281,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "code",
       "norm_label": "get_activity_feed()",
       "source_file": "backend/app/api/routes/events.py",
@@ -10365,7 +10293,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "code",
       "norm_label": "get_feed_unread_counts()",
       "source_file": "backend/app/api/routes/events.py",
@@ -10377,7 +10305,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "code",
       "norm_label": "get_recent_events()",
       "source_file": "backend/app/api/routes/events.py",
@@ -10389,7 +10317,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "code",
       "norm_label": "get_seven_day_digests()",
       "source_file": "backend/app/api/routes/events.py",
@@ -10401,7 +10329,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "code",
       "norm_label": "get_task_hooks()",
       "source_file": "backend/app/api/routes/events.py",
@@ -10413,7 +10341,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "code",
       "norm_label": "publish_manual_event()",
       "source_file": "backend/app/api/routes/events.py",
@@ -10425,7 +10353,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "code",
       "norm_label": "register_task_hook()",
       "source_file": "backend/app/api/routes/events.py",
@@ -10437,7 +10365,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "code",
       "norm_label": "stream_events()",
       "source_file": "backend/app/api/routes/events.py",
@@ -10449,7 +10377,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "code",
       "norm_label": "event_generator()",
       "source_file": "backend/app/api/routes/events.py",
@@ -10461,7 +10389,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "code",
       "norm_label": "_periodic_memory_maintenance()",
       "source_file": "backend/app/core/lifecycle.py",
@@ -10473,7 +10401,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "code",
       "norm_label": "get_service_memory_manager()",
       "source_file": "backend/app/modules/memory/service_memory.py",
@@ -10898,6 +10826,18 @@
       "norm_label": ".__init__()",
       "source_file": "backend/app/core/exceptions.py",
       "source_location": "L42"
+    },
+    {
+      "id": "backend_app_core_exceptions_jarvis_exception_handler",
+      "label": "jarvis_exception_handler()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 67,
+      "community_name": "execution_engine.py",
+      "file_type": "code",
+      "norm_label": "jarvis_exception_handler()",
+      "source_file": "backend/app/core/exceptions.py",
+      "source_location": "L51"
     },
     {
       "id": "backend_app_core_exceptions_jarvisexception_init",
@@ -11461,7 +11401,7 @@
       "file_type": "code",
       "norm_label": "callagent()",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L180"
+      "source_location": "L169"
     },
     {
       "id": "ai_automation_frontend_app_page_home_changescope",
@@ -11473,7 +11413,7 @@
       "file_type": "code",
       "norm_label": "changescope()",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L134"
+      "source_location": "L123"
     },
     {
       "id": "ai_automation_frontend_app_page_home_confirmplan",
@@ -11485,7 +11425,7 @@
       "file_type": "code",
       "norm_label": "confirmplan()",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L233"
+      "source_location": "L222"
     },
     {
       "id": "ai_automation_frontend_app_page_home_newchat",
@@ -11497,7 +11437,7 @@
       "file_type": "code",
       "norm_label": "newchat()",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L266"
+      "source_location": "L255"
     },
     {
       "id": "ai_automation_frontend_app_page_home_sendprompt",
@@ -11509,7 +11449,7 @@
       "file_type": "code",
       "norm_label": "sendprompt()",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L190"
+      "source_location": "L179"
     },
     {
       "id": "ai_automation_frontend_app_page_home_triggeravatarspeech",
@@ -12669,11 +12609,47 @@
       "_callable": true,
       "_origin": "ast",
       "community": 97,
-      "community_name": "antigravity_worker/agent/config.py",
+      "community_name": "run_antigravity_cli",
       "file_type": "code",
       "norm_label": "_build_args()",
       "source_file": "backend/app/workers/antigravity_worker/agent/cli_client.py",
       "source_location": "L35"
+    },
+    {
+      "id": "backend_app_workers_antigravity_worker_agent_cli_client_extract_session_id",
+      "label": "_extract_session_id()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 97,
+      "community_name": "run_antigravity_cli",
+      "file_type": "code",
+      "norm_label": "_extract_session_id()",
+      "source_file": "backend/app/workers/antigravity_worker/agent/cli_client.py",
+      "source_location": "L78"
+    },
+    {
+      "id": "backend_app_workers_antigravity_worker_agent_cli_client_run_antigravity_cli",
+      "label": "run_antigravity_cli()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 97,
+      "community_name": "run_antigravity_cli",
+      "file_type": "code",
+      "norm_label": "run_antigravity_cli()",
+      "source_file": "backend/app/workers/antigravity_worker/agent/cli_client.py",
+      "source_location": "L194"
+    },
+    {
+      "id": "backend_app_workers_antigravity_worker_agent_cli_client_run_subprocess_sync",
+      "label": "_run_subprocess_sync()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 97,
+      "community_name": "run_antigravity_cli",
+      "file_type": "code",
+      "norm_label": "_run_subprocess_sync()",
+      "source_file": "backend/app/workers/antigravity_worker/agent/cli_client.py",
+      "source_location": "L117"
     },
     {
       "id": "backend_app_workers_antigravity_worker_agent_config_get_antigravity_model",
@@ -12681,7 +12657,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 97,
-      "community_name": "antigravity_worker/agent/config.py",
+      "community_name": "run_antigravity_cli",
       "file_type": "code",
       "norm_label": "get_antigravity_model()",
       "source_file": "backend/app/workers/antigravity_worker/agent/config.py",
@@ -12693,7 +12669,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 97,
-      "community_name": "antigravity_worker/agent/config.py",
+      "community_name": "run_antigravity_cli",
       "file_type": "code",
       "norm_label": "get_auto_approve()",
       "source_file": "backend/app/workers/antigravity_worker/agent/config.py",
@@ -12705,7 +12681,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 97,
-      "community_name": "antigravity_worker/agent/config.py",
+      "community_name": "run_antigravity_cli",
       "file_type": "code",
       "norm_label": "get_milestone_timeout()",
       "source_file": "backend/app/workers/antigravity_worker/agent/config.py",
@@ -12717,11 +12693,35 @@
       "_callable": true,
       "_origin": "ast",
       "community": 97,
-      "community_name": "antigravity_worker/agent/config.py",
+      "community_name": "run_antigravity_cli",
       "file_type": "code",
       "norm_label": "get_visible_console()",
       "source_file": "backend/app/workers/antigravity_worker/agent/config.py",
       "source_location": "L67"
+    },
+    {
+      "id": "backend_tests_unit_test_antigravity_worker_testantigravitycliclient_test_run_antigravity_cli_missing_binary",
+      "label": ".test_run_antigravity_cli_missing_binary()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 97,
+      "community_name": "run_antigravity_cli",
+      "file_type": "code",
+      "norm_label": ".test_run_antigravity_cli_missing_binary()",
+      "source_file": "backend/tests/unit/test_antigravity_worker.py",
+      "source_location": "L39"
+    },
+    {
+      "id": "backend_tests_unit_test_antigravity_worker_testantigravitycliclient_test_run_antigravity_cli_success",
+      "label": ".test_run_antigravity_cli_success()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 97,
+      "community_name": "run_antigravity_cli",
+      "file_type": "code",
+      "norm_label": ".test_run_antigravity_cli_success()",
+      "source_file": "backend/tests/unit/test_antigravity_worker.py",
+      "source_location": "L46"
     },
     {
       "id": "backend_app_modules_database_models_executionlog_repr",
@@ -15616,17 +15616,6 @@
       "source_location": "L1"
     },
     {
-      "id": "backend_app_workers_antigravity_worker_agent_worker_agent_py_any",
-      "label": "Any",
-      "_origin": "ast",
-      "community": 14,
-      "community_name": "AntigravityWorkerAgent",
-      "file_type": "code",
-      "norm_label": "any",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
       "id": "backend_tests_unit_test_antigravity_worker",
       "label": "test_antigravity_worker.py",
       "_origin": "ast",
@@ -15682,17 +15671,6 @@
       "source_location": "L27"
     },
     {
-      "id": "backend_app_workers_antigravity_worker_agent_worker_agent_rationale_117",
-      "label": "Record step result into agent history.",
-      "_origin": "ast",
-      "community": 14,
-      "community_name": "AntigravityWorkerAgent",
-      "file_type": "rationale",
-      "norm_label": "record step result into agent history.",
-      "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
-      "source_location": "L117"
-    },
-    {
       "id": "backend_app_workers_antigravity_worker_agent_worker_agent_rationale_126",
       "label": "Queue parent/manager guidance for the next turn.",
       "_origin": "ast",
@@ -15735,17 +15713,6 @@
       "norm_label": "receive plan rejection with feedback and reset to planning phase.",
       "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
       "source_location": "L91"
-    },
-    {
-      "id": "backend_app_workers_antigravity_worker_agent_worker_agent_rationale_96",
-      "label": "Create a real-time event forwarder for SSE consumers.",
-      "_origin": "ast",
-      "community": 14,
-      "community_name": "AntigravityWorkerAgent",
-      "file_type": "rationale",
-      "norm_label": "create a real-time event forwarder for sse consumers.",
-      "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
-      "source_location": "L96"
     },
     {
       "id": "backend_tests_unit_test_antigravity_worker_rationale_1",
@@ -16007,17 +15974,6 @@
       "source_location": ""
     },
     {
-      "id": "backend_app_workers_base_bus_py_queue",
-      "label": "Queue",
-      "_origin": "ast",
-      "community": 142,
-      "community_name": "worker_events",
-      "file_type": "code",
-      "norm_label": "queue",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
       "id": "backend_app_api_routes_workers_rationale_624",
       "label": "SSE stream of this worker's events (live activity feed with disk replay\u2026",
       "_origin": "ast",
@@ -16038,28 +15994,6 @@
       "norm_label": "real-time sse stream of raw antigravity cli events (step_update deltas, tool...",
       "source_file": "backend/app/api/routes/workers.py",
       "source_location": "L694"
-    },
-    {
-      "id": "backend_app_workers_base_bus_rationale_17",
-      "label": "Subscribe a new asyncio.Queue to receive live streaming events for session_id.",
-      "_origin": "ast",
-      "community": 142,
-      "community_name": "worker_events",
-      "file_type": "rationale",
-      "norm_label": "subscribe a new asyncio.queue to receive live streaming events for session_id.",
-      "source_file": "backend/app/workers/base/bus.py",
-      "source_location": "L17"
-    },
-    {
-      "id": "backend_app_workers_base_bus_rationale_29",
-      "label": "Unsubscribe and remove an asyncio.Queue from session_id's active subscribers.",
-      "_origin": "ast",
-      "community": 142,
-      "community_name": "worker_events",
-      "file_type": "rationale",
-      "norm_label": "unsubscribe and remove an asyncio.queue from session_id's active subscribers.",
-      "source_file": "backend/app/workers/base/bus.py",
-      "source_location": "L29"
     },
     {
       "id": "backend_app_workers_base_bus_rationale_62",
@@ -16778,114 +16712,48 @@
       "source_location": "L1"
     },
     {
-      "id": "backend_app_modules_antigravity_brain",
-      "label": "brain.py",
+      "id": "backend_app_workers_antigravity_worker_agent_milestones_rationale_168",
+      "label": "Build the prompt for the Antigravity agent milestone.",
       "_origin": "ast",
       "community": 166,
-      "community_name": "brain.py",
-      "file_type": "code",
-      "norm_label": "brain.py",
-      "source_file": "backend/app/modules/antigravity/brain.py",
-      "source_location": "L1"
-    },
-    {
-      "id": "backend_app_modules_antigravity_init",
-      "label": "antigravity/__init__.py",
-      "_origin": "ast",
-      "community": 166,
-      "community_name": "brain.py",
-      "file_type": "code",
-      "norm_label": "antigravity/__init__.py",
-      "source_file": "backend/app/modules/antigravity/__init__.py",
-      "source_location": "L1"
-    },
-    {
-      "id": "backend_tests_unit_test_antigravity_brain",
-      "label": "test_antigravity_brain.py",
-      "_origin": "ast",
-      "community": 166,
-      "community_name": "brain.py",
-      "file_type": "code",
-      "norm_label": "test_antigravity_brain.py",
-      "source_file": "backend/tests/unit/test_antigravity_brain.py",
-      "source_location": "L1"
-    },
-    {
-      "id": "backend_tests_unit_test_antigravity_brain_py_asyncio",
-      "label": "asyncio",
-      "_origin": "ast",
-      "community": 166,
-      "community_name": "brain.py",
-      "file_type": "code",
-      "norm_label": "asyncio",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "backend_tests_unit_test_antigravity_brain_py_fixture",
-      "label": "fixture",
-      "_origin": "ast",
-      "community": 166,
-      "community_name": "brain.py",
-      "file_type": "code",
-      "norm_label": "fixture",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "backend_tests_unit_test_antigravity_brain_py_path",
-      "label": "Path",
-      "_origin": "ast",
-      "community": 166,
-      "community_name": "brain.py",
-      "file_type": "code",
-      "norm_label": "path",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "backend_app_modules_antigravity_brain_rationale_1",
-      "label": "Jarvis Central Brain Manager powered by Antigravity CLI (`agy.exe`). Features:\u2026",
-      "_origin": "ast",
-      "community": 166,
-      "community_name": "brain.py",
+      "community_name": "Milestone",
       "file_type": "rationale",
-      "norm_label": "jarvis central brain manager powered by antigravity cli (`agy.exe`). features:...",
-      "source_file": "backend/app/modules/antigravity/brain.py",
-      "source_location": "L1"
+      "norm_label": "build the prompt for the antigravity agent milestone.",
+      "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
+      "source_location": "L168"
     },
     {
-      "id": "backend_app_modules_antigravity_brain_rationale_630",
-      "label": "Return the global JarvisBrainManager instance.",
+      "id": "backend_app_workers_antigravity_worker_agent_milestones_rationale_24",
+      "label": "A single discrete unit of work executed by the Antigravity worker.",
       "_origin": "ast",
       "community": 166,
-      "community_name": "brain.py",
+      "community_name": "Milestone",
       "file_type": "rationale",
-      "norm_label": "return the global jarvisbrainmanager instance.",
-      "source_file": "backend/app/modules/antigravity/brain.py",
-      "source_location": "L630"
+      "norm_label": "a single discrete unit of work executed by the antigravity worker.",
+      "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
+      "source_location": "L24"
     },
     {
-      "id": "backend_app_modules_antigravity_init_rationale_1",
-      "label": "Antigravity module for Jarvis core brain and memory.",
+      "id": "backend_app_workers_antigravity_worker_agent_milestones_rationale_35",
+      "label": "Detect if an objective is simple enough to complete in 1 execution step + 1\u2026",
       "_origin": "ast",
       "community": 166,
-      "community_name": "brain.py",
+      "community_name": "Milestone",
       "file_type": "rationale",
-      "norm_label": "antigravity module for jarvis core brain and memory.",
-      "source_file": "backend/app/modules/antigravity/__init__.py",
-      "source_location": "L1"
+      "norm_label": "detect if an objective is simple enough to complete in 1 execution step + 1...",
+      "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
+      "source_location": "L35"
     },
     {
-      "id": "backend_tests_unit_test_antigravity_brain_rationale_1",
-      "label": "Unit tests for JarvisBrainManager and living memory system.",
+      "id": "backend_app_workers_antigravity_worker_agent_milestones_rationale_65",
+      "label": "Generate proportional milestone sequence with a fixed final test phase.",
       "_origin": "ast",
       "community": 166,
-      "community_name": "brain.py",
+      "community_name": "Milestone",
       "file_type": "rationale",
-      "norm_label": "unit tests for jarvisbrainmanager and living memory system.",
-      "source_file": "backend/tests/unit/test_antigravity_brain.py",
-      "source_location": "L1"
+      "norm_label": "generate proportional milestone sequence with a fixed final test phase.",
+      "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
+      "source_location": "L65"
     },
     {
       "id": "backend_app_modules_readme",
@@ -17558,17 +17426,6 @@
       "source_location": "L1"
     },
     {
-      "id": "backend_app_core_exceptions_py_request",
-      "label": "Request",
-      "_origin": "ast",
-      "community": 173,
-      "community_name": "main.py",
-      "file_type": "code",
-      "norm_label": "request",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
       "id": "backend_app_main",
       "label": "main.py",
       "_origin": "ast",
@@ -17642,17 +17499,6 @@
       "community_name": "main.py",
       "file_type": "code",
       "norm_label": "basesettings",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "jsonresponse",
-      "label": "JSONResponse",
-      "_origin": "ast",
-      "community": 173,
-      "community_name": "main.py",
-      "file_type": "code",
-      "norm_label": "jsonresponse",
       "source_file": "",
       "source_location": ""
     },
@@ -17809,6 +17655,39 @@
       "norm_label": "any",
       "source_file": "",
       "source_location": ""
+    },
+    {
+      "id": "backend_app_workers_base_bus_py_queue",
+      "label": "Queue",
+      "_origin": "ast",
+      "community": 177,
+      "community_name": "base/bus.py",
+      "file_type": "code",
+      "norm_label": "queue",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "backend_app_workers_base_bus_rationale_17",
+      "label": "Subscribe a new asyncio.Queue to receive live streaming events for session_id.",
+      "_origin": "ast",
+      "community": 177,
+      "community_name": "base/bus.py",
+      "file_type": "rationale",
+      "norm_label": "subscribe a new asyncio.queue to receive live streaming events for session_id.",
+      "source_file": "backend/app/workers/base/bus.py",
+      "source_location": "L17"
+    },
+    {
+      "id": "backend_app_workers_base_bus_rationale_29",
+      "label": "Unsubscribe and remove an asyncio.Queue from session_id's active subscribers.",
+      "_origin": "ast",
+      "community": 177,
+      "community_name": "base/bus.py",
+      "file_type": "rationale",
+      "norm_label": "unsubscribe and remove an asyncio.queue from session_id's active subscribers.",
+      "source_file": "backend/app/workers/base/bus.py",
+      "source_location": "L29"
     },
     {
       "id": "backend_app_workers_base_bus_rationale_40",
@@ -18244,6 +18123,39 @@
       "norm_label": "serialize to json for transport (parent \u2194 worker session init).",
       "source_file": "backend/app/workers/base/contract.py",
       "source_location": "L123"
+    },
+    {
+      "id": "backend_app_workers_antigravity_worker_agent_worker_agent_py_any",
+      "label": "Any",
+      "_origin": "ast",
+      "community": 189,
+      "community_name": "._make_on_event",
+      "file_type": "code",
+      "norm_label": "any",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "backend_app_workers_antigravity_worker_agent_worker_agent_rationale_117",
+      "label": "Record step result into agent history.",
+      "_origin": "ast",
+      "community": 189,
+      "community_name": "._make_on_event",
+      "file_type": "rationale",
+      "norm_label": "record step result into agent history.",
+      "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
+      "source_location": "L117"
+    },
+    {
+      "id": "backend_app_workers_antigravity_worker_agent_worker_agent_rationale_96",
+      "label": "Create a real-time event forwarder for SSE consumers.",
+      "_origin": "ast",
+      "community": 189,
+      "community_name": "._make_on_event",
+      "file_type": "rationale",
+      "norm_label": "create a real-time event forwarder for sse consumers.",
+      "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
+      "source_location": "L96"
     },
     {
       "id": "agents",
@@ -18844,6 +18756,17 @@
       "source_location": "L18"
     },
     {
+      "id": "backend_app_modules_antigravity_brain",
+      "label": "brain.py",
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "code",
+      "norm_label": "brain.py",
+      "source_file": "backend/app/modules/antigravity/brain.py",
+      "source_location": "L1"
+    },
+    {
       "id": "backend_app_modules_antigravity_brain_py_any",
       "label": "Any",
       "_origin": "ast",
@@ -18866,6 +18789,61 @@
       "source_location": ""
     },
     {
+      "id": "backend_app_modules_antigravity_init",
+      "label": "antigravity/__init__.py",
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "code",
+      "norm_label": "antigravity/__init__.py",
+      "source_file": "backend/app/modules/antigravity/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "backend_tests_unit_test_antigravity_brain",
+      "label": "test_antigravity_brain.py",
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "code",
+      "norm_label": "test_antigravity_brain.py",
+      "source_file": "backend/tests/unit/test_antigravity_brain.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "backend_tests_unit_test_antigravity_brain_py_asyncio",
+      "label": "asyncio",
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "code",
+      "norm_label": "asyncio",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "backend_tests_unit_test_antigravity_brain_py_fixture",
+      "label": "fixture",
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "code",
+      "norm_label": "fixture",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "backend_tests_unit_test_antigravity_brain_py_path",
+      "label": "Path",
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "code",
+      "norm_label": "path",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
       "id": "backend_tests_unit_test_master_task_prompt",
       "label": "test_master_task_prompt.py",
       "_origin": "ast",
@@ -18874,6 +18852,17 @@
       "file_type": "code",
       "norm_label": "test_master_task_prompt.py",
       "source_file": "backend/tests/unit/test_master_task_prompt.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "backend_app_modules_antigravity_brain_rationale_1",
+      "label": "Jarvis Central Brain Manager powered by Antigravity CLI (`agy.exe`). Features:\u2026",
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "rationale",
+      "norm_label": "jarvis central brain manager powered by antigravity cli (`agy.exe`). features:...",
+      "source_file": "backend/app/modules/antigravity/brain.py",
       "source_location": "L1"
     },
     {
@@ -19031,6 +19020,17 @@
       "source_location": "L572"
     },
     {
+      "id": "backend_app_modules_antigravity_brain_rationale_630",
+      "label": "Return the global JarvisBrainManager instance.",
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "rationale",
+      "norm_label": "return the global jarvisbrainmanager instance.",
+      "source_file": "backend/app/modules/antigravity/brain.py",
+      "source_location": "L630"
+    },
+    {
       "id": "backend_app_modules_antigravity_brain_rationale_96",
       "label": "Append historical worker receipt to MEMORY_ARCHIVE.md on disk.",
       "_origin": "ast",
@@ -19040,6 +19040,28 @@
       "norm_label": "append historical worker receipt to memory_archive.md on disk.",
       "source_file": "backend/app/modules/antigravity/brain.py",
       "source_location": "L96"
+    },
+    {
+      "id": "backend_app_modules_antigravity_init_rationale_1",
+      "label": "Antigravity module for Jarvis core brain and memory.",
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "rationale",
+      "norm_label": "antigravity module for jarvis core brain and memory.",
+      "source_file": "backend/app/modules/antigravity/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "backend_tests_unit_test_antigravity_brain_rationale_1",
+      "label": "Unit tests for JarvisBrainManager and living memory system.",
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "JarvisBrainManager",
+      "file_type": "rationale",
+      "norm_label": "unit tests for jarvisbrainmanager and living memory system.",
+      "source_file": "backend/tests/unit/test_antigravity_brain.py",
+      "source_location": "L1"
     },
     {
       "id": "backend_app_modules_antigravity_tool_vector_index_rationale_320",
@@ -20010,13 +20032,35 @@
       "source_location": "L1"
     },
     {
+      "id": "backend_tests_unit_test_session_handover",
+      "label": "test_session_handover.py",
+      "_origin": "ast",
+      "community": 28,
+      "community_name": "test_session_handover.py",
+      "file_type": "code",
+      "norm_label": "test_session_handover.py",
+      "source_file": "backend/tests/unit/test_session_handover.py",
+      "source_location": "L1"
+    },
+    {
       "id": "backend_tests_unit_test_session_handover_py_asyncio",
       "label": "asyncio",
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "code",
       "norm_label": "asyncio",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "backend_tests_unit_test_session_handover_py_fixture",
+      "label": "fixture",
+      "_origin": "ast",
+      "community": 28,
+      "community_name": "test_session_handover.py",
+      "file_type": "code",
+      "norm_label": "fixture",
       "source_file": "",
       "source_location": ""
     },
@@ -20025,7 +20069,7 @@
       "label": "Path",
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "code",
       "norm_label": "path",
       "source_file": "",
@@ -20036,7 +20080,7 @@
       "label": "Create + start a worker engine and register it for polling/SSE. Shared by the\u2026",
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "rationale",
       "norm_label": "create + start a worker engine and register it for polling/sse. shared by the...",
       "source_file": "backend/app/api/routes/workers.py",
@@ -20047,18 +20091,29 @@
       "label": "Test launch_worker automatically detects existing handover in workspace.",
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "rationale",
       "norm_label": "test launch_worker automatically detects existing handover in workspace.",
       "source_file": "backend/tests/unit/test_session_handover.py",
       "source_location": "L125"
     },
     {
+      "id": "backend_tests_unit_test_session_handover_rationale_191",
+      "label": "Test that graphify knowledge graph is signaled in handover section and contract.",
+      "_origin": "ast",
+      "community": 28,
+      "community_name": "test_session_handover.py",
+      "file_type": "rationale",
+      "norm_label": "test that graphify knowledge graph is signaled in handover section and contract.",
+      "source_file": "backend/tests/unit/test_session_handover.py",
+      "source_location": "L191"
+    },
+    {
       "id": "backend_tests_unit_test_session_handover_rationale_212",
       "label": "Test that _fork_task respects explicit fs_scope or extracts directory from\u2026",
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "rationale",
       "norm_label": "test that _fork_task respects explicit fs_scope or extracts directory from...",
       "source_file": "backend/tests/unit/test_session_handover.py",
@@ -20069,7 +20124,7 @@
       "label": "Test the GET /workers/{session_id}/handover API endpoint.",
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "rationale",
       "norm_label": "test the get /workers/{session_id}/handover api endpoint.",
       "source_file": "backend/tests/unit/test_session_handover.py",
@@ -20080,7 +20135,7 @@
       "label": "Test that TaskContract properly validates and retains handover fields.",
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "rationale",
       "norm_label": "test that taskcontract properly validates and retains handover fields.",
       "source_file": "backend/tests/unit/test_session_handover.py",
@@ -20091,7 +20146,7 @@
       "label": "Test WorkerSession write_handover and read_handover.",
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "rationale",
       "norm_label": "test workersession write_handover and read_handover.",
       "source_file": "backend/tests/unit/test_session_handover.py",
@@ -20102,7 +20157,7 @@
       "label": "Test WorkerEngine._synthesize_handover creates SESSION_HANDOVER.md and\u2026",
       "_origin": "ast",
       "community": 28,
-      "community_name": "launch_worker",
+      "community_name": "test_session_handover.py",
       "file_type": "rationale",
       "norm_label": "test workerengine._synthesize_handover creates session_handover.md and...",
       "source_file": "backend/tests/unit/test_session_handover.py",
@@ -21935,28 +21990,6 @@
       "source_location": "L1"
     },
     {
-      "id": "backend_app_api_routes_events",
-      "label": "events.py",
-      "_origin": "ast",
-      "community": 42,
-      "community_name": "EventType",
-      "file_type": "code",
-      "norm_label": "events.py",
-      "source_file": "backend/app/api/routes/events.py",
-      "source_location": "L1"
-    },
-    {
-      "id": "backend_app_api_routes_events_py_basemodel",
-      "label": "BaseModel",
-      "_origin": "ast",
-      "community": 42,
-      "community_name": "EventType",
-      "file_type": "code",
-      "norm_label": "basemodel",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
       "id": "backend_app_core_events_bus",
       "label": "events/bus.py",
       "_origin": "ast",
@@ -22078,6 +22111,28 @@
       "source_location": "L1"
     },
     {
+      "id": "backend_tests_unit_test_inbound_listeners",
+      "label": "test_inbound_listeners.py",
+      "_origin": "ast",
+      "community": 42,
+      "community_name": "EventType",
+      "file_type": "code",
+      "norm_label": "test_inbound_listeners.py",
+      "source_file": "backend/tests/unit/test_inbound_listeners.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "backend_tests_unit_test_inbound_listeners_py_asyncio",
+      "label": "asyncio",
+      "_origin": "ast",
+      "community": 42,
+      "community_name": "EventType",
+      "file_type": "code",
+      "norm_label": "asyncio",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
       "id": "logger",
       "label": "Logger",
       "_origin": "ast",
@@ -22087,6 +22142,17 @@
       "norm_label": "logger",
       "source_file": "",
       "source_location": ""
+    },
+    {
+      "id": "backend_app_modules_whatsapp_helpers_listener_rationale_14",
+      "label": "Continuous background listener that monitors WhatsApp chats and emits digest\u2026",
+      "_origin": "ast",
+      "community": 42,
+      "community_name": "EventType",
+      "file_type": "rationale",
+      "norm_label": "continuous background listener that monitors whatsapp chats and emits digest...",
+      "source_file": "backend/app/modules/whatsapp/helpers/listener.py",
+      "source_location": "L14"
     },
     {
       "id": "abc",
@@ -22606,17 +22672,6 @@
       "source_location": "L1"
     },
     {
-      "id": "backend_app_workers_antigravity_worker_agent_cli_client_py_any",
-      "label": "Any",
-      "_origin": "ast",
-      "community": 44,
-      "community_name": "antigravity_worker/agent/cli_client.py",
-      "file_type": "code",
-      "norm_label": "any",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
       "id": "backend_app_workers_antigravity_worker_agent_init",
       "label": "antigravity_worker/agent/__init__.py",
       "_origin": "ast",
@@ -22661,17 +22716,6 @@
       "source_location": "L1"
     },
     {
-      "id": "backend_app_workers_antigravity_worker_agent_cli_client_rationale_202",
-      "label": "Execute `agy` via stream-json stdin/stdout and collect structured results.",
-      "_origin": "ast",
-      "community": 44,
-      "community_name": "antigravity_worker/agent/cli_client.py",
-      "file_type": "rationale",
-      "norm_label": "execute `agy` via stream-json stdin/stdout and collect structured results.",
-      "source_file": "backend/app/workers/antigravity_worker/agent/cli_client.py",
-      "source_location": "L202"
-    },
-    {
       "id": "backend_app_workers_antigravity_worker_agent_cli_client_rationale_245",
       "label": "Maintains a persistent, warm background Antigravity CLI process. Uses `agy\u2026",
       "_origin": "ast",
@@ -22714,17 +22758,6 @@
       "norm_label": "gracefully stop the persistent daemon.",
       "source_file": "backend/app/workers/antigravity_worker/agent/cli_client.py",
       "source_location": "L407"
-    },
-    {
-      "id": "backend_app_workers_antigravity_worker_agent_cli_client_rationale_79",
-      "label": "Try to extract the Antigravity session/conversation ID from events or raw\u2026",
-      "_origin": "ast",
-      "community": 44,
-      "community_name": "antigravity_worker/agent/cli_client.py",
-      "file_type": "rationale",
-      "norm_label": "try to extract the antigravity session/conversation id from events or raw...",
-      "source_file": "backend/app/workers/antigravity_worker/agent/cli_client.py",
-      "source_location": "L79"
     },
     {
       "id": "backend_app_workers_antigravity_worker_agent_init_rationale_1",
@@ -23395,51 +23428,18 @@
       "label": "Any",
       "_origin": "ast",
       "community": 53,
-      "community_name": "WhatsAppInboundListener",
+      "community_name": "._persist_to_db",
       "file_type": "code",
       "norm_label": "any",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "backend_tests_unit_test_inbound_listeners",
-      "label": "test_inbound_listeners.py",
-      "_origin": "ast",
-      "community": 53,
-      "community_name": "WhatsAppInboundListener",
-      "file_type": "code",
-      "norm_label": "test_inbound_listeners.py",
-      "source_file": "backend/tests/unit/test_inbound_listeners.py",
-      "source_location": "L1"
-    },
-    {
-      "id": "backend_tests_unit_test_inbound_listeners_py_asyncio",
-      "label": "asyncio",
-      "_origin": "ast",
-      "community": 53,
-      "community_name": "WhatsAppInboundListener",
-      "file_type": "code",
-      "norm_label": "asyncio",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "backend_app_modules_whatsapp_helpers_listener_rationale_14",
-      "label": "Continuous background listener that monitors WhatsApp chats and emits digest\u2026",
-      "_origin": "ast",
-      "community": 53,
-      "community_name": "WhatsAppInboundListener",
-      "file_type": "rationale",
-      "norm_label": "continuous background listener that monitors whatsapp chats and emits digest...",
-      "source_file": "backend/app/modules/whatsapp/helpers/listener.py",
-      "source_location": "L14"
-    },
-    {
       "id": "backend_app_modules_whatsapp_helpers_listener_rationale_165",
       "label": "Persist incoming chat preview to SQLite service_events table.",
       "_origin": "ast",
       "community": 53,
-      "community_name": "WhatsAppInboundListener",
+      "community_name": "._persist_to_db",
       "file_type": "rationale",
       "norm_label": "persist incoming chat preview to sqlite service_events table.",
       "source_file": "backend/app/modules/whatsapp/helpers/listener.py",
@@ -23450,7 +23450,7 @@
       "label": "Fetch and persist recent WhatsApp chats and messages into SQLite service_events\u2026",
       "_origin": "ast",
       "community": 53,
-      "community_name": "WhatsAppInboundListener",
+      "community_name": "._persist_to_db",
       "file_type": "rationale",
       "norm_label": "fetch and persist recent whatsapp chats and messages into sqlite service_events...",
       "source_file": "backend/app/modules/whatsapp/helpers/listener.py",
@@ -23461,7 +23461,7 @@
       "label": "antigravity_worker/agent/milestones.py",
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "code",
       "norm_label": "antigravity_worker/agent/milestones.py",
       "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
@@ -23472,7 +23472,7 @@
       "label": "Any",
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "code",
       "norm_label": "any",
       "source_file": "",
@@ -23483,7 +23483,7 @@
       "label": "Enum",
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "code",
       "norm_label": "enum",
       "source_file": "",
@@ -23494,7 +23494,7 @@
       "label": "str",
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "code",
       "norm_label": "str",
       "source_file": "",
@@ -23505,7 +23505,7 @@
       "label": "antigravity_worker/agent/worker_agent.py",
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "code",
       "norm_label": "antigravity_worker/agent/worker_agent.py",
       "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
@@ -23516,73 +23516,29 @@
       "label": "base/__init__.py",
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "code",
       "norm_label": "base/__init__.py",
       "source_file": "backend/app/workers/base/__init__.py",
       "source_location": "L1"
     },
     {
-      "id": "backend_tests_unit_test_session_handover",
-      "label": "test_session_handover.py",
-      "_origin": "ast",
-      "community": 54,
-      "community_name": "test_session_handover.py",
-      "file_type": "code",
-      "norm_label": "test_session_handover.py",
-      "source_file": "backend/tests/unit/test_session_handover.py",
-      "source_location": "L1"
-    },
-    {
-      "id": "backend_tests_unit_test_session_handover_py_fixture",
-      "label": "fixture",
-      "_origin": "ast",
-      "community": 54,
-      "community_name": "test_session_handover.py",
-      "file_type": "code",
-      "norm_label": "fixture",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
       "id": "backend_app_workers_antigravity_worker_agent_milestones_rationale_1",
       "label": "Milestone planning and prompt generation for the Antigravity Autonomous Worker.\u2026",
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "rationale",
       "norm_label": "milestone planning and prompt generation for the antigravity autonomous worker....",
       "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
       "source_location": "L1"
     },
     {
-      "id": "backend_app_workers_antigravity_worker_agent_milestones_rationale_168",
-      "label": "Build the prompt for the Antigravity agent milestone.",
-      "_origin": "ast",
-      "community": 54,
-      "community_name": "test_session_handover.py",
-      "file_type": "rationale",
-      "norm_label": "build the prompt for the antigravity agent milestone.",
-      "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
-      "source_location": "L168"
-    },
-    {
-      "id": "backend_app_workers_antigravity_worker_agent_milestones_rationale_24",
-      "label": "A single discrete unit of work executed by the Antigravity worker.",
-      "_origin": "ast",
-      "community": 54,
-      "community_name": "test_session_handover.py",
-      "file_type": "rationale",
-      "norm_label": "a single discrete unit of work executed by the antigravity worker.",
-      "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
-      "source_location": "L24"
-    },
-    {
       "id": "backend_app_workers_antigravity_worker_agent_milestones_rationale_280",
       "label": "Build the prompt for Job 1: Implementation Planning & Architecture Blueprint.",
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "rationale",
       "norm_label": "build the prompt for job 1: implementation planning & architecture blueprint.",
       "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
@@ -23593,29 +23549,18 @@
       "label": "Build the prompt for Job 2: Executing the Approved Implementation Plan.",
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "rationale",
       "norm_label": "build the prompt for job 2: executing the approved implementation plan.",
       "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
       "source_location": "L344"
     },
     {
-      "id": "backend_app_workers_antigravity_worker_agent_milestones_rationale_35",
-      "label": "Detect if an objective is simple enough to complete in 1 execution step + 1\u2026",
-      "_origin": "ast",
-      "community": 54,
-      "community_name": "test_session_handover.py",
-      "file_type": "rationale",
-      "norm_label": "detect if an objective is simple enough to complete in 1 execution step + 1...",
-      "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
-      "source_location": "L35"
-    },
-    {
       "id": "backend_app_workers_antigravity_worker_agent_milestones_rationale_394",
       "label": "Build the prompt for Job 3: Automated Self-Testing & Verification.",
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "rationale",
       "norm_label": "build the prompt for job 3: automated self-testing & verification.",
       "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
@@ -23626,29 +23571,18 @@
       "label": "Build the master task specification prompt for fully autonomous worker\u2026",
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "rationale",
       "norm_label": "build the master task specification prompt for fully autonomous worker...",
       "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
       "source_location": "L446"
     },
     {
-      "id": "backend_app_workers_antigravity_worker_agent_milestones_rationale_65",
-      "label": "Generate proportional milestone sequence with a fixed final test phase.",
-      "_origin": "ast",
-      "community": 54,
-      "community_name": "test_session_handover.py",
-      "file_type": "rationale",
-      "norm_label": "generate proportional milestone sequence with a fixed final test phase.",
-      "source_file": "backend/app/workers/antigravity_worker/agent/milestones.py",
-      "source_location": "L65"
-    },
-    {
       "id": "backend_app_workers_antigravity_worker_agent_worker_agent_rationale_1",
       "label": "Antigravity Worker Agent implementation. Drives direct autonomous execution via\u2026",
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "rationale",
       "norm_label": "antigravity worker agent implementation. drives direct autonomous execution via...",
       "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
@@ -23659,7 +23593,7 @@
       "label": "Execute autonomous task steps via Antigravity CLI (`agy run`).",
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "rationale",
       "norm_label": "execute autonomous task steps via antigravity cli (`agy run`).",
       "source_file": "backend/app/workers/antigravity_worker/agent/worker_agent.py",
@@ -23670,22 +23604,11 @@
       "label": "Test that prompt builders in milestones.py embed living docs and handover\u2026",
       "_origin": "ast",
       "community": 54,
-      "community_name": "test_session_handover.py",
+      "community_name": "antigravity_worker/agent/milestones.py",
       "file_type": "rationale",
       "norm_label": "test that prompt builders in milestones.py embed living docs and handover...",
       "source_file": "backend/tests/unit/test_session_handover.py",
       "source_location": "L150"
-    },
-    {
-      "id": "backend_tests_unit_test_session_handover_rationale_191",
-      "label": "Test that graphify knowledge graph is signaled in handover section and contract.",
-      "_origin": "ast",
-      "community": 54,
-      "community_name": "test_session_handover.py",
-      "file_type": "rationale",
-      "norm_label": "test that graphify knowledge graph is signaled in handover section and contract.",
-      "source_file": "backend/tests/unit/test_session_handover.py",
-      "source_location": "L191"
     },
     {
       "id": "backend_app_workers_base_scoped_registry_py_any",
@@ -24694,13 +24617,35 @@
       "source_location": "L73"
     },
     {
+      "id": "backend_app_api_routes_events",
+      "label": "events.py",
+      "_origin": "ast",
+      "community": 62,
+      "community_name": "events.py",
+      "file_type": "code",
+      "norm_label": "events.py",
+      "source_file": "backend/app/api/routes/events.py",
+      "source_location": "L1"
+    },
+    {
       "id": "backend_app_api_routes_events_py_any",
       "label": "Any",
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "code",
       "norm_label": "any",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "backend_app_api_routes_events_py_basemodel",
+      "label": "BaseModel",
+      "_origin": "ast",
+      "community": 62,
+      "community_name": "events.py",
+      "file_type": "code",
+      "norm_label": "basemodel",
       "source_file": "",
       "source_location": ""
     },
@@ -24709,7 +24654,7 @@
       "label": "get",
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "code",
       "norm_label": "get",
       "source_file": "",
@@ -24720,7 +24665,7 @@
       "label": "post",
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "code",
       "norm_label": "post",
       "source_file": "",
@@ -24731,7 +24676,7 @@
       "label": "Request",
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "code",
       "norm_label": "request",
       "source_file": "",
@@ -24742,7 +24687,7 @@
       "label": "Multi-subscriber Server-Sent Events (SSE) stream.",
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "rationale",
       "norm_label": "multi-subscriber server-sent events (sse) stream.",
       "source_file": "backend/app/api/routes/events.py",
@@ -24753,7 +24698,7 @@
       "label": "Return recently buffered events for instant UI loading.",
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "rationale",
       "norm_label": "return recently buffered events for instant ui loading.",
       "source_file": "backend/app/api/routes/events.py",
@@ -24764,7 +24709,7 @@
       "label": "Return persistent 24-hour hot activity feed across WhatsApp, Gmail, and Google\u2026",
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "rationale",
       "norm_label": "return persistent 24-hour hot activity feed across whatsapp, gmail, and google...",
       "source_file": "backend/app/api/routes/events.py",
@@ -24775,7 +24720,7 @@
       "label": "Return unread counts per integrated service within the hot 24-hour window.",
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "rationale",
       "norm_label": "return unread counts per integrated service within the hot 24-hour window.",
       "source_file": "backend/app/api/routes/events.py",
@@ -24786,7 +24731,7 @@
       "label": "Return structured 7-day rolling temporal memory digests.",
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "rationale",
       "norm_label": "return structured 7-day rolling temporal memory digests.",
       "source_file": "backend/app/api/routes/events.py",
@@ -24797,7 +24742,7 @@
       "label": "Return all registered/executed reactive task hooks.",
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "rationale",
       "norm_label": "return all registered/executed reactive task hooks.",
       "source_file": "backend/app/api/routes/events.py",
@@ -24808,7 +24753,7 @@
       "label": "Register a reactive follow-up action to execute when target_session_id\u2026",
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "rationale",
       "norm_label": "register a reactive follow-up action to execute when target_session_id...",
       "source_file": "backend/app/api/routes/events.py",
@@ -24819,7 +24764,7 @@
       "label": "Manually publish an event to the global event bus.",
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "rationale",
       "norm_label": "manually publish an event to the global event bus.",
       "source_file": "backend/app/api/routes/events.py",
@@ -24830,7 +24775,7 @@
       "label": "Periodic background task to aggregate daily digests and prune expired 7-day\u2026",
       "_origin": "ast",
       "community": 62,
-      "community_name": "get_service_memory_manager",
+      "community_name": "events.py",
       "file_type": "rationale",
       "norm_label": "periodic background task to aggregate daily digests and prune expired 7-day...",
       "source_file": "backend/app/core/lifecycle.py",
@@ -25079,6 +25024,17 @@
       "source_location": ""
     },
     {
+      "id": "backend_app_core_exceptions_py_request",
+      "label": "Request",
+      "_origin": "ast",
+      "community": 67,
+      "community_name": "execution_engine.py",
+      "file_type": "code",
+      "norm_label": "request",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
       "id": "backend_app_core_execution_engine",
       "label": "execution_engine.py",
       "_origin": "ast",
@@ -25130,6 +25086,17 @@
       "community_name": "execution_engine.py",
       "file_type": "code",
       "norm_label": "exception",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "jsonresponse",
+      "label": "JSONResponse",
+      "_origin": "ast",
+      "community": 67,
+      "community_name": "execution_engine.py",
+      "file_type": "code",
+      "norm_label": "jsonresponse",
       "source_file": "",
       "source_location": ""
     },
@@ -27688,33 +27655,66 @@
       "source_location": "L5"
     },
     {
+      "id": "backend_app_workers_antigravity_worker_agent_cli_client_py_any",
+      "label": "Any",
+      "_origin": "ast",
+      "community": 97,
+      "community_name": "run_antigravity_cli",
+      "file_type": "code",
+      "norm_label": "any",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
       "id": "backend_app_workers_antigravity_worker_agent_config",
       "label": "antigravity_worker/agent/config.py",
       "_origin": "ast",
       "community": 97,
-      "community_name": "antigravity_worker/agent/config.py",
+      "community_name": "run_antigravity_cli",
       "file_type": "code",
       "norm_label": "antigravity_worker/agent/config.py",
       "source_file": "backend/app/workers/antigravity_worker/agent/config.py",
       "source_location": "L1"
     },
     {
+      "id": "backend_app_workers_antigravity_worker_agent_cli_client_rationale_202",
+      "label": "Execute `agy` via stream-json stdin/stdout and collect structured results.",
+      "_origin": "ast",
+      "community": 97,
+      "community_name": "run_antigravity_cli",
+      "file_type": "rationale",
+      "norm_label": "execute `agy` via stream-json stdin/stdout and collect structured results.",
+      "source_file": "backend/app/workers/antigravity_worker/agent/cli_client.py",
+      "source_location": "L202"
+    },
+    {
       "id": "backend_app_workers_antigravity_worker_agent_cli_client_rationale_41",
       "label": "Build the argument list for official Antigravity CLI (`agy.exe`).",
       "_origin": "ast",
       "community": 97,
-      "community_name": "antigravity_worker/agent/config.py",
+      "community_name": "run_antigravity_cli",
       "file_type": "rationale",
       "norm_label": "build the argument list for official antigravity cli (`agy.exe`).",
       "source_file": "backend/app/workers/antigravity_worker/agent/cli_client.py",
       "source_location": "L41"
     },
     {
+      "id": "backend_app_workers_antigravity_worker_agent_cli_client_rationale_79",
+      "label": "Try to extract the Antigravity session/conversation ID from events or raw\u2026",
+      "_origin": "ast",
+      "community": 97,
+      "community_name": "run_antigravity_cli",
+      "file_type": "rationale",
+      "norm_label": "try to extract the antigravity session/conversation id from events or raw...",
+      "source_file": "backend/app/workers/antigravity_worker/agent/cli_client.py",
+      "source_location": "L79"
+    },
+    {
       "id": "backend_app_workers_antigravity_worker_agent_config_rationale_1",
       "label": "Configuration for the Antigravity CLI Worker (`agy`). Resolves the `agy` /\u2026",
       "_origin": "ast",
       "community": 97,
-      "community_name": "antigravity_worker/agent/config.py",
+      "community_name": "run_antigravity_cli",
       "file_type": "rationale",
       "norm_label": "configuration for the antigravity cli worker (`agy`). resolves the `agy` /...",
       "source_file": "backend/app/workers/antigravity_worker/agent/config.py",
@@ -27725,7 +27725,7 @@
       "label": "Return the requested model or default to gemini-3.8-flash-low.",
       "_origin": "ast",
       "community": 97,
-      "community_name": "antigravity_worker/agent/config.py",
+      "community_name": "run_antigravity_cli",
       "file_type": "rationale",
       "norm_label": "return the requested model or default to gemini-3.8-flash-low.",
       "source_file": "backend/app/workers/antigravity_worker/agent/config.py",
@@ -27736,7 +27736,7 @@
       "label": "Return whether to run Antigravity CLI with `--auto`.",
       "_origin": "ast",
       "community": 97,
-      "community_name": "antigravity_worker/agent/config.py",
+      "community_name": "run_antigravity_cli",
       "file_type": "rationale",
       "norm_label": "return whether to run antigravity cli with `--auto`.",
       "source_file": "backend/app/workers/antigravity_worker/agent/config.py",
@@ -27747,7 +27747,7 @@
       "label": "Maximum seconds to wait for a single milestone execution.",
       "_origin": "ast",
       "community": 97,
-      "community_name": "antigravity_worker/agent/config.py",
+      "community_name": "run_antigravity_cli",
       "file_type": "rationale",
       "norm_label": "maximum seconds to wait for a single milestone execution.",
       "source_file": "backend/app/workers/antigravity_worker/agent/config.py",
@@ -27758,7 +27758,7 @@
       "label": "Return whether to launch Antigravity CLI in a visible Windows terminal window.",
       "_origin": "ast",
       "community": 97,
-      "community_name": "antigravity_worker/agent/config.py",
+      "community_name": "run_antigravity_cli",
       "file_type": "rationale",
       "norm_label": "return whether to launch antigravity cli in a visible windows terminal window.",
       "source_file": "backend/app/workers/antigravity_worker/agent/config.py",
@@ -29693,7 +29693,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L123",
+      "source_location": "L112",
       "weight": 1.0
     },
     {
@@ -29705,7 +29705,19 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L150",
+      "source_location": "L139",
+      "weight": 1.0
+    },
+    {
+      "source": "ai_automation_frontend_app_page_home",
+      "target": "ai_automation_frontend_app_lib_ttsplayer_stoptts",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "AI-Automation Frontend/app/page.js",
+      "source_location": "L184",
       "weight": 1.0
     },
     {
@@ -29717,7 +29729,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L469",
+      "source_location": "L458",
       "weight": 1.0
     },
     {
@@ -29729,19 +29741,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L92",
-      "weight": 1.0
-    },
-    {
-      "source": "ai_automation_frontend_app_page_home",
-      "target": "ai_automation_frontend_app_lib_ttsplayer_stoptts",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L96",
+      "source_location": "L91",
       "weight": 1.0
     },
     {
@@ -29753,7 +29753,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L181",
+      "source_location": "L170",
       "weight": 1.0
     },
     {
@@ -29765,7 +29765,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L150",
+      "source_location": "L139",
       "weight": 1.0
     },
     {
@@ -29777,7 +29777,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L238",
+      "source_location": "L227",
       "weight": 1.0
     },
     {
@@ -29789,7 +29789,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L242",
+      "source_location": "L231",
       "weight": 1.0
     },
     {
@@ -29801,7 +29801,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L246",
+      "source_location": "L235",
       "weight": 1.0
     },
     {
@@ -29813,7 +29813,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L253",
+      "source_location": "L242",
       "weight": 1.0
     },
     {
@@ -29825,7 +29825,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L267",
+      "source_location": "L256",
       "weight": 1.0
     },
     {
@@ -29837,7 +29837,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L285",
+      "source_location": "L274",
       "weight": 1.0
     },
     {
@@ -29849,7 +29849,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L195",
+      "source_location": "L184",
       "weight": 1.0
     },
     {
@@ -29861,7 +29861,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L198",
+      "source_location": "L187",
       "weight": 1.0
     },
     {
@@ -29873,7 +29873,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L209",
+      "source_location": "L198",
       "weight": 1.0
     },
     {
@@ -29885,7 +29885,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L217",
+      "source_location": "L206",
       "weight": 1.0
     },
     {
@@ -29897,19 +29897,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L92",
-      "weight": 1.0
-    },
-    {
-      "source": "ai_automation_frontend_app_page_home_triggeravatarspeech",
-      "target": "ai_automation_frontend_app_lib_ttsplayer_stoptts",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L96",
+      "source_location": "L91",
       "weight": 1.0
     },
     {
@@ -37865,7 +37853,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L134",
+      "source_location": "L123",
       "weight": 1.0
     },
     {
@@ -37877,7 +37865,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L148",
+      "source_location": "L137",
       "weight": 1.0
     },
     {
@@ -37889,7 +37877,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L190",
+      "source_location": "L179",
       "weight": 1.0
     },
     {
@@ -37901,7 +37889,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L233",
+      "source_location": "L222",
       "weight": 1.0
     },
     {
@@ -57456,7 +57444,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L180",
+      "source_location": "L169",
       "weight": 1.0
     },
     {
@@ -57467,7 +57455,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L266",
+      "source_location": "L255",
       "weight": 1.0
     },
     {
@@ -57478,7 +57466,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "AI-Automation Frontend/app/page.js",
-      "source_location": "L282",
+      "source_location": "L271",
       "weight": 1.0
     },
     {

@@ -1158,9 +1158,9 @@
     "semantic_hash": "a8a9e6b1d4ce651b3d08fabfe2df47e4"
   },
   "AI-Automation Frontend/app/page.js": {
-    "mtime": 1790399382.430122,
-    "seen": 1790399517.7241561,
-    "ast_hash": "745cafa8a722168eb2299a407aed990f",
+    "mtime": 1790399996.60111,
+    "seen": 1790400036.2410545,
+    "ast_hash": "8ec387f7b394de2664d844ea6962d7d2",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/worker/[id]/page.js": {
@@ -1518,9 +1518,9 @@
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/components/avatar/AvatarAssistantMode.js": {
-    "mtime": 1790339707.857239,
-    "seen": 1790339830.9651723,
-    "ast_hash": "7e3abc4a1d087c585fa324822d238170",
+    "mtime": 1790399927.589041,
+    "seen": 1790400036.2410195,
+    "ast_hash": "6051e01e1da1656c6c5e3afa2e5b09d9",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/components/avatar/AvatarBlink.js": {
@@ -1536,9 +1536,9 @@
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/components/avatar/AvatarCanvas.js": {
-    "mtime": 1790398996.542403,
-    "seen": 1790399205.143245,
-    "ast_hash": "0989c51c09703a766e21af82459937c5",
+    "mtime": 1790399980.3808558,
+    "seen": 1790400036.2410262,
+    "ast_hash": "177b2029d878ce9e2f4ea5ed0cae36b3",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/components/avatar/AvatarExpression.js": {
@@ -1608,15 +1608,15 @@
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/components/avatar/AvatarChoreographer.js": {
-    "mtime": 1790340594.1515524,
-    "seen": 1790340704.9596546,
-    "ast_hash": "15ec704426ca72e620ad4fcfa55d4357",
+    "mtime": 1790399948.5442455,
+    "seen": 1790400036.2410278,
+    "ast_hash": "29128fb255759015581d98154aee8ed6",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/lib/ttsPlayer.js": {
-    "mtime": 1790398979.4517288,
-    "seen": 1790399205.1432693,
-    "ast_hash": "592702c28c16be4498ebf8b6f9f205bb",
+    "mtime": 1790399903.1913433,
+    "seen": 1790400036.2410524,
+    "ast_hash": "39715b5fa35874af537d60248d20136c",
     "semantic_hash": ""
   },
   "backend/app/api/routes/tts.py": {
