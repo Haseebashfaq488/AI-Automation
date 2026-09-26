@@ -1218,9 +1218,9 @@
     "semantic_hash": ""
   },
   "AI-Automation Frontend/README.md": {
-    "mtime": 1790164942.9659016,
-    "seen": 1790175974.0935004,
-    "ast_hash": "fb0375dc19ba6477fec218c16d65dd07",
+    "mtime": 1790401688.4209363,
+    "seen": 1790401984.3696003,
+    "ast_hash": "db547ccb19916a1a8d9d6ade61700d81",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/public/file.svg": {
@@ -1416,15 +1416,15 @@
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/README.md": {
-    "mtime": 1790263540.7306368,
-    "seen": 1790263670.8306422,
-    "ast_hash": "904887b7be4c4c8f1b2e7dc4e3f33529",
+    "mtime": 1790401659.7874312,
+    "seen": 1790401984.3696017,
+    "ast_hash": "ec4c1674c29366c1e7d6778a9280b828",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/components/README.md": {
-    "mtime": 1790263557.1436672,
-    "seen": 1790263670.830644,
-    "ast_hash": "a2fb11a7cfbef4dd0dd0a40fcb194bdc",
+    "mtime": 1790401676.8037019,
+    "seen": 1790401984.3696048,
+    "ast_hash": "7d4594bad79fd71852423b5d4eb48274",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/lib/README.md": {
@@ -1590,15 +1590,15 @@
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/components/avatar/VRMAnimationManager.js": {
-    "mtime": 1790338482.4444628,
-    "seen": 1790338785.8469388,
-    "ast_hash": "36c46d045a89e374cc54c9cce74cb39c",
+    "mtime": 1790401854.7337573,
+    "seen": 1790401984.3692734,
+    "ast_hash": "ac1a1d660360f8014d8d9dc92e9c622c",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/components/avatar/VRMAvatar.js": {
-    "mtime": 1790334793.1889956,
-    "seen": 1790338785.8469398,
-    "ast_hash": "a5f5c39bb182fa6f4afd6c1f5ca4a9c4",
+    "mtime": 1790401866.4622624,
+    "seen": 1790401984.369275,
+    "ast_hash": "d3f6d627f3486749c050bd0b820569dc",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/public/avatar/background.jpg": {
@@ -1632,9 +1632,21 @@
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/avatar-studio/page.js": {
-    "mtime": 1790401231.3941114,
-    "seen": 1790401424.8931646,
-    "ast_hash": "44f460b2899d84e759d8f33796fdba68",
+    "mtime": 1790401939.2567828,
+    "seen": 1790401984.3692348,
+    "ast_hash": "fa2d58b88c7ddb7ede7e881874f2dcfc",
+    "semantic_hash": ""
+  },
+  "AI-Automation Frontend/app/avatar-studio/README.md": {
+    "mtime": 1790401642.0090823,
+    "seen": 1790401984.3696034,
+    "ast_hash": "ed45bc8f9ed10d924c98f062843fa4c6",
+    "semantic_hash": ""
+  },
+  "AI-Automation Frontend/app/components/avatar/README.md": {
+    "mtime": 1790401633.5949054,
+    "seen": 1790401984.3696063,
+    "ast_hash": "c88ee9cff59bc348a9497bfd2aaf2b5e",
     "semantic_hash": ""
   }
 }
