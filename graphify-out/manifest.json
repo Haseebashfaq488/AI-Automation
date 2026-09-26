@@ -1596,9 +1596,9 @@
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/components/avatar/VRMAvatar.js": {
-    "mtime": 1790401866.4622624,
-    "seen": 1790401984.369275,
-    "ast_hash": "d3f6d627f3486749c050bd0b820569dc",
+    "mtime": 1790419978.2876341,
+    "seen": 1790420012.05826,
+    "ast_hash": "5cfa5824865f998fcd5ff8e54ffd167a",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/public/avatar/background.jpg": {
@@ -1632,9 +1632,9 @@
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/avatar-studio/page.js": {
-    "mtime": 1790419500.137116,
-    "seen": 1790419540.025633,
-    "ast_hash": "bb9824e4a54376ac21df29305efc3eea",
+    "mtime": 1790419988.1779928,
+    "seen": 1790420012.0582225,
+    "ast_hash": "214007e66e6fec745c6ccb6d071f78c8",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/avatar-studio/README.md": {
@@ -1650,9 +1650,9 @@
     "semantic_hash": ""
   },
   "generate_custom_idle.py": {
-    "mtime": 1790419438.8896549,
-    "seen": 1790419540.0259905,
-    "ast_hash": "16879ba15f55e921a780f09119c04da1",
+    "mtime": 1790419906.889218,
+    "seen": 1790420012.0585628,
+    "ast_hash": "5fe0795babdc6821426c50f3477077c8",
     "semantic_hash": ""
   }
 }

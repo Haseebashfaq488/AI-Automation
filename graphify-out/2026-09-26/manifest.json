@@ -1350,9 +1350,9 @@
     "semantic_hash": ""
   },
   "AI-Automation Frontend/FRONTEND_ARCHITECTURE.md": {
-    "mtime": 1790164868.186722,
-    "seen": 1790175974.093499,
-    "ast_hash": "9ac5ca0adf30a8cacde25142ce8f4f4f",
+    "mtime": 1790419516.992198,
+    "seen": 1790419540.0260189,
+    "ast_hash": "14c4a018b33ab3c73a54d4ee9f94fbdd",
     "semantic_hash": ""
   },
   "run_tunnel.py": {
@@ -1590,9 +1590,9 @@
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/components/avatar/VRMAnimationManager.js": {
-    "mtime": 1790401854.7337573,
-    "seen": 1790401984.3692734,
-    "ast_hash": "ac1a1d660360f8014d8d9dc92e9c622c",
+    "mtime": 1790419493.2779436,
+    "seen": 1790419540.025672,
+    "ast_hash": "356f11350b3c0033491f7b13e8529674",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/components/avatar/VRMAvatar.js": {
@@ -1632,9 +1632,9 @@
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/avatar-studio/page.js": {
-    "mtime": 1790418245.0586672,
-    "seen": 1790418342.0386486,
-    "ast_hash": "875dd0534666f7628c3238ba2d920431",
+    "mtime": 1790419500.137116,
+    "seen": 1790419540.025633,
+    "ast_hash": "bb9824e4a54376ac21df29305efc3eea",
     "semantic_hash": ""
   },
   "AI-Automation Frontend/app/avatar-studio/README.md": {
@@ -1647,6 +1647,12 @@
     "mtime": 1790401633.5949054,
     "seen": 1790401984.3696063,
     "ast_hash": "c88ee9cff59bc348a9497bfd2aaf2b5e",
+    "semantic_hash": ""
+  },
+  "generate_custom_idle.py": {
+    "mtime": 1790419438.8896549,
+    "seen": 1790419540.0259905,
+    "ast_hash": "16879ba15f55e921a780f09119c04da1",
     "semantic_hash": ""
   }
 }
