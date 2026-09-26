@@ -1,12 +1,15 @@
 import pytest
 
 from app.core.execution_engine import ExecutionEngine
-from app.registry import registry
+from app.registry.tool_registry import ToolRegistry
+from app.modules.file_management.tools.search_content import SearchContentTool
 
 
 @pytest.fixture
 def engine():
-    return ExecutionEngine(registry)
+    reg = ToolRegistry()
+    reg.register(SearchContentTool())
+    return ExecutionEngine(reg)
 
 
 @pytest.mark.asyncio

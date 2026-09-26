@@ -5,13 +5,54 @@ import zipfile
 import pytest
 
 from app.core.execution_engine import ExecutionEngine
-from app.registry import registry
+from app.registry.tool_registry import ToolRegistry
+from app.modules.file_management.tools.list_directory import ListDirectoryTool
+from app.modules.file_management.tools.exists import ExistsTool
+from app.modules.file_management.tools.metadata import MetadataTool
+from app.modules.file_management.tools.search_files import SearchFilesTool
+from app.modules.file_management.tools.read_file import ReadFileTool
+from app.modules.file_management.tools.create_file import CreateFileTool
+from app.modules.file_management.tools.create_folder import CreateFolderTool
+from app.modules.file_management.tools.write_file import WriteFileTool
+from app.modules.file_management.tools.copy import CopyTool
+from app.modules.file_management.tools.move import MoveTool
+from app.modules.file_management.tools.rename import RenameTool
+from app.modules.file_management.tools.search_content import SearchContentTool
+from app.modules.file_management.tools.delete_file import DeleteFileTool
+from app.modules.file_management.tools.delete_folder import DeleteFolderTool
+from app.modules.file_management.tools.archive import ArchiveTool
+from app.modules.file_management.tools.extract import ExtractTool
+from app.modules.file_management.tools.touch import TouchTool
+from app.modules.file_management.tools.bulk_rename import BulkRenameTool
+from app.modules.file_management.tools.append_file import AppendFileTool
+from app.modules.file_management.skills.organize_downloads import OrganizeDownloadsSkill
 from app.modules.file_management.helpers.trash import TRASH_DIR
 
 
 @pytest.fixture
 def engine():
-    return ExecutionEngine(registry)
+    reg = ToolRegistry()
+    reg.register(ListDirectoryTool())
+    reg.register(ExistsTool())
+    reg.register(MetadataTool())
+    reg.register(SearchFilesTool())
+    reg.register(ReadFileTool())
+    reg.register(CreateFileTool())
+    reg.register(CreateFolderTool())
+    reg.register(WriteFileTool())
+    reg.register(CopyTool())
+    reg.register(MoveTool())
+    reg.register(RenameTool())
+    reg.register(SearchContentTool())
+    reg.register(DeleteFileTool())
+    reg.register(DeleteFolderTool())
+    reg.register(ArchiveTool())
+    reg.register(ExtractTool())
+    reg.register(TouchTool())
+    reg.register(BulkRenameTool())
+    reg.register(AppendFileTool())
+    reg.register(OrganizeDownloadsSkill())
+    return ExecutionEngine(reg)
 
 
 # ---------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 """Unit tests for the Antigravity Autonomous Worker (Direct Execution & Streaming Mode)."""
 from __future__ import annotations
 
+import asyncio
 import json
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -76,7 +77,8 @@ class TestAntigravityWorkerAgent:
             output_text="Created test file successfully via agy.",
         )
 
-        with patch("app.workers.antigravity_worker.agent.worker_agent.run_antigravity_cli", new=AsyncMock(return_value=mock_result)):
+        with patch.object(config, "get_agy_binary", return_value="agy.exe"), \
+             patch("app.workers.antigravity_worker.agent.worker_agent.run_antigravity_cli", new=AsyncMock(return_value=mock_result)):
             # Job 1: Planning
             step1 = await agent.decide_next_step()
             assert step1["action"] == "plan_ready"
@@ -114,7 +116,8 @@ class TestAntigravityWorkerAgent:
 
         mock_result = RunResult(success=True, output_text="Ok", session_id="agy_ses_456")
 
-        with patch("app.workers.antigravity_worker.agent.worker_agent.run_antigravity_cli", new=AsyncMock(return_value=mock_result)):
+        with patch.object(config, "get_agy_binary", return_value="agy.exe"), \
+             patch("app.workers.antigravity_worker.agent.worker_agent.run_antigravity_cli", new=AsyncMock(return_value=mock_result)):
             # Advance past main task
             await agent.decide_next_step()
             # Inject intervention
@@ -148,7 +151,8 @@ class TestAntigravityEngineIntegration:
             return ag
 
         mock_run = AsyncMock(return_value=RunResult(success=True, output_text="Done!", session_id="ses_1"))
-        with patch("app.workers.antigravity_worker.agent.worker_agent.run_antigravity_cli", new=mock_run):
+        with patch.object(config, "get_agy_binary", return_value="agy.exe"), \
+             patch("app.workers.antigravity_worker.agent.worker_agent.run_antigravity_cli", new=mock_run):
             eng = WorkerEngine(registry, agent_factory=factory)
             res = await eng.run(contract)
             assert res["status"] in ("completed", "running", "awaiting_plan_approval")

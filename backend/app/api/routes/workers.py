@@ -1,3 +1,5 @@
+from typing import Any
+from app.api.routes.agent import logger
 import asyncio
 import json
 import os
@@ -35,6 +37,7 @@ class ForkRequest(BaseModel):
     allowed_tools: List[str] = []
     max_steps: int = 20
     requires_plan_approval: bool = True
+    skip_testing: bool = False
 
 
 class InterveneRequest(BaseModel):
@@ -43,6 +46,7 @@ class InterveneRequest(BaseModel):
 
 class ApprovePlanRequest(BaseModel):
     plan: Optional[str] = None
+    skip_testing: Optional[bool] = None
 
 
 class RejectPlanRequest(BaseModel):
@@ -220,6 +224,7 @@ async def fork_worker(payload: ForkRequest):
             max_steps=payload.max_steps,
             model=payload.model,
             requires_plan_approval=payload.requires_plan_approval,
+            skip_testing=payload.skip_testing,
         )
     except Exception as exc:
         raise HTTPException(status_code=422, detail=f"Invalid contract: {exc}")
@@ -236,29 +241,45 @@ async def launch_worker(contract: TaskContract, worker_type: str = "antigravity_
     # Auto-detect existing handover in workspace if not explicitly provided
     if not contract.prior_handover:
         try:
-            scope_dir = Path(contract.fs_scope)
-            handover_file = scope_dir / "handover.json"
-            if handover_file.is_file():
-                contract.prior_handover = json.loads(handover_file.read_text(encoding="utf-8"))
-                contract.is_refinement = True
-            elif (scope_dir / "SESSION_HANDOVER.md").is_file():
-                contract.prior_handover = {"summary": (scope_dir / "SESSION_HANDOVER.md").read_text(encoding="utf-8")}
-                contract.is_refinement = True
+            scope_dir = Path(contract.fs_scope).resolve()
+            # Avoid loading drive root handovers (e.g. D:\SESSION_HANDOVER.md) which are unrelated to specific tasks
+            is_drive_root = (scope_dir.parent == scope_dir) or str(scope_dir).rstrip("\\/") in ("D:", "C:", "D:\\", "C:\\")
+            if not is_drive_root:
+                handover_file = scope_dir / "handover.json"
+                if handover_file.is_file():
+                    contract.prior_handover = json.loads(handover_file.read_text(encoding="utf-8"))
+                    contract.is_refinement = True
+                elif (scope_dir / "SESSION_HANDOVER.md").is_file():
+                    summary_text = (scope_dir / "SESSION_HANDOVER.md").read_text(encoding="utf-8")[:4000]
+                    contract.prior_handover = {"summary": summary_text}
+                    contract.is_refinement = True
         except Exception:
             pass
 
     # Discover living documentation (subfolder README.md files)
     if not contract.folder_manifests:
         try:
-            scope_dir = Path(contract.fs_scope)
-            if scope_dir.is_dir():
+            scope_dir = Path(contract.fs_scope).resolve()
+            is_drive_root = (scope_dir.parent == scope_dir) or str(scope_dir).rstrip("\\/") in ("D:", "C:", "D:\\", "C:\\")
+            EXCLUDED = {"node_modules", ".git", ".next", ".venv", "venv", "__pycache__", "site-packages", "dist", "build", ".pytest_cache", ".cache", "appdata", "$recycle.bin", "system volume information"}
+            if scope_dir.is_dir() and not is_drive_root:
                 manifests = []
-                for p in scope_dir.rglob("README.md"):
-                    if p.is_file():
+                for root, dirs, files in os.walk(scope_dir):
+                    # Prune excluded directories
+                    dirs[:] = [d for d in dirs if d.lower() not in EXCLUDED and not d.startswith(".")]
+                    # Check depth (max 3 levels)
+                    rel_depth = len(Path(root).relative_to(scope_dir).parts)
+                    if rel_depth > 3:
+                        dirs.clear()
+                        continue
+                    if "README.md" in files:
+                        p = Path(root) / "README.md"
                         try:
                             manifests.append(str(p.relative_to(scope_dir)))
                         except Exception:
                             manifests.append(str(p))
+                    if len(manifests) >= 30:
+                        break
                 contract.folder_manifests = manifests
         except Exception:
             pass
@@ -346,6 +367,7 @@ def _agent_factory_for(worker_type: str):
                 prior_handover=contract.prior_handover,
                 is_refinement=contract.is_refinement,
                 folder_manifests=contract.folder_manifests,
+                skip_testing=contract.skip_testing,
             )
 
         return factory
@@ -416,11 +438,60 @@ async def get_worker_result(session_id: str):
 async def approve_worker_plan(session_id: str, payload: Optional[ApprovePlanRequest] = None):
     """Approve the worker's implementation plan and trigger execution."""
     eng = _engines.get(session_id)
+    plan_override = payload.plan if payload else None
+    skip_testing = payload.skip_testing if payload else None
+
+    if not eng:
+        # Rehydrate from on-disk session if backend restarted
+        from app.workers.base.session import WorkerSession
+        session = WorkerSession(session_id)
+        if (session.path / "task.json").is_file():
+            try:
+                contract = session.read_task()
+                plan_text = plan_override or session.read_plan() or ""
+                contract.requires_plan_approval = False
+                if skip_testing is not None:
+                    contract.skip_testing = bool(skip_testing)
+
+                eng = WorkerEngine(registry, session_id=session_id, agent_factory=_agent_factory_for(contract.worker_type or "antigravity_worker"))
+                eng._session = session
+                eng._contract = contract
+                eng._implementation_plan = plan_text
+                eng._skip_testing = contract.skip_testing
+                _engines[session_id] = eng
+
+                # Start agent loop starting from Job 2 (execution)
+                agent = eng._agent_factory(contract) if eng._agent_factory else None
+                eng._agent = agent
+                if agent is not None:
+                    if hasattr(agent, "worker_session_id"):
+                        agent.worker_session_id = session_id
+                    if hasattr(agent, "set_approved_plan"):
+                        agent.set_approved_plan(plan_text)
+                    if hasattr(agent, "skip_testing"):
+                        agent.skip_testing = contract.skip_testing
+                    agent._phase = "execution"
+
+                eng._loop_task = asyncio.create_task(eng._worker_loop())
+                return {"status": "plan approved and execution resumed", "session_id": session_id}
+            except Exception as exc:
+                logger.error("Failed to resume worker %s from disk: %s", session_id, exc)
+                raise HTTPException(status_code=500, detail=f"Failed to resume worker from disk: {exc}")
+
+        raise HTTPException(status_code=404, detail="Worker session not found")
+
+    eng.approve_plan(plan_override, skip_testing=skip_testing)
+    return {"status": "plan approved", "session_id": session_id}
+
+
+@router.post("/{session_id}/skip-testing")
+async def skip_worker_testing(session_id: str):
+    """Dynamically skip the self-testing verification phase for a worker."""
+    eng = _engines.get(session_id)
     if not eng:
         raise HTTPException(status_code=404, detail="Worker session not found")
-    plan_override = payload.plan if payload else None
-    eng.approve_plan(plan_override)
-    return {"status": "plan approved", "session_id": session_id}
+    eng.set_skip_testing(True)
+    return {"status": "testing skipped", "session_id": session_id}
 
 
 @router.post("/{session_id}/reject-plan")
@@ -428,7 +499,32 @@ async def reject_worker_plan(session_id: str, payload: RejectPlanRequest):
     """Reject or request revisions to the worker's implementation plan."""
     eng = _engines.get(session_id)
     if not eng:
+        # Rehydrate from on-disk session if backend restarted
+        from app.workers.base.session import WorkerSession
+        session = WorkerSession(session_id)
+        if (session.path / "task.json").is_file():
+            try:
+                contract = session.read_task()
+                eng = WorkerEngine(registry, session_id=session_id, agent_factory=_agent_factory_for(contract.worker_type or "antigravity_worker"))
+                eng._session = session
+                eng._contract = contract
+                _engines[session_id] = eng
+
+                agent = eng._agent_factory(contract) if eng._agent_factory else None
+                eng._agent = agent
+                if agent is not None:
+                    if hasattr(agent, "worker_session_id"):
+                        agent.worker_session_id = session_id
+                    if hasattr(agent, "reject_plan"):
+                        agent.reject_plan(payload.feedback)
+                eng._loop_task = asyncio.create_task(eng._worker_loop())
+                return {"status": "plan rejected and revision started", "session_id": session_id}
+            except Exception as exc:
+                logger.error("Failed to resume worker %s for revision: %s", session_id, exc)
+                raise HTTPException(status_code=500, detail=f"Failed to resume worker for revision: {exc}")
+
         raise HTTPException(status_code=404, detail="Worker session not found")
+
     eng.reject_plan(payload.feedback)
     return {"status": "plan rejected with feedback", "session_id": session_id}
 
@@ -741,4 +837,4 @@ async def get_worker_handover(session_id: str):
 
 def get_engine(session_id: str) -> Optional[WorkerEngine]:
     """Used by the agent route to look up engines after delegation."""
-    return _engines.get(session_id)
+    return _engines.get(session_id)

@@ -49,6 +49,10 @@ class WorkerEngine:
         self._interventions: List[str] = []
         self._plan_approved_event = asyncio.Event()
         self._awaiting_plan_approval = False
+        self._plan_action: Optional[str] = None
+        self._plan_feedback: Optional[str] = None
+        self._skip_testing: bool = False
+        self._agent: Optional[Any] = None
         self._implementation_plan: Optional[str] = None
         self._test_results: Dict[str, Any] = {}
 
@@ -62,6 +66,7 @@ class WorkerEngine:
         """Create the on‑disk worker session from a contract."""
         contract.task_id = contract.task_id or self._session_id
         self._contract = contract
+        self._skip_testing = getattr(contract, "skip_testing", False)
         self._session = WorkerSession(self._session_id, contract)
         self._session.fork()
         self._guardian = ActiveStreamGuardian(contract, self._session_id)
@@ -102,6 +107,7 @@ class WorkerEngine:
                 "allowed_tools": self._contract.allowed_tools,
                 "max_steps": self._contract.max_steps,
                 "plan_status": self._contract.plan_status,
+                "skip_testing": self._contract.skip_testing,
             }
         
         status = "cancelled" if self._cancelled else (
@@ -144,8 +150,22 @@ class WorkerEngine:
         """Queue a parent guidance message for the worker loop."""
         self._interventions.append(message)
 
-    def approve_plan(self, approved_plan: Optional[str] = None) -> bool:
+    def set_skip_testing(self, skip: bool = True) -> None:
+        """Dynamically enable or disable the self-testing phase."""
+        self._skip_testing = skip
+        if self._contract:
+            self._contract.skip_testing = skip
+        if self._agent and hasattr(self._agent, "skip_testing"):
+            self._agent.skip_testing = skip
+        if self._session:
+            self._session.append_event("TESTING_SKIPPED", {"skip_testing": skip})
+        logger.info("Worker session %s set skip_testing = %s", self._session_id, skip)
+
+    def approve_plan(self, approved_plan: Optional[str] = None, skip_testing: Optional[bool] = None) -> bool:
         """Approve the implementation plan and resume worker execution."""
+        from pathlib import Path
+
+        self._plan_action = "approved"
         if approved_plan:
             self._implementation_plan = approved_plan
             if self._contract:
@@ -153,11 +173,28 @@ class WorkerEngine:
             if self._session:
                 self._session.write_plan(approved_plan)
 
+            # Synchronize the user's approved plan markdown directly to disk in the workspace
+            try:
+                if self._contract and self._contract.fs_scope:
+                    scope_dir = Path(self._contract.fs_scope)
+                    scope_dir.mkdir(parents=True, exist_ok=True)
+                    (scope_dir / "implementation_plan.md").write_text(approved_plan, encoding="utf-8")
+                    logger.info("Synchronized approved implementation_plan.md to %s", scope_dir)
+            except Exception as exc:
+                logger.warning("Could not write implementation_plan.md to fs_scope: %s", exc)
+
+        if skip_testing is not None:
+            self._skip_testing = bool(skip_testing)
+            if self._contract:
+                self._contract.skip_testing = bool(skip_testing)
+            if self._agent and hasattr(self._agent, "skip_testing"):
+                self._agent.skip_testing = bool(skip_testing)
+
         if self._contract:
             self._contract.plan_status = "approved"
 
         if self._session:
-            self._session.append_event("PLAN_APPROVED", {"plan": self._implementation_plan or ""})
+            self._session.append_event("PLAN_APPROVED", {"plan": self._implementation_plan or "", "skip_testing": self._skip_testing})
             self._session.write_state({
                 "status": "running",
                 "current_step": "Job 2: Execute Implementation Plan",
@@ -165,13 +202,15 @@ class WorkerEngine:
                 "implementation_plan": self._implementation_plan or self._session.read_plan(),
             })
 
-        emit(self._session_id, "PLAN_APPROVED", {"plan": self._implementation_plan or ""})
+        emit(self._session_id, "PLAN_APPROVED", {"plan": self._implementation_plan or "", "skip_testing": self._skip_testing})
         self._awaiting_plan_approval = False
         self._plan_approved_event.set()
         return True
 
     def reject_plan(self, feedback: str) -> bool:
         """Reject or request changes to the implementation plan with feedback."""
+        self._plan_action = "rejected"
+        self._plan_feedback = feedback
         if self._contract:
             self._contract.plan_status = "rejected"
 
@@ -185,7 +224,6 @@ class WorkerEngine:
             })
 
         emit(self._session_id, "PLAN_REJECTED", {"feedback": feedback})
-        self.intervene(f"Plan revision request: {feedback}")
         self._awaiting_plan_approval = False
         self._plan_approved_event.set()
         return True
@@ -212,11 +250,14 @@ class WorkerEngine:
         contract = self._contract
 
         agent = self._agent_factory(contract) if self._agent_factory else None
+        self._agent = agent
         if agent is not None:
             if hasattr(agent, "worker_session_id") and not getattr(agent, "worker_session_id", None):
                 agent.worker_session_id = self._session_id
             if hasattr(agent, "requires_plan_approval"):
                 agent.requires_plan_approval = contract.requires_plan_approval
+            if hasattr(agent, "skip_testing"):
+                agent.skip_testing = contract.skip_testing or self._skip_testing
             binary_check = None
             try:
                 from app.workers.antigravity_worker.agent import config as agy_config
@@ -234,6 +275,7 @@ class WorkerEngine:
     # LLM‑driven loop (Direct Task Execution & Streaming)
     # ==================================================================
     async def _agent_loop(self, agent: Any, contract: TaskContract) -> Dict[str, Any]:
+        self._agent = agent
         ev = EventBus(self._session_id)
         allowed: List[str] = list(dict.fromkeys(contract.allowed_tools))
         scoped = ScopedToolRegistry(self._registry, set(allowed))
@@ -280,7 +322,8 @@ class WorkerEngine:
                         self._contract.plan_status = "awaiting_approval"
 
                     step_name = decision.get("params", {}).get("step", "Job 1: Author Implementation Plan")
-                    completed.append(step_name)
+                    if step_name not in completed:
+                        completed.append(step_name)
                     ev.step_completed(step_name, step_index, output={"plan": plan_text[:500]})
                     self._session.append_event("PLAN_READY", {"step": step_name, "plan": plan_text})
 
@@ -303,17 +346,38 @@ class WorkerEngine:
                         if self._cancelled:
                             break
 
+                        # Check if user requested plan revisions
+                        if self._plan_action == "rejected":
+                            logger.info("Plan rejected with feedback for session %s: %s", self._session_id, self._plan_feedback)
+                            if hasattr(agent, "reject_plan"):
+                                agent.reject_plan(self._plan_feedback or "")
+                            self._session.write_state({
+                                "status": "running",
+                                "current_step": "Revising Implementation Plan",
+                                "completed": completed,
+                                "remaining": [contract.objective],
+                                "errors": [e["message"] for e in errors],
+                                "progress_percent": 15,
+                                "plan_status": "rejected",
+                                "implementation_plan": self._implementation_plan or self._session.read_plan(),
+                                "test_results": self._test_results or self._session.read_test_results(),
+                            })
+                            self._plan_action = None
+                            self._plan_feedback = None
+                            # Loop back to Job 1 planning with revision prompt
+                            continue
+
+                        # Plan was approved
                         if hasattr(agent, "set_approved_plan"):
                             agent.set_approved_plan(self._implementation_plan or "")
+
+                        if hasattr(agent, "skip_testing"):
+                            agent.skip_testing = self._contract.skip_testing if self._contract else self._skip_testing
 
                         # Immediately update disk state so pollers and SSE clients see running state while Job 2 executes
                         self._session.write_state({
                             "status": "running",
                             "current_step": "Job 2: Execute Implementation Plan",
-                            "completed": completed,
-                            "remaining": [contract.objective],
-                            "errors": [e["message"] for e in errors],
-                            "progress_percent": 35,
                             "plan_status": self._contract.plan_status if self._contract else "approved",
                             "implementation_plan": self._implementation_plan or self._session.read_plan(),
                             "test_results": self._test_results or self._session.read_test_results(),

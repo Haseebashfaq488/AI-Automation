@@ -7,9 +7,17 @@ from app.registry import registry
 from app.modules.opencode.adapter import OpenCodeAdapter
 
 
+from app.registry.tool_registry import ToolRegistry
+from app.modules.file_management.tools.create_folder import CreateFolderTool
+from app.modules.file_management.tools.rename import RenameTool
+
+
 @pytest.fixture
 def engine():
-    return ExecutionEngine(registry)
+    reg = ToolRegistry()
+    reg.register(CreateFolderTool())
+    reg.register(RenameTool())
+    return ExecutionEngine(reg)
 
 
 # ---------------------------------------------------------------------------
@@ -20,9 +28,9 @@ def test_adapter_accepts_valid_plan_steps():
     adapter = OpenCodeAdapter.__new__(OpenCodeAdapter)  # skip network init
     adapter.registry = registry
     steps = [
-        {"tool": "search_files", "params": {"path": "/tmp", "pattern": "*.txt"}, "description": "d"},
-        {"tool": "rename", "params": {"source": "/tmp/a", "destination": "/tmp/b"}, "description": "d"},
-        {"tool": "organize_downloads", "params": {"source_dir": "/tmp"}, "description": "d"},
+        {"tool": "send_message", "params": {"to": "Ali", "message": "hello"}, "description": "send msg"},
+        {"tool": "send_email", "params": {"to": "test@domain.com", "body": "content"}, "description": "send mail"},
+        {"tool": "list_drive_files", "params": {"page_size": 10}, "description": "list drive"},
     ]
     valid, dropped = adapter._validate_plan_steps(steps)
     assert len(valid) == 3
@@ -33,22 +41,18 @@ def test_adapter_rejects_bad_plan_steps():
     adapter = OpenCodeAdapter.__new__(OpenCodeAdapter)  # skip network init
     adapter.registry = registry
     steps = [
-        # wrong param name (legacy 'query')
-        {"tool": "search_files", "params": {"path": "/tmp", "query": "x"}},
-        # legacy rename params
-        {"tool": "rename", "params": {"path": "/tmp/a", "new_name": "b"}},
-        # legacy organize_downloads param
-        {"tool": "organize_downloads", "params": {"directory": "/tmp"}},
+        # missing required param
+        {"tool": "send_message", "params": {"to": "Ali"}},
+        # missing required body param
+        {"tool": "send_email", "params": {"to": "a@b.com"}},
         # unknown tool
         {"tool": "delete_everything", "params": {}},
-        # missing required param
-        {"tool": "write_file", "params": {"path": "/tmp/a"}},
         # not a dict
         "garbage",
     ]
     valid, dropped = adapter._validate_plan_steps(steps)
     assert valid == []
-    assert len(dropped) == 5  # the "garbage" string is not a step at all
+    assert len(dropped) == 3  # the "garbage" string is not a step at all
 
 
 # ---------------------------------------------------------------------------
@@ -82,15 +86,15 @@ def test_tools_list_contains_category(client: TestClient):
     resp = client.get("/tools/list")
     assert resp.status_code == 200
     names = {t["name"]: t for t in resp.json()["tools"]}
-    assert names["read_file"]["category"] == "tool"
-    assert names["organize_downloads"]["category"] == "skill"
+    assert names["send_email"]["category"] == "tool"
+    assert names["list_drive_files"]["category"] == "tool"
 
 
 def test_skills_list_only_skills(client: TestClient):
     resp = client.get("/skills/list")
     assert resp.status_code == 200
     skills = {s["name"] for s in resp.json()["skills"]}
-    assert skills == {"organize_downloads", "send_report", "unread_digest", "list_recent_emails", "search_drive"}
+    assert skills == {"send_report", "unread_digest", "list_recent_emails", "search_drive"}
 
 
 def test_pipelines_list_and_404(client: TestClient):

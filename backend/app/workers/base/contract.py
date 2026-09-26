@@ -67,6 +67,10 @@ class TaskContract(BaseModel):
         default=True,
         description="Whether the worker requires implementation plan review and approval before execution.",
     )
+    skip_testing: bool = Field(
+        default=False,
+        description="Whether to skip Job 3 (automated self-testing & verification).",
+    )
     plan_status: str = Field(
         default="pending",
         description="Current status of the implementation plan: pending, awaiting_approval, approved, rejected.",

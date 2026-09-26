@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -13,10 +14,12 @@ from app.workers.base.scoped_registry import ScopedToolRegistry
 from app.workers.base.session import WorkerSession
 
 
-import os
-
-from pydantic import ValidationError
-
+from app.registry.tool_registry import ToolRegistry
+from app.modules.file_management.tools.create_file import CreateFileTool
+from app.modules.file_management.tools.exists import ExistsTool
+from app.modules.file_management.tools.write_file import WriteFileTool
+from app.modules.file_management.tools.touch import TouchTool
+from app.modules.file_management.tools.read_file import ReadFileTool
 from app.workers.base.bus import EventBus
 from app.workers.base.contract import TaskContract
 from app.workers.base.engine import WorkerEngine
@@ -25,6 +28,17 @@ from app.workers.base.session import WorkerSession
 
 # Platform-independent absolute path for contract fixtures
 SCOPE = os.path.abspath("/tmp")
+
+
+@pytest.fixture
+def test_registry():
+    reg = ToolRegistry()
+    reg.register(CreateFileTool())
+    reg.register(ExistsTool())
+    reg.register(WriteFileTool())
+    reg.register(TouchTool())
+    reg.register(ReadFileTool())
+    return reg
 
 
 def _contract(**overrides) -> TaskContract:
@@ -110,22 +124,22 @@ class TestWorkerSession:
 
 
 class TestScopedRegistry:
-    def test_only_allowed_tools_visible(self):
-        scoped = ScopedToolRegistry(registry, {"read_file", "exists"})
+    def test_only_allowed_tools_visible(self, test_registry):
+        scoped = ScopedToolRegistry(test_registry, {"read_file", "exists"})
         tools = scoped.list_tools()
         assert set(tools.keys()) == {"read_file", "exists"}
 
-    def test_get_blocked_tool_raises(self):
-        scoped = ScopedToolRegistry(registry, {"read_file"})
+    def test_get_blocked_tool_raises(self, test_registry):
+        scoped = ScopedToolRegistry(test_registry, {"read_file"})
         with pytest.raises(KeyError):
             scoped.get("delete_file")
 
-    def test_allowed_tool_returns_instance(self):
-        scoped = ScopedToolRegistry(registry, {"read_file"})
+    def test_allowed_tool_returns_instance(self, test_registry):
+        scoped = ScopedToolRegistry(test_registry, {"read_file"})
         assert scoped.get("read_file").name == "read_file"
 
-    def test_contains(self):
-        scoped = ScopedToolRegistry(registry, {"read_file"})
+    def test_contains(self, test_registry):
+        scoped = ScopedToolRegistry(test_registry, {"read_file"})
         assert "read_file" in scoped
         assert "delete_file" not in scoped
 
@@ -155,9 +169,9 @@ class TestEventBus:
 
 class TestWorkerEngine:
     @pytest.mark.asyncio
-    async def test_run_completes_and_writes_result(self, tmp_path, monkeypatch):
+    async def test_run_completes_and_writes_result(self, tmp_path, monkeypatch, test_registry):
         monkeypatch.setattr(WorkerSession, "SESSIONS_ROOT", tmp_path)
-        eng = WorkerEngine(registry, session_id="ws_e2e")
+        eng = WorkerEngine(test_registry, session_id="ws_e2e")
         state = await eng.run(_contract())
         assert state["status"] == "running"
 
@@ -184,12 +198,12 @@ class TestWorkerEngine:
         assert "WORK_COMPLETED" in events
 
     @pytest.mark.asyncio
-    async def test_scoped_registry_enforced_in_loop(self, tmp_path, monkeypatch):
+    async def test_scoped_registry_enforced_in_loop(self, tmp_path, monkeypatch, test_registry):
         """The worker must not be able to call tools outside allowed_tools."""
         monkeypatch.setattr(WorkerSession, "SESSIONS_ROOT", tmp_path)
         # 'not_a_real_tool' will fail validation; 'delete_file' is NOT in the
         # allowed list, so the engine must never reach it even if requested.
-        eng = WorkerEngine(registry, session_id="ws_scoped")
+        eng = WorkerEngine(test_registry, session_id="ws_scoped")
         contract = _contract(allowed_tools=["create_file"])
         await eng.run(contract)
 
@@ -203,9 +217,9 @@ class TestWorkerEngine:
         assert all(e["tool"] != "delete_file" for e in result["errors"])
 
     @pytest.mark.asyncio
-    async def test_cancel_stops_worker(self, tmp_path, monkeypatch):
+    async def test_cancel_stops_worker(self, tmp_path, monkeypatch, test_registry):
         monkeypatch.setattr(WorkerSession, "SESSIONS_ROOT", tmp_path)
-        eng = WorkerEngine(registry, session_id="ws_cancel")
+        eng = WorkerEngine(test_registry, session_id="ws_cancel")
         await eng.run(_contract(allowed_tools=["create_file", "exists", "write_file", "touch"]))
         eng.cancel()
 
@@ -219,9 +233,9 @@ class TestWorkerEngine:
         assert eng.get_result().get("cancelled") is True
 
     @pytest.mark.asyncio
-    async def test_intervention_recorded(self, tmp_path, monkeypatch):
+    async def test_intervention_recorded(self, tmp_path, monkeypatch, test_registry):
         monkeypatch.setattr(WorkerSession, "SESSIONS_ROOT", tmp_path)
-        eng = WorkerEngine(registry, session_id="ws_intervene")
+        eng = WorkerEngine(test_registry, session_id="ws_intervene")
         eng.intervene("Try a different approach")
         await eng.run(_contract())
 

@@ -4,10 +4,13 @@ These survive restarts and are injected into the agent's planning prompt as
 "known facts" so preferences and important paths follow the user across
 sessions.
 """
+import logging
 from typing import Callable, List, Optional
 
 from app.modules.database.db import SessionLocal
 from app.modules.database.models import Memory
+
+logger = logging.getLogger("jarvis.memory.long_term")
 
 
 class LongTermMemory:
@@ -24,7 +27,7 @@ class LongTermMemory:
             return False
         db = self._session_factory()
         try:
-            existing = db.query(Memory).filter(Memory.content == content).all()
+            existing = db.query(Memory).filter(Memory.content == content).first()
             if existing:
                 return False
             # enforce cap by dropping the oldest fact
@@ -36,11 +39,18 @@ class LongTermMemory:
             db.add(Memory(content=content))
             db.commit()
             return True
-        except Exception:
-            db.rollback()
-            raise
+        except Exception as exc:
+            logger.warning("LongTermMemory.add failed: %s", exc)
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            return False
         finally:
-            db.close()
+            try:
+                db.close()
+            except Exception:
+                pass
 
 
     def all(self, limit: int = 20) -> List[str]:
@@ -88,8 +98,18 @@ class LongTermMemory:
                 db.commit()
                 return True
             return False
+        except Exception as exc:
+            logger.warning("LongTermMemory.forget failed: %s", exc)
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            return False
         finally:
-            db.close()
+            try:
+                db.close()
+            except Exception:
+                pass
 
     def clear(self) -> int:
         """Remove all facts. Returns how many were deleted."""
@@ -99,6 +119,16 @@ class LongTermMemory:
             db.query(Memory).delete()
             db.commit()
             return count
+        except Exception as exc:
+            logger.warning("LongTermMemory.clear failed: %s", exc)
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            return 0
         finally:
-            db.close()
+            try:
+                db.close()
+            except Exception:
+                pass
 

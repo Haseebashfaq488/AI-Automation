@@ -45,7 +45,7 @@ long_term_memory = LongTermMemory(limit=100)
 # Memory extraction runs every N conversational turns to avoid the ~20s agy
 # overhead on every message. Plan confirmations always extract regardless.
 _turn_counter: int = 0
-MEMORY_EXTRACTION_INTERVAL: int = 5  # change to 10 if you prefer less frequent
+MEMORY_EXTRACTION_INTERVAL: int = 3  # Extracts durable facts every 3 turns to learn preferences continuously
 
 
 class PromptRequest(BaseModel):
@@ -80,13 +80,16 @@ async def run_prompt(request: PromptRequest) -> Dict[str, Any]:
             session_id, "assistant",
             f"[executed plan: {outcome['completed']}/{outcome['total_steps']} steps succeeded]",
         )
-        outcome["memories_learned"] = await _learn_from_turn(
+        # Spawn background memory learning without blocking HTTP response
+        import asyncio
+        asyncio.create_task(_learn_from_turn(
             request.prompt,
             f"Plan of {outcome['total_steps']} steps executed, "
             f"{outcome['completed']} succeeded. Tools used: "
             + ", ".join(r["tool"] for r in outcome["results"]),
             force=True,  # always extract after plan execution — highest signal
-        )
+        ))
+        outcome["memories_learned"] = []
         return outcome
 
     # --- Phase 1: analyze and plan ---
@@ -117,10 +120,12 @@ async def run_prompt(request: PromptRequest) -> Dict[str, Any]:
     if analysis["type"] == "response":
         message = analysis["message"]
         chat_memory.add(session_id, "assistant", message)
+        import asyncio
+        asyncio.create_task(_learn_from_turn(request.prompt, f"Agent replied: {message}"))
         return {
             "mode": "response",
             "message": message,
-            "memories_learned": await _learn_from_turn(request.prompt, f"Agent replied: {message}"),
+            "memories_learned": [],
         }
 
     if analysis["type"] == "clarify":

@@ -8,7 +8,7 @@ The `app/modules/` directory contains all domain-specific plugins, integrations,
 ## 2. Module Inventory
 | Module | Role | Key Tools / Responsibilities |
 | :--- | :--- | :--- |
-| **`antigravity`** | Executive Brain | `JarvisBrainManager` (`brain.py`), tool vector semantic index (`tool_vector_index.py`), long-term fact extraction, and memory files (`JARVIS_MEMORY.md`). |
+| **`antigravity`** | Executive Brain | `JarvisBrainManager` (`brain.py`), tool vector semantic index (`tool_vector_index.py`), memory semantic index (`memory_vector_index.py`), quantized ONNX runtime embedder (`onnx_embedder.py`, models in `models/`), living memory (`JARVIS_MEMORY.md`), historical receipts (`MEMORY_ARCHIVE.md`), and long-term fact extraction loop. |
 | **`database`** | SQLite Persistence | SQLAlchemy session management (`db.py`), ORM models (`models.py`: `Task`, `Memory`, `AuditLog`), and Repository CRUD layer (`repository.py`). |
 | **`memory`** | Context Memory | `ChatMemory` (20-message short-term sliding window), `LongTermMemory` (deduplicated persistent facts in SQLite), and `ServiceMemory`. |
 | **`drive`** | Google Drive | `list_drive_files`, `read_drive_file`, `upload_drive_file`, `search_drive` (skill). Supports OAuth auto-refresh and mock mode (`DRIVE_MOCK=1`). |

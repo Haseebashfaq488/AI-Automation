@@ -6,10 +6,11 @@ from app.modules.antigravity.tool_vector_index import query, TOOL_CORPUS, get_in
 
 class TestToolVectorIndex:
     def test_vector_index_build(self):
-        """Vector index should build and return a valid FAISS index with labels."""
+        """Vector index should build and return a valid ONNX embedding matrix with labels."""
         idx = get_index(TOOL_CORPUS)
         assert idx is not None
-        assert idx.ntotal > 50
+        assert len(idx) > 50
+        assert idx.shape[1] == 384
 
     def test_vector_query_ping_zahida(self):
         """Paraphrased WhatsApp message prompt should match send_message with high confidence."""

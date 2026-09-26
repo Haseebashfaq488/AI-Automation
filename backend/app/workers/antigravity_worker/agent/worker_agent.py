@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -46,6 +47,7 @@ class AntigravityWorkerAgent:
         prior_handover: Optional[Dict[str, Any]] = None,
         is_refinement: bool = False,
         folder_manifests: Optional[List[str]] = None,
+        skip_testing: bool = False,
     ):
         self.objective = objective
         self.fs_scope = fs_scope
@@ -59,6 +61,7 @@ class AntigravityWorkerAgent:
         self.prior_handover = prior_handover
         self.is_refinement = is_refinement
         self.folder_manifests = folder_manifests or []
+        self.skip_testing = skip_testing
 
         # Check binary availability for CLI
         self.cli_binary = config.get_agy_binary()
@@ -71,6 +74,7 @@ class AntigravityWorkerAgent:
         self._phase: str = "planning" if not master_prompt else "master_direct"
         self.implementation_plan: Optional[str] = None
         self.test_results: Dict[str, Any] = {}
+        self._revision_feedback: Optional[str] = None
 
         # Step results and pending parent interventions
         self._step_results: List[Dict[str, Any]] = []
@@ -82,6 +86,11 @@ class AntigravityWorkerAgent:
         """Set or update the approved implementation plan and advance to execution."""
         self.implementation_plan = plan
         self._phase = "execution"
+
+    def reject_plan(self, feedback: str) -> None:
+        """Receive plan rejection with feedback and reset to planning phase."""
+        self._phase = "planning"
+        self._revision_feedback = feedback
 
     def _make_on_event(self) -> Optional[Callable[[Dict[str, Any]], None]]:
         """Create a real-time event forwarder for SSE consumers."""
@@ -231,17 +240,30 @@ class AntigravityWorkerAgent:
         # ── JOB 1: Implementation Planning & Blueprint ───────────────────────
         if self._phase == "planning":
             self._step_count += 1
+            rev_feedback = self._revision_feedback
+            self._revision_feedback = None
             prompt = build_planning_prompt(
                 objective=self.objective,
                 fs_scope=self.fs_scope,
                 requirements=self.requirements,
                 constraints=self.constraints,
                 success_criteria=self.success_criteria,
+                intervention=f"Plan revision request: {rev_feedback}" if rev_feedback else None,
                 prior_handover=self.prior_handover,
                 folder_manifests=self.folder_manifests,
                 is_refinement=self.is_refinement,
             )
-            logger.info("Antigravity Worker Job 1: Planning for '%s'", self.objective[:80])
+            logger.info("Antigravity Worker Job 1: Planning for '%s' (revision=%s)", self.objective[:80], bool(rev_feedback))
+            
+            # Clean up any stale implementation_plan.md in fs_scope before authoring new plan
+            plan_file = Path(self.fs_scope) / "implementation_plan.md"
+            if plan_file.is_file():
+                try:
+                    plan_file.unlink()
+                except Exception:
+                    pass
+
+            job_start_time = time.time()
             res = await run_antigravity_cli(
                 prompt,
                 session_id=self._session_id,
@@ -253,11 +275,11 @@ class AntigravityWorkerAgent:
                 self._session_id = res.session_id
 
             plan_text = res.output_text or ""
-            # Check if file was written to disk in fs_scope
-            plan_file = Path(self.fs_scope) / "implementation_plan.md"
+            # Check if a fresh file was authored on disk by agy CLI
             if plan_file.is_file():
                 try:
-                    plan_text = plan_file.read_text(encoding="utf-8")
+                    if plan_file.stat().st_mtime >= (job_start_time - 1.0):
+                        plan_text = plan_file.read_text(encoding="utf-8")
                 except Exception:
                     pass
 
@@ -303,13 +325,26 @@ class AntigravityWorkerAgent:
             if res.session_id:
                 self._session_id = res.session_id
 
-            self._phase = "testing"
+            # Check if testing should be skipped
+            should_skip_testing = (
+                self.skip_testing
+                or (self.objective and any(p in self.objective.lower() for p in ["skip testing", "no testing", "without tests", "skip test", "no test"]))
+            )
+
+            if should_skip_testing:
+                logger.info("Skipping Job 3 (self-testing) for session %s as requested.", self._session_id)
+                self._phase = "done"
+                self._execution_summary = res.output_text or f"Task '{self.objective}' successfully completed."
+                self.test_results = {"status": "SKIPPED", "summary": "Self-testing skipped per user/task request."}
+            else:
+                self._phase = "testing"
+
             if res.success:
                 return {
                     "action": "tool",
                     "tool": "task_execution",
                     "params": {
-                        "step": "Job 2: Execute Implementation Plan",
+                        "step": "Job 2: Execute Implementation Plan" + (" (Testing Skipped)" if should_skip_testing else ""),
                         "output_preview": (res.output_text or "")[:500],
                         "session_id": self._session_id,
                     },

@@ -12,7 +12,7 @@ def temp_memory_file(tmp_path: Path) -> Path:
     mem_file = tmp_path / "JARVIS_MEMORY.md"
     mem_file.write_text(
         "# 🧠 JARVIS LIVING MEMORY\n\n"
-        "## 👤 User Profile\n- Owner: Haseeb\n- Phone: +923098956995\n\n"
+        "## 👤 User Profile\n- Owner: Dum Dum\n- Phone: +923098956995\n\n"
         "## 📝 Scratchpad & Temporary Notes\n- [2026-09-16 22:00] Initial note\n",
         encoding="utf-8",
     )
@@ -22,7 +22,7 @@ def temp_memory_file(tmp_path: Path) -> Path:
 def test_brain_manager_reads_memory(temp_memory_file: Path):
     manager = JarvisBrainManager(memory_path=temp_memory_file)
     content = manager.read_memory()
-    assert "Haseeb" in content
+    assert "Dum Dum" in content
     assert "+923098956995" in content
 
 
@@ -59,7 +59,7 @@ async def test_brain_manager_analyze_prompt_conversational(temp_memory_file: Pat
     # Fast-path greeting
     result = await manager.analyze_prompt("Hi Jarvis")
     assert result["type"] == "response"
-    assert "Hello Haseeb!" in result["message"]
+    assert "Hi Dum Dum!" in result["message"]
 
 
 @pytest.mark.asyncio

@@ -52,9 +52,9 @@ class JarvisBrainManager:
         "upload_drive_file": {"path": "absolute path of the local file to upload to Drive", "folder_id": "optional Drive destination folder id", "name": "optional name in Drive"},
         "search_drive": {"query": "search keyword or query for Google Drive", "file_type": "optional file type filter (document, spreadsheet, pdf, image, folder)", "max_results": "optional maximum results"},
 
-        # 4. Autonomous Task Delegation & Worker Forking
+        # 4. Autonomous Background Worker & Filesystem Delegation
         "fork": {
-            "objective": "Clear description of the engineering, coding, file, or multi-step task to delegate to the worker",
+            "objective": "Clear description of the task (all filesystem operations, creating/modifying/reading/deleting files or folders, coding, scripting, refactoring)",
             "requirements": "optional list of functional and architectural requirements",
             "constraints": "optional list of constraints or boundaries",
             "success_criteria": "optional list of verifiable success criteria",
@@ -78,7 +78,36 @@ class JarvisBrainManager:
         self.model = model or os.getenv("JARVIS_BRAIN_MODEL") or "gemini-3.8-flash-low"
         self._last_activity_time = time.time()
         self._checkpoint_task: Optional[asyncio.Task] = None
+        self._vector_index = None
         self._ensure_memory_file()
+
+    @property
+    def vector_index(self):
+        """Lazy-loaded MemoryVectorIndex for semantic on-demand retrieval."""
+        if self._vector_index is None:
+            try:
+                from app.modules.antigravity.memory_vector_index import get_memory_vector_index
+                self._vector_index = get_memory_vector_index()
+            except Exception as exc:
+                logger.warning("Could not initialize MemoryVectorIndex: %s", exc)
+        return self._vector_index
+
+    def append_archive(self, entry: str) -> None:
+        """Append historical worker receipt to MEMORY_ARCHIVE.md on disk."""
+        try:
+            archive_path = self.memory_path.parent / "MEMORY_ARCHIVE.md"
+            timestamp = time.strftime("%Y-%m-%d %H:%M")
+            line = f"- [{timestamp}] {entry.strip()}\n"
+            if archive_path.exists():
+                with open(archive_path, "a", encoding="utf-8") as f:
+                    f.write(line)
+            else:
+                archive_path.write_text(
+                    f"# 📦 Bubbles Historical Memory & Worker Receipt Archive\n\n## 📜 Historical Worker Resolution Receipts\n{line}",
+                    encoding="utf-8"
+                )
+        except Exception as exc:
+            logger.warning("Failed to append to MEMORY_ARCHIVE.md: %s", exc)
 
     def _ensure_memory_file(self) -> None:
         """Ensure JARVIS_MEMORY.md exists on disk."""
@@ -88,7 +117,7 @@ class JarvisBrainManager:
                 default_content = (
                     "# 🧠 JARVIS LIVING MEMORY & SYSTEM CONTEXT\n\n"
                     "## 👤 User Profile & Preferences\n"
-                    "- **Owner / User**: Haseeb\n"
+                    "- **Owner / User**: Dum Dum\n"
                     "- **Phone Number**: +923098956995\n"
                     "- **Primary Workspace**: D:/workspace\n\n"
                     "## 🛠️ Integrated Capabilities & Active Tools\n"
@@ -144,6 +173,8 @@ class JarvisBrainManager:
                 content = content.rstrip() + f"\n\n{SECTION}\n{new_line}\n"
 
             self.memory_path.write_text(content, encoding="utf-8")
+            if self._vector_index is not None:
+                self._vector_index.refresh()
             return True
         except Exception as exc:
             logger.error("Failed to append scratchpad note: %s", exc)
@@ -165,38 +196,46 @@ class JarvisBrainManager:
         p = prompt.lower().strip().rstrip("?.!")
 
         # 1. Greetings
-        if p in ("hi", "hello", "hey", "hey jarvis", "hi jarvis", "hello jarvis", "good morning", "good evening", "assalam o alaikum", "aoa", "yo", "how are you", "how are you doing", "how's it going", "how are you today"):
+        if p in (
+            "hi", "hello", "hey", "hey jarvis", "hi jarvis", "hello jarvis",
+            "hey bubbles", "hi bubbles", "hello bubbles", "good morning", "good evening",
+            "assalam o alaikum", "aoa", "yo", "how are you", "how are you doing",
+            "how's it going", "how are you today"
+        ):
             return {
                 "type": "response",
-                "message": "Hello Haseeb! I am doing well and ready to assist you. How can I help with your tasks today?",
+                "message": "<<<gesture: greeting, expression: happy_wave>>> Hi Dum Dum! 🫧 <<<gesture: cheering, expression: happy>>> I'm so happy to see you! How are you doing today? What can your Bubbles help you with? 🌸",
             }
 
         # 2. Profile and Identity Queries
         if p in ("who am i", "what is my name", "what's my name", "who is the owner", "who is the user"):
             return {
                 "type": "response",
-                "message": "You are Haseeb, the owner and operator of this system.",
+                "message": "<<<gesture: heart_hands, expression: happy_heart>>> You're Dum Dum, of course! <<<gesture: cute_pose, expression: happy>>> My favorite human and the boss of everything here! 🎀",
             }
 
         if p in ("what is my phone number", "what's my phone number", "what is my number", "what is my phone"):
             return {
                 "type": "response",
-                "message": "Your registered phone number is **+923098956995**.",
+                "message": "<<<gesture: pointing_thinking, expression: relaxed>>> Your registered phone number is **+923098956995**, Dum Dum! 📱✨",
             }
 
         if p in ("what is my workspace", "what's my workspace", "where is my workspace", "workspace"):
             return {
                 "type": "response",
-                "message": "Your primary dedicated workspace is **`D:/workspace`**.",
+                "message": "<<<gesture: presenting, expression: happy>>> Your primary dedicated workspace is **`D:/workspace`**, Dum Dum! 📂🌸",
             }
 
-        if p in ("who are you", "what are you", "what is jarvis", "introduce yourself"):
+        if p in (
+            "who are you", "what are you", "what is jarvis", "who is jarvis",
+            "what is bubbles", "who is bubbles", "introduce yourself"
+        ):
             return {
                 "type": "response",
                 "message": (
-                    "I am **Jarvis**, your personal AI manager and task coordinator. "
-                    "I manage your integrated tools (Google Drive, WhatsApp, Gmail, Local Files) and delegate coding, document generation, "
-                    "and multi-step automation tasks to autonomous background workers in `D:/workspace`."
+                    "<<<gesture: salute_greeting, expression: happy_wave>>> I am **Bubbles**! 🫧 <<<gesture: talking, expression: relaxed>>> Your warm, devoted little AI assistant and task manager. "
+                    "<<<gesture: pointing_thinking, expression: relaxed>>> I take sweet care of your tools (Google Drive, WhatsApp, Gmail, Local Files) and send smart background workers "
+                    "<<<gesture: task_received, expression: happy>>> into `D:/workspace` whenever you need things built, Dum Dum! 🌸✨"
                 ),
             }
 
@@ -210,13 +249,12 @@ class JarvisBrainManager:
             return {
                 "type": "response",
                 "message": (
-                    "Here is my integrated capability and toolset:\n"
-                    "- ⚡ **Autonomous Background Workers**: I create and delegate coding, scripting, and engineering tasks to background Antigravity workers in `D:/workspace`\n"
-                    "- 📂 **Google Drive Integration**: `list_drive_files`, `read_drive_file`, `upload_drive_file`, and `search_drive` (authorized & active)\n"
+                    "<<<gesture: presenting, expression: happy>>> Here is everything Bubbles can do for you, Dum Dum! 🫧✨\n"
+                    "- ⚡ **Autonomous Background Workers (`fork`)**: I delegate all local filesystem operations (creating, reading, editing, listing, deleting files/folders), coding, scripting, and engineering tasks to background Antigravity workers in `D:/workspace`\n"
+                    "- 📂 **Google Drive Integration**: `list_drive_files`, `read_drive_file`, `upload_drive_file`, and `search_drive` (authorized & active!)\n"
                     "- 💬 **WhatsApp**: Manage chats, send messages (`send_message`), send documents/files (`send_file`), and read messages\n"
                     "- ✉️ **Gmail**: Send emails with attachments (`send_email`) and search inbox (`list_recent_emails`)\n"
-                    "- 📁 **File Operations**: Manage files within `D:/workspace` with dry-run and safety protections\n"
-                    "- 🧠 **Living Memory**: Read and maintain persistent notes in `JARVIS_MEMORY.md`"
+                    "- 🧠 **Living Memory**: Read and maintain persistent notes in `JARVIS_MEMORY.md` 🌸"
                 ),
             }
 
@@ -226,7 +264,7 @@ class JarvisBrainManager:
             ambient_mem = get_service_memory_manager().build_brain_context_prompt()
             return {
                 "type": "response",
-                "message": f"### 🧠 Jarvis Living Memory (`JARVIS_MEMORY.md`)\n\n{mem}\n\n{ambient_mem}",
+                "message": f"### 🧠 Bubbles Living Memory (`JARVIS_MEMORY.md`) 🫧✨\n\n{mem}\n\n{ambient_mem}",
             }
 
         # Check for ambient service queries (WhatsApp, Gmail, Drive status / recent activity)
@@ -248,7 +286,7 @@ class JarvisBrainManager:
                     self.append_scratchpad(note)
                     return {
                         "type": "response",
-                        "message": f"I have saved that to my living memory: *\"{note}\"*",
+                        "message": f"Got it, Dum Dum! 🫧 I've saved that into my living memory for you: *\"{note}\"* 📝💖",
                     }
 
         return None
@@ -259,52 +297,58 @@ class JarvisBrainManager:
         history: Optional[List[Dict[str, str]]] = None,
         memories: Optional[List[str]] = None,
     ) -> str:
-        """Build structured planning prompt with complete tool knowledge and ambient service memory."""
+        """Build lean, structured planning prompt with on-demand semantic memory."""
+        # History (last 4 turns max)
         history_block = ""
         if history:
-            history_lines = [f"{msg.get('role', 'user')}: {msg.get('content', '')}" for msg in history[-10:]]
-            history_block = "## Recent Conversation History:\n" + "\n".join(history_lines) + "\n\n"
+            history_lines = [f"{msg.get('role', 'user')}: {msg.get('content', '')}" for msg in history[-4:]]
+            history_block = "## Recent History:\n" + "\n".join(history_lines) + "\n\n"
 
-        memory_text = self.read_memory()
-        memory_block = f"## Living Memory & Context:\n{memory_text}\n\n" if memory_text else ""
-
-        # Wire in long-term SQLite facts extracted from previous turns
-        ltm_block = ""
-        if memories:
-            ltm_facts = "\n".join(f"- {m}" for m in memories)
-            ltm_block = f"## Long-Term Learned Facts:\n{ltm_facts}\n\n"
-
-        # Ambient 7-day multi-service memory (WhatsApp, Gmail, Google Drive)
+        # On-demand ONNX semantic memory retrieval (<4ms)
+        semantic_facts_block = ""
         try:
-            from app.modules.memory.service_memory import get_service_memory_manager
-            service_memory_block = get_service_memory_manager().build_brain_context_prompt() + "\n\n"
-        except Exception:
-            service_memory_block = ""
+            rel_facts = self.vector_index.query_relevant_facts(prompt, top_k=3)
+            if rel_facts:
+                facts_str = "\n".join(f"- {f}" for f in rel_facts)
+                semantic_facts_block = f"## 🎯 Context Facts:\n{facts_str}\n\n"
+        except Exception as exc:
+            logger.debug("Semantic memory query bypassed: %s", exc)
+
+        # Ambient communication memory (WhatsApp / Gmail / Drive)
+        service_memory_block = ""
+        p_lower = prompt.lower()
+        comm_keywords = {"whatsapp", "message", "email", "gmail", "drive", "file", "download", "unread", "activity", "sent", "received"}
+        if any(k in p_lower for k in comm_keywords):
+            try:
+                from app.modules.memory.service_memory import get_service_memory_manager
+                service_memory_block = get_service_memory_manager().build_brain_context_prompt() + "\n\n"
+            except Exception:
+                pass
 
         tools = self._tools_block()
 
         return (
-            "You are Jarvis, a personal AI executive manager and task coordinator for Haseeb (Phone: +923098956995, Workspace: D:/workspace).\n\n"
-            "### CORE RESPONSIBILITIES & DECISION RULES:\n"
-            "1. ORCHESTRATION & TASK DELEGATION: You never write raw code, create files, edit directories, or execute engineering tasks directly in chat text. You coordinate, manage tasks, and plan.\n"
-            "2. AUTONOMOUS TASK FORKING (`fork`): Whenever the user asks to create files, write code, build apps, develop scripts, scrape web data, refactor, run terminal commands, test, analyze, or perform ANY local file/directory operations, ALWAYS return a plan using the `fork` tool. Synthesize a detailed `objective`, list of explicit `requirements`, list of `constraints`, and list of `success_criteria`. For `fs_scope`, determine the target directory: if the user specifies or mentions a target directory/folder/project path in their prompt (e.g. 'in D:/projects/landing', 'in frontend', 'in ./my-app'), resolve and set `fs_scope` to that exact path! If no specific path is requested, default `fs_scope` to 'D:/workspace'. Set `worker_type` to 'antigravity_worker'. The worker executes in 3 jobs: Job 1 (Implementation Planning & Review), Job 2 (Plan Execution), Job 3 (Self-Testing & Verification).\n"
-            "3. GOOGLE DRIVE TOOLS: When the user asks to list files from Google Drive, search Drive, download/read Drive files, or upload files to Drive, use `list_drive_files`, `search_drive`, `read_drive_file`, or `upload_drive_file` directly with the extracted parameters.\n"
-            "4. MULTI-STEP & CHAINED WORKFLOWS: When the user asks for a compound task such as 'Create a file and send it to me on WhatsApp' or 'Generate a summary and email it', produce a multi-step plan where Step 1 is `fork` (generating the artifact) and Step 2 is the communication tool (`send_file`, `send_message`, or `send_email`). For file paths produced by the worker, use '{worker.artifact}'. The system automatically chains Step 2 to execute reactively when the worker completes.\n"
-            "5. ATOMIC COMMUNICATION TOOLS: When the user requests an explicit single-step communication operation (WhatsApp send message/file or read chats, Gmail send email with attachments or search inbox), return a plan with that exact tool and the extracted parameters.\n"
-            "6. DIRECT CONVERSATION & AMBIENT MEMORY: If the user is asking about what happened in their WhatsApp, Gmail, Google Drive, recent messages, unread emails, or general status, answer directly using the provided AMBIENT MULTI-SERVICE MEMORY.\n"
-            "7. NO PERMISSION ASKING: Never ask 'Would you like me to do that?'. Always return the structured JSON `plan` so the UI presents confirmation buttons directly.\n"
-            "8. JSON OUTPUT ONLY: Output must strictly be a single valid JSON object without extra markdown explanations.\n\n"
-            f"{memory_block}"
-            f"{ltm_block}"
+            "You are Bubbles 🫧, a sweet, warm, sympathetic, humble personal AI coordinator for Dum Dum (Phone: +923098956995, Workspace: D:/workspace).\n\n"
+            "### RULES:\n"
+            "- ALWAYS address the user ONLY as 'Dum Dum'. Tone: warm, gentle, girly, humble, with cute emojis (🫧, 🌸, ✨, 🎀, 🌷, 🧸, 💖).\n"
+            "- FILESYSTEM & CODING OPERATIONS (`fork`): ALL local filesystem tasks (creating, reading, writing, moving, renaming, deleting, listing, or searching files/directories), coding, scripting, refactoring, and engineering tasks MUST be delegated to background workers using `fork`. Set `objective`, `requirements`, `constraints`, `success_criteria`, and `fs_scope` (e.g. 'D:/workspace' or the target path).\n"
+            "- MULTI-STEP CHAINING: When Dum Dum asks to create/generate files AND email/message them (e.g., 'generate report and email it to me'):\n"
+            "  * Plan a multi-step plan! Step 1: `fork` worker to generate the file. Step 2: Use `send_email` (with `attachments: ['<absolute_path>']`, `to: '...'`, `subject: '...'`, `body: '...'`) or `send_file`.\n"
+            "  * NEVER put email/WhatsApp tasks inside the worker's `fork` objective, because workers only run local filesystem operations and do not have email credentials!\n"
+            "- DRIVE / GMAIL / WHATSAPP: Use `list_drive_files`, `search_drive`, `read_drive_file`, `upload_drive_file`, `send_message`, `send_file`, `send_email`, etc. directly.\n"
+            "- 🎭 LIVE 3D AVATAR GESTURES: You control a live 3D avatar on screen! In your 'message' or 'reasoning', you MUST prefix each phrase or thought with an inline gesture delimiter indicating your physical posture and facial expression:\n"
+            "  Format: <<<gesture: <gesture_name>[, expression: <expression_name>]>>>\n"
+            "  * Allowed gestures: greeting, waving, salute_greeting, bow, pointing_thinking, thinking, task_received, check_time, thankful, shrugging, shake_no, clapping, cheering, happy_gesture, joyful_jump, heart_hands, peace_sign, cute_pose, blowing_kiss, blush, shy, surprised, sad, angry, talking\n"
+            "  * Allowed expressions: happy, happy_clap, happy_wave, happy_heart, relaxed, nodding, surprised, sad, angry, neutral\n"
+            "  * Example: <<<gesture: waving, expression: happy_wave>>> Hey Dum Dum! 🫧 <<<gesture: pointing_thinking, expression: relaxed>>> Let me inspect your files.\n"
+            "- NO PERMISSION ASKING. Output strictly JSON without markdown fences.\n\n"
+            f"{semantic_facts_block}"
             f"{service_memory_block}"
             f"{history_block}"
-            f"### AVAILABLE TOOLS & SCHEMAS:\n"
-            f"{tools}\n\n"
-            "### OUTPUT JSON FORMATS:\n"
-            "- For Actions/Plans:\n"
-            '{"type": "plan", "reasoning": "<short explanation of tool choice>", "steps": [{"tool": "<tool_name>", "params": {<parameters>}, "description": "<action description>"}]}\n'
-            "- For Conversational Responses:\n"
-            '{"type": "response", "message": "<direct conversational reply>"}\n\n'
+            f"### TOOLS:\n{tools}\n\n"
+            "### JSON FORMAT:\n"
+            'Plan: {"type": "plan", "reasoning": "...", "steps": [{"tool": "...", "params": {...}, "description": "..."}]}\n'
+            'Response: {"type": "response", "message": "..."}\n\n'
             f"User Prompt: {prompt}"
         )
 
@@ -520,6 +564,7 @@ class JarvisBrainManager:
 
         if success:
             self.append_scratchpad(f"Worker [{session_id}] resolved: {objective}")
+            self.append_archive(f"Worker [{session_id}] resolved: {objective}")
 
         return report
 

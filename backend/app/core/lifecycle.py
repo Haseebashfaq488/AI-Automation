@@ -64,6 +64,14 @@ async def lifespan(app: FastAPI):
         except Exception as exc:
             logger.warning("Could not pre-warm Antigravity CLI daemon: %s", exc)
 
+    # 6. Pre-warm Semantic Vector Embedder in background thread (skip in unit test runs)
+    if not is_testing:
+        try:
+            from app.modules.antigravity.memory_vector_index import prewarm_vector_embedder
+            asyncio.create_task(prewarm_vector_embedder())
+        except Exception as exc:
+            logger.debug("Could not trigger vector embedder pre-warm: %s", exc)
+
     yield
 
     logger.info("Shutting down Jarvis Backend Engine...")

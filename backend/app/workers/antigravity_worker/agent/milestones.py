@@ -207,6 +207,19 @@ def _living_docs_section() -> str:
     )
 
 
+def _testing_safety_guardrails_section() -> str:
+    return (
+        "## 🛡️ Critical Subprocess & Test Safety Rules (Anti-Hang Invariants)\n"
+        "1. **MANDATORY SUBPROCESS TIMEOUTS**:\n"
+        "   - Whenever executing commands or child processes (e.g. `subprocess.run`, `subprocess.Popen`, `Popen.communicate`), you MUST specify an explicit timeout (e.g. `timeout=10` or `timeout=15`).\n"
+        "   - Unbounded subprocesses without timeouts are strictly prohibited to prevent infinite test hangs.\n"
+        "2. **NEVER LAUNCH BLOCKING GUI / INTERACTIVE LOOPS IN TESTS**:\n"
+        "   - Never invoke blocking event loops (such as Tkinter `root.mainloop()`, Qt `QApplication.exec()`, or interactive terminal input prompts) inside automated tests or headless verifications.\n"
+        "   - For dual GUI/CLI applications, always run CLI tests with the non-interactive/REPL flag (e.g. `--cli`, `--batch`, or piped stdin with exit command).\n"
+        "   - For GUI unit tests, instantiate widgets headlessly, call `root.update()` or `root.update_idletasks()`, and immediately tear down with `root.destroy()`."
+    )
+
+
 def _format_handover_section(
     prior_handover: Dict[str, Any] | None = None,
     folder_manifests: List[str] | None = None,
@@ -308,8 +321,9 @@ def build_planning_prompt(
         f"2. **Target Files**: List of all files to create, modify, or delete with their exact relative paths.\n"
         f"3. **Living Documentation Plan**: What subfolder `README.md` files will be created/updated.\n"
         f"4. **Step-by-Step Implementation Roadmap**: Ordered list of execution steps (Job 2).\n"
-        f"5. **Self-Testing & Verification Plan**: Explicit testing strategy (unit tests, integration checks, test commands) for Job 3.\n"
+        f"5. **Self-Testing & Verification Plan**: Explicit testing strategy (unit tests, integration checks, test commands) for Job 3 (ensuring subprocess timeouts and non-blocking headless execution).\n"
         f"6. **Edge Cases & Failure Handling**: Identified risks and mitigations.\n\n"
+        f"{_testing_safety_guardrails_section()}\n\n"
         f"Write `{fs_scope}/implementation_plan.md` and output the complete markdown plan."
     )
 
@@ -358,6 +372,7 @@ def build_execution_prompt(
         f"## 4. Approved Implementation Plan\n"
         f"```markdown\n{approved_plan.strip()}\n```\n\n"
         f"{_living_docs_section()}\n\n"
+        f"{_testing_safety_guardrails_section()}\n\n"
         f"## 5. Execution Directives\n"
         f"- Execute all steps outlined in the approved implementation plan.\n"
         f"- Author complete, production-ready, modular code.\n"
@@ -395,6 +410,7 @@ def build_testing_prompt(
         f"## 1. Objective Being Verified\n{objective}\n\n"
         f"## 2. Target Workspace\n`{fs_scope}`\n\n"
         f"## 3. Success Criteria Checklist\n{crit_text}\n\n"
+        f"{_testing_safety_guardrails_section()}\n\n"
         f"## 4. Mandatory Testing Protocol\n"
         f"As an autonomous engineer, verify your implementation independently:\n"
         f"1. **Create / Run Test Suites**: Write and execute automated test scripts (e.g. `pytest`, unit test scripts, or command assertions) in `{fs_scope}`.\n"
@@ -460,6 +476,7 @@ def build_master_task_prompt(
         f"### Requirements:\n{reqs_text}\n\n"
         f"### Constraints:\n{cons_text}\n\n"
         f"{_living_docs_section()}\n\n"
+        f"{_testing_safety_guardrails_section()}\n\n"
         f"## 4. Mandatory Engineering Execution Protocol\n"
         f"As an autonomous engineer, execute your work in the following structured manner:\n"
         f"1. **Exploration**: Inspect existing code, dependencies, and environment in `{fs_scope}`.\n"

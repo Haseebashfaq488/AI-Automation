@@ -16,6 +16,7 @@ The `app/api/` directory exposes the public HTTP REST API and real-time Server-S
 | [`tools.py`](file:///d:/AI-Automation/backend/app/api/routes/tools.py) | `/tools` | Catalog of all registered executable tools. |
 | [`skills.py`](file:///d:/AI-Automation/backend/app/api/routes/skills.py) | `/skills` | Catalog of all registered multi-step skills. |
 | [`pipelines.py`](file:///d:/AI-Automation/backend/app/api/routes/pipelines.py) | `/pipelines` | Automated event-driven pipeline definitions. |
+| [`tts.py`](file:///d:/AI-Automation/backend/app/api/routes/tts.py) | `/agent/tts` | High-fidelity neural voice synthesis via Microsoft Edge TTS (`POST /agent/tts` streaming MP3, `GET /agent/tts/voices`). |
 | [`health.py`](file:///d:/AI-Automation/backend/app/api/routes/health.py) | `/health` | Liveness health check returning `{ "status": "ok" }`. |
 
 ---

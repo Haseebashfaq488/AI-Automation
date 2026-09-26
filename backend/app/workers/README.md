@@ -66,3 +66,14 @@ When a new worker is launched in a directory that already contains a `SESSION_HA
 * The backend automatically flags `is_refinement = True` and loads `prior_handover`.
 * The worker prompt is injected with the prior architecture, living doc manifests, and AST graph query instructions (`graphify query`, `graphify path`).
 * The worker is strictly instructed to apply incremental delta updates and maintain existing tests without clobbering prior work.
+
+---
+
+## 6. Critical Invariants & Gotchas
+
+| Gotcha / Failure Mode | Root Cause | Preventative Guardrail |
+| :--- | :--- | :--- |
+| **Worker hangs in Job 3 during test suite execution** | Integration test executed `subprocess.run()` without `timeout`, and target script launched a blocking Tkinter/Qt event loop (`root.mainloop()`) or blocking stdin prompt. | `milestones.py` enforces mandatory `timeout=10` on all child subprocesses, and explicitly prohibits invoking blocking UI event loops or interactive terminal prompts inside test suites. |
+| **Silent CLI timeout (1800s)** | `agy` CLI milestone timeout defaults to 30 min (`ANTIGRAVITY_TIMEOUT=1800`). If a test hangs, the engine remains in `running` status until timeout expires. | Strict subprocess timeouts in test assertions ensure child scripts fail fast (`TimeoutExpired`) instead of freezing the CLI runner. |
+| **Non-interactive / Headless testing for dual CLI/GUI apps** | Automated tests invoking dual CLI/GUI entrypoints default to GUI when no args are passed. | Tests must pass `--cli`, `--non-interactive`, or instantiate widgets headlessly (`root.update(); root.destroy()`). |
+

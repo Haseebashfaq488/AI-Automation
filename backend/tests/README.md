@@ -12,10 +12,13 @@ The `tests/` directory contains all unit, integration, and contract tests for th
 | [`test_task_orchestrator.py`](file:///d:/AI-Automation/backend/tests/unit/test_task_orchestrator.py) | Reactive Pipelines | Downstream hook execution, dynamic attachment extraction from worker artifacts, and email/drive chaining. |
 | [`test_agent_fork.py`](file:///d:/AI-Automation/backend/tests/unit/test_agent_fork.py) | Task Forking | Two-phase agent `/agent/run` plan generation and `fork` pseudo-tool background delegation. |
 | [`test_antigravity_brain.py`](file:///d:/AI-Automation/backend/tests/unit/test_antigravity_brain.py) | Brain Orchestration | Semantic tool index retrieval, plan generation, and memory extraction. |
+| [`test_memory_vector_index.py`](file:///d:/AI-Automation/backend/tests/unit/test_memory_vector_index.py) | Semantic Memory Retrieval | Ultra-low latency ONNX vector retrieval, lexical keyword boosting, and greeting bypass. |
+| [`test_onnx_embedder.py`](file:///d:/AI-Automation/backend/tests/unit/test_onnx_embedder.py) | ONNX Runtime Embedder | Single/batch encoding, 384-dim normalized vector validation, and singleton lifecycle. |
 | [`test_antigravity_worker.py`](file:///d:/AI-Automation/backend/tests/unit/test_antigravity_worker.py) | Worker Execution | Multi-job milestone prompts, CLI client subprocess invocation, and output parsing. |
 | [`test_drive_tools.py`](file:///d:/AI-Automation/backend/tests/unit/test_drive_tools.py) | Google Drive Module | List, search, read, and upload Drive tools (mock & live paths). |
 | [`test_file_tools_v2.py`](file:///d:/AI-Automation/backend/tests/unit/test_file_tools_v2.py) | File Management | 11 file tools, protected directory refusal, trash deletion, and zip archives. |
 | [`test_events_route.py`](file:///d:/AI-Automation/backend/tests/unit/test_events_route.py) | Event Bus Routes | SSE event streaming and hook registration endpoints. |
+| [`test_plan_review_and_skip_testing.py`](file:///d:/AI-Automation/backend/tests/unit/test_plan_review_and_skip_testing.py) | Plan Reviews & Verification Skip | Plan revision requests routing back to Job 1, edited markdown propagation to `fs_scope`, and skip testing bypassing Job 3. |
 | [`test_frontend_integration.py`](file:///d:/AI-Automation/backend/tests/unit/test_frontend_integration.py) | End-to-End Contract | Full integration flow simulating frontend API calls. |
 
 ---

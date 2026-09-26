@@ -2,11 +2,29 @@ import pytest
 import os
 from pathlib import Path
 from app.core.execution_engine import ExecutionEngine
-from app.registry import registry
+from app.registry.tool_registry import ToolRegistry
+from app.modules.file_management.tools.create_folder import CreateFolderTool
+from app.modules.file_management.tools.create_file import CreateFileTool
+from app.modules.file_management.tools.write_file import WriteFileTool
+from app.modules.file_management.tools.copy import CopyTool
+from app.modules.file_management.tools.move import MoveTool
+from app.modules.file_management.tools.rename import RenameTool
+
+
+def get_mutation_engine():
+    reg = ToolRegistry()
+    reg.register(CreateFolderTool())
+    reg.register(CreateFileTool())
+    reg.register(WriteFileTool())
+    reg.register(CopyTool())
+    reg.register(MoveTool())
+    reg.register(RenameTool())
+    return ExecutionEngine(reg)
+
 
 @pytest.mark.asyncio
 async def test_mutation_tools_flow(tmp_path: Path):
-    engine = ExecutionEngine(registry)
+    engine = get_mutation_engine()
     base = tmp_path / "test_dir"
     # 1. create_folder
     result = await engine.run("create_folder", {"path": str(base)})
@@ -45,7 +63,7 @@ async def test_mutation_tools_flow(tmp_path: Path):
 
 @pytest.mark.asyncio
 async def test_dry_run_create_folder(tmp_path: Path):
-    engine = ExecutionEngine(registry)
+    engine = get_mutation_engine()
     dry_path = tmp_path / "dry_folder"
     result = await engine.run("create_folder", {"path": str(dry_path), "dry_run": True})
     assert result.success is True

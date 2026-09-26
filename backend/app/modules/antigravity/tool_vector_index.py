@@ -24,7 +24,7 @@ _initialized = False
 
 # ── Complete Tool Corpus ───────────────────────────────────────────────────────
 TOOL_CORPUS: Dict[str, List[str]] = {
-    # ── Fork / Background Workers (Complex / Generative Tasks) ─────────────────
+    # ── Fork / Background Workers (All Filesystem, Coding, & Complex Tasks) ───
     "fork": [
         "build a calculator app",
         "create a Python script that scrapes data",
@@ -43,6 +43,86 @@ TOOL_CORPUS: Dict[str, List[str]] = {
         "generate a docx document summarizing the findings",
         "fix the bugs in the application",
         "write a python script to process files",
+        "list files in Downloads",
+        "show what is in D drive",
+        "what files are in the workspace",
+        "ls D:/projects",
+        "show the contents of the directory",
+        "list the files in folder",
+        "view directory contents",
+        "what is inside D:/workspace",
+        "does haseeb.txt exist on D",
+        "check if report.pdf is in D:/workspace",
+        "is there a file called notes.txt",
+        "confirm the file exists",
+        "is haseeb.txt on the D partition",
+        "verify if document exists",
+        "check existence of folder",
+        "get file size of report.pdf",
+        "show metadata for notes.txt",
+        "when was this file modified",
+        "check file properties and details",
+        "read the file at D:/notes.txt",
+        "open report.md",
+        "show me the contents of config.json",
+        "print the log file",
+        "read file content",
+        "display contents of script.py",
+        "find all PDF files in Downloads",
+        "search for txt files in D:/projects",
+        "look for files matching *.log",
+        "find files by name pattern",
+        "locate all python scripts in workspace",
+        "find files containing the word invoice",
+        "search for 'error' inside log files",
+        "look for TODO comments in D:/workspace",
+        "grep for keyword in directory",
+        "find text inside files",
+        "create a new file called notes.txt",
+        "make a blank file at D:/workspace/todo.txt",
+        "touch a new file",
+        "create an empty file",
+        "create a new directory called backups",
+        "make a new folder in D:/workspace",
+        "mkdir projects",
+        "create folder named reports",
+        "write content into notes.txt",
+        "save this text into output.txt",
+        "overwrite the file with new text",
+        "append line to log.txt",
+        "add this note to the end of notes.md",
+        "append text to file",
+        "delete D:/workspace/old.txt",
+        "remove the file notes.txt",
+        "trash the log file",
+        "delete file from disk",
+        "delete the folder old_backups",
+        "remove directory D:/workspace/temp",
+        "trash the folder",
+        "move report.pdf from Downloads to D:/workspace",
+        "relocate the file to another folder",
+        "move file to destination",
+        "copy backup.zip to D:/archive",
+        "duplicate the config file",
+        "copy file to another location",
+        "rename old.txt to new.txt",
+        "change the file name of report.docx",
+        "rename folder to archive",
+        "bulk rename all images to photo_#.jpg",
+        "rename multiple files sequentially",
+        "batch rename files in folder",
+        "organize my downloads folder",
+        "sort the files in Downloads",
+        "clean up Downloads folder",
+        "categorize files in directory by type",
+        "zip the workspace folder",
+        "compress D:/projects into an archive",
+        "create a zip file of the reports",
+        "archive folder into zip",
+        "unzip the archive",
+        "extract backup.zip",
+        "unpack the zip file into destination",
+        "uncompress zip archive",
     ],
 
     # ── WhatsApp ──────────────────────────────────────────────────────────────
@@ -184,145 +264,26 @@ TOOL_CORPUS: Dict[str, List[str]] = {
         "look for pdf files in drive",
         "search drive for presentation",
     ],
-
-    # ── File System / Directory ────────────────────────────────────────────────
-    "list_directory": [
-        "list files in Downloads",
-        "show what is in D drive",
-        "what files are in the workspace",
-        "ls D:/projects",
-        "show the contents of the directory",
-        "list the files in folder",
-        "view directory contents",
-        "what is inside D:/workspace",
-    ],
-    "exists": [
-        "does haseeb.txt exist on D",
-        "check if report.pdf is in D:/workspace",
-        "is there a file called notes.txt",
-        "confirm the file exists",
-        "is haseeb.txt on the D partition",
-        "verify if document exists",
-        "check existence of folder",
-    ],
-    "metadata": [
-        "get file size of report.pdf",
-        "show metadata for notes.txt",
-        "when was this file modified",
-        "check file properties and details",
-    ],
-    "read_file": [
-        "read the file at D:/notes.txt",
-        "open report.md",
-        "show me the contents of config.json",
-        "print the log file",
-        "read file content",
-        "display contents of script.py",
-    ],
-    "search_files": [
-        "find all PDF files in Downloads",
-        "search for txt files in D:/projects",
-        "look for files matching *.log",
-        "find files by name pattern",
-        "locate all python scripts in workspace",
-    ],
-    "search_content": [
-        "find files containing the word invoice",
-        "search for 'error' inside log files",
-        "look for TODO comments in D:/workspace",
-        "grep for keyword in directory",
-        "find text inside files",
-    ],
-    "create_file": [
-        "create a new file called notes.txt",
-        "make a blank file at D:/workspace/todo.txt",
-        "touch a new file",
-        "create an empty file",
-    ],
-    "create_folder": [
-        "create a new directory called backups",
-        "make a new folder in D:/workspace",
-        "mkdir projects",
-        "create folder named reports",
-    ],
-    "write_file": [
-        "write content into notes.txt",
-        "save this text into output.txt",
-        "overwrite the file with new text",
-    ],
-    "append_file": [
-        "append line to log.txt",
-        "add this note to the end of notes.md",
-        "append text to file",
-    ],
-    "delete_file": [
-        "delete D:/workspace/old.txt",
-        "remove the file notes.txt",
-        "trash the log file",
-        "delete file from disk",
-    ],
-    "delete_folder": [
-        "delete the folder old_backups",
-        "remove directory D:/workspace/temp",
-        "trash the folder",
-    ],
-    "move": [
-        "move report.pdf from Downloads to D:/workspace",
-        "relocate the file to another folder",
-        "move file to destination",
-    ],
-    "copy": [
-        "copy backup.zip to D:/archive",
-        "duplicate the config file",
-        "copy file to another location",
-    ],
-    "rename": [
-        "rename old.txt to new.txt",
-        "change the file name of report.docx",
-        "rename folder to archive",
-    ],
-    "bulk_rename": [
-        "bulk rename all images to photo_#.jpg",
-        "rename multiple files sequentially",
-        "batch rename files in folder",
-    ],
-    "organize_downloads": [
-        "organize my downloads folder",
-        "sort the files in Downloads",
-        "clean up Downloads folder",
-        "categorize files in directory by type",
-    ],
-    "archive": [
-        "zip the workspace folder",
-        "compress D:/projects into an archive",
-        "create a zip file of the reports",
-        "archive folder into zip",
-    ],
-    "extract": [
-        "unzip the archive",
-        "extract backup.zip",
-        "unpack the zip file into destination",
-        "uncompress zip archive",
-    ],
 }
 
 
+# Precomputed embeddings matrix and label array
+_phrase_embeddings: Optional[Any] = None
+
+
 def _build_index(corpus: Dict[str, List[str]]) -> bool:
-    """Encode all example phrases and build a flat FAISS inner-product (cosine) index."""
-    global _index, _tool_labels, _embedder, _initialized
+    """Encode all example phrases with ONNX embedder into a normalized NumPy matrix."""
+    global _phrase_embeddings, _tool_labels, _embedder, _initialized
 
     try:
-        import faiss
         import numpy as np
-        from sentence_transformers import SentenceTransformer
-    except ImportError as e:
-        logger.warning(f"Vector search dependencies missing (faiss / sentence_transformers): {e}")
+        from app.modules.antigravity.onnx_embedder import get_onnx_embedder
+        _embedder = get_onnx_embedder()
+    except Exception as exc:
+        logger.warning("ONNX tool embedder unavailable: %s", exc)
         return False
 
     try:
-        if _embedder is None:
-            _embedder = SentenceTransformer(MODEL_NAME)
-
         phrases: List[str] = []
         labels: List[str] = []
         for tool, examples in corpus.items():
@@ -331,29 +292,23 @@ def _build_index(corpus: Dict[str, List[str]]) -> bool:
                 labels.append(tool)
 
         vecs = _embedder.encode(phrases, normalize_embeddings=True)
-        dim = vecs.shape[1]
-        
-        # Inner Product on normalized vectors is exact Cosine Similarity
-        idx = faiss.IndexFlatIP(dim)
-        idx.add(np.array(vecs, dtype="float32"))
-        
-        _index = idx
+        _phrase_embeddings = np.array(vecs, dtype=np.float32)
         _tool_labels = labels
         _initialized = True
-        logger.info(f"Built FAISS tool vector index with {len(phrases)} phrases across {len(corpus)} tools.")
+        logger.info("Built ONNX tool vector index with %d phrases across %d tools. ⚡", len(phrases), len(corpus))
         return True
     except Exception as exc:
-        logger.error(f"Failed to build vector index: {exc}", exc_info=True)
+        logger.error("Failed to build ONNX tool vector index: %s", exc, exc_info=True)
         return False
 
 
 def get_index(corpus: Optional[Dict[str, List[str]]] = None) -> Any:
-    """Return or lazily initialize the global FAISS index."""
-    global _index, _initialized
-    if not _initialized or _index is None:
+    """Return or lazily initialize the global ONNX tool index matrix."""
+    global _phrase_embeddings, _initialized
+    if not _initialized or _phrase_embeddings is None:
         c = corpus or TOOL_CORPUS
         _build_index(c)
-    return _index
+    return _phrase_embeddings
 
 
 def query(
@@ -362,7 +317,7 @@ def query(
     top_k: int = 3,
     threshold: Optional[float] = None,
 ) -> Tuple[Optional[str], float]:
-    """Return (best_tool_name, confidence_score) for the given prompt.
+    """Return (best_tool_name, confidence_score) for the given prompt using ONNX dot product.
 
     Returns (None, best_score) if score is below the confidence threshold.
     Returns (None, 0.0) if index is unavailable.
@@ -370,23 +325,23 @@ def query(
     import numpy as np
 
     c = corpus or TOOL_CORPUS
-    idx = get_index(c)
-    if idx is None or _embedder is None or not _tool_labels:
+    embeddings = get_index(c)
+    if embeddings is None or _embedder is None or not _tool_labels:
         return None, 0.0
 
     min_threshold = threshold if threshold is not None else DEFAULT_THRESHOLD
 
     try:
-        vec = _embedder.encode([prompt], normalize_embeddings=True).astype("float32")
-        distances, indices = idx.search(vec, min(top_k, len(_tool_labels)))
-
-        best_score = float(distances[0][0])
-        best_idx = indices[0][0]
+        q_vec = _embedder.encode(prompt, normalize_embeddings=True)
+        sims = np.dot(embeddings, q_vec)
+        best_idx = int(np.argmax(sims))
+        best_score = float(sims[best_idx])
         best_tool = _tool_labels[best_idx]
 
         if best_score < min_threshold:
             return None, best_score
         return best_tool, best_score
     except Exception as exc:
-        logger.warning(f"Vector search query failed for prompt '{prompt[:50]}': {exc}")
+        logger.warning("ONNX tool vector search query failed for prompt '%s': %s", prompt[:50], exc)
         return None, 0.0
+

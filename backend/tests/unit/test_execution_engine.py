@@ -1,12 +1,15 @@
 import pytest
 import asyncio
 from app.core.execution_engine import ExecutionEngine
-from app.registry import registry
+from app.registry.tool_registry import ToolRegistry
+from app.modules.file_management.tools.list_directory import ListDirectoryTool
 
 
 @pytest.mark.asyncio
 async def test_execution_engine_list_directory():
-    engine = ExecutionEngine(registry)
+    reg = ToolRegistry()
+    reg.register(ListDirectoryTool())
+    engine = ExecutionEngine(reg)
     # Use current directory (project root) which should exist
     result = await engine.run("list_directory", {"path": "."})
     assert result.success is True

@@ -2,6 +2,49 @@
 
 ---
 
+### Module 15 – Worker Plan Revision Loop, Edited Plan Synchronization & Verification Skip
+- **Plan Revision Loop (Job 1)**:
+  - Fixed `reject_plan` in `engine.py` and `worker_agent.py`. Rejection now sets `_plan_action = "rejected"` and `_phase = "planning"`, keeping the worker in Job 1.
+  - Injected user revision feedback into `build_planning_prompt()` as `intervention` so `agy` incorporates user changes into the revised plan.
+- **Direct Markdown Plan Synchronization**:
+  - When the user edits the plan markdown in the UI and approves it via `POST /workers/{session_id}/approve-plan`, the backend writes the edited content directly to `{fs_scope}/implementation_plan.md` on disk.
+  - Ensures the worker CLI strictly executes the user's edited markdown rather than stale generated plans.
+- **Verification Skip Control (Job 3)**:
+  - Added `skip_testing: bool` to `TaskContract`, `ForkRequest`, and `ApprovePlanRequest`.
+  - Added endpoint `POST /workers/{session_id}/skip-testing` and real-time frontend controls (plan approval card checkbox and header toolbar button).
+  - When enabled or when the objective requests skipping tests, the worker completes Job 2 and transitions directly to `done` with status `SKIPPED`, avoiding unwanted verification runs.
+- **Testing**: 3 comprehensive tests in `test_plan_review_and_skip_testing.py` verifying rejection routing, markdown file writing, and verification skipping.
+
+---
+
+### Module 14 – Bubbles Persona & Ultra-Low Latency ONNX Semantic Memory Architecture
+- **Persona & Identity Transformation (Bubbles 🫧 & Dum Dum)**:
+  - Transformed assistant identity to **Bubbles 🫧** across prompts, fallback Groq adapter, fast paths, and documentation.
+  - Tone strictly anchored: warm, deeply sympathetic, girlish, humble, with cute emojis (`🫧`, `🌸`, `✨`, `🎀`, `🌷`, `🧸`, `💖`).
+  - Strict addressing invariant: Bubbles **ONLY** calls the user **"Dum Dum"**.
+- **Continuous Reinforced Learning**:
+  - Enforced continuous 3-message feedback extraction (`MEMORY_EXTRACTION_INTERVAL = 3`) in `app/api/routes/agent.py`.
+  - Hardened SQLite transaction handling in `LongTermMemory` to eliminate commit conflict rollbacks.
+- **Hierarchical Memory Split**:
+  - Compacted `JARVIS_MEMORY.md` from 110 lines to ~50 lines, preserving only pinned invariants, preferences, and active workspaces.
+  - Created `MEMORY_ARCHIVE.md` for historical worker milestone receipts and task completion logs, preventing prompt bloat.
+  - Brain automatically routes worker summaries to `MEMORY_ARCHIVE.md`.
+- **Ultra-Low Latency ONNX Semantic Retrieval & Tool Selection**:
+  - Replaced heavy PyTorch & `SentenceTransformer` with **ONNX Runtime** and rust-based `tokenizers`.
+  - Exported quantized `all-MiniLM-L6-v2` (`model_quantized.onnx`, ~21.9 MB) with AVX2 CPU quantization.
+  - Created `OnnxEmbedder` (`app/modules/antigravity/onnx_embedder.py`):
+    - Sub-millisecond NumPy vector dot-product for cosine similarity.
+    - Zero Hugging Face network roundtrips or rate-limit warnings.
+    - Average query latency reduced from ~10s / ~150ms to **3.8ms**.
+  - Upgraded both `MemoryVectorIndex` and `tool_vector_index.py` to `OnnxEmbedder` and fast NumPy matrix multiplication (tool matching in ~3.2ms).
+  - Streamlined `_build_brain_prompt()` with lean context (<600 tokens), preventing context accumulation in `PersistentAgyDaemon`.
+- **Non-Blocking Background Memory Extraction**:
+  - Resolved 15-20s latency on "Confirm and Run" and 3-turn chat cycles by dispatching `_learn_from_turn()` into non-blocking `asyncio.create_task()`.
+  - `/agent/run` now responds immediately in <100ms for confirmed plan executions.
+- **Testing**: 21 unit tests passing across `test_onnx_embedder.py`, `test_memory_vector_index.py`, `test_tool_vector_index.py`, and `test_antigravity_brain.py`. AST knowledge graph updated via `graphify update .`.
+
+---
+
 ### Module 13 – Autonomous Worker 3-Job Workflow (Planning, Execution & Self-Testing)
 - **Step 1: Jarvis Task Prompt & Spec Synthesizer**:
   - `JarvisBrainManager` automatically synthesizes rich Master Task Specifications including primary objectives, acceptance criteria, filesystem boundary scopes, and engineering execution protocols.
